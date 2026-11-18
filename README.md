@@ -21,7 +21,7 @@ blue abyss.
 - Dynamic visual effects: Parallax occlusion mapping, waves hitting the coasts,
   water moving with the currents.
 
-easter egg?
+- easter egg?
 
 ## Install
 
