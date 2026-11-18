@@ -19,3 +19,9 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+Scope: the grant above covers the userscript and the other files in this
+repository that its author wrote, including the whale mesh and route. It does not
+extend to the map artwork the sea is generated from — the zig-zag.fm map raster,
+or the textures derived from it — which remain the property of their owners and
+are included only so the script can run.
