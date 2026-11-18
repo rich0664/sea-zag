@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.6.0 — 2026-11-18
+
+- Hue slider, snaps to 0
+- Saturation slider, 0–120%, snaps to 0 and 100
+- Brightness snaps to 100
+- Reset for the colour controls
+- Wheel over a slider adjusts it
+- Glints brighter in the deep water
+- Whale: shadows wash out underwater
+- Whale: wake lingers and fades after a dive
+- Whale: more water colour just under the surface
+- Static when tabbed out keeps up with the camera
+- Update check, with an arrow on the button
+
 ## 0.5.1 — 2026-11-18
 
 - Sun glitter toned down

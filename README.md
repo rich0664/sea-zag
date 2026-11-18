@@ -25,7 +25,7 @@ blue abyss.
 
 ## Install
 
-1. Install [Tampermonkey](https://www.tampermonkey.net/) in your browser.
+1. Install Tampermonkey in your browser.
 2. Open
    [`sea-zag.user.js`](https://raw.githubusercontent.com/rich0664/sea-zag/main/dist/sea-zag.user.js)
    and let Tampermonkey install it.
@@ -35,6 +35,12 @@ blue abyss.
 Tampermonkey updates the script on its own, so you only need the link once. To
 start over, remove the script from Tampermonkey and install it again. If the map
 ever looks wrong after an update, reload the page once.
+
+If the script doesn't show up in Tampermonkey after installing it, the browser is
+blocking userscripts. In Chrome and Edge, open the extensions page, open
+Tampermonkey's details, and turn on "Allow user scripts" — on older versions,
+turn on developer mode instead. In Firefox, check that Tampermonkey is allowed to
+run on zig-zag.fm.
 
 ## Settings
 

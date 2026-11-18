@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         sea-zag
 // @namespace    sea-zag
-// @version      0.5.1
+// @version      0.6.0
 // @description  Draws a bathymetric sea between the zig-zag.fm archipelagos: depth = distance from land, terrain = layered noise, rendered tile-aligned behind the map.
 // @match        https://www.zig-zag.fm/*
 // @grant        none
@@ -11,7 +11,7 @@
 // ==/UserScript==
 
 (() => {
-const seaConsts = {"version":"0.5.1","assetVersion":"2026-11-17a","whaleVersion":"1","assetBase":"https://raw.githubusercontent.com/rich0664/sea-zag/main/dist","map":{"w":7749,"h":5254},"distMax":600,"alongScale":1.03,"heightLo":0.1606,"heightHi":1,"auxScale":2,"flowCell":16,"speedCell":4,"backingCap":2560,"baseline":{"shore":16,"shelf":26,"flow":3.7,"wave":2.5,"spec":0.035,"specPow":14.5,"specMode":2,"specSize":0.76,"specInvert":0.02,"grain":0.04,"foam":0.25,"deep":0.6,"swell":0.008,"adir":254,"aspeed":1.42,"ascale":0.156,"bdir":45,"bspeed":1.16,"bscale":0.046,"par":0.78,"pom":5,"dslow":0.91,"win":0.58,"wout":0.82,"cycle":7,"warp":2.1,"wbias":1,"deflect":1,"deflectReach":50},"curves":{"pc":[0,0.187,0.339,0.578,1],"sc":[0,0.057,0.274,0.492,0.926],"wc":[0,0.187,0.426,0.594,1]},"meshVersion":"4"};
+const seaConsts = {"version":"0.6.0","assetVersion":"2026-11-17a","whaleVersion":"1","assetBase":"https://raw.githubusercontent.com/rich0664/sea-zag/main/dist","map":{"w":7749,"h":5254},"distMax":600,"alongScale":1.03,"heightLo":0.1606,"heightHi":1,"auxScale":2,"flowCell":16,"speedCell":4,"backingCap":2560,"baseline":{"shore":16,"shelf":26,"flow":3.7,"wave":2.5,"spec":0.035,"specPow":14.5,"specMode":2,"specSize":0.76,"specInvert":0.02,"specFloor":0.3,"grain":0.04,"foam":0.25,"deep":0.6,"swell":0.008,"adir":254,"aspeed":1.42,"ascale":0.156,"bdir":45,"bspeed":1.16,"bscale":0.046,"par":0.78,"pom":5,"dslow":0.91,"win":0.58,"wout":0.82,"cycle":7,"warp":2.1,"wbias":1,"deflect":1,"deflectReach":50},"curves":{"pc":[0,0.187,0.339,0.578,1],"sc":[0,0.057,0.274,0.492,0.926],"wc":[0,0.187,0.426,0.594,1]},"meshVersion":"4"};
 
 /* ---- sea-core.js ---- */
 const MODE_IDS = ['baseline', 'medium', 'low', 'extra-low', 'static'];
@@ -34,6 +34,81 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 function shaderCapable(webgl2, maxTextureSize) {
   return !!webgl2 && Number(maxTextureSize) >= MIN_TEXTURE_SIZE;
 }
+
+
+
+
+const SNAP_AT = 100;
+const SNAP_WINDOW = 2;
+
+
+
+function snapTo(v, targets, window = SNAP_WINDOW) {
+  const at = targets && targets.length ? targets[0] : SNAP_AT;
+  if (v === null || v === undefined || v === '') return at;
+  const n = Number(v);
+  if (!isFinite(n)) return at;
+  for (const t of targets) if (Math.abs(n - t) <= window) return t;
+  return n;
+}
+
+function snapPercent(v, at = SNAP_AT, window = SNAP_WINDOW) {
+  return snapTo(v, [at], window);
+}
+
+
+
+
+const UPDATE_CHECK_MS = 15 * 60 * 1000;
+
+function parseScriptVersion(text) {
+  const m = /^\/\/\s*@version\s+(\S+)/m.exec(String(text || ''));
+  return m ? m[1] : null;
+}
+
+
+
+
+
+function versionParts(v) {
+  const m = /^(\d+(?:\.\d+)*)(?:-([0-9A-Za-z.-]+))?$/.exec(String(v ?? '').trim());
+  if (!m) return null;
+  return {
+    nums: m[1].split('.').map(Number),
+    pre: m[2] ? m[2].split('.') : null,
+  };
+}
+
+function compareVersions(a, b) {
+  const pa = versionParts(a);
+  const pb = versionParts(b);
+  if (!pa || !pb) return 0;
+  const n = Math.max(pa.nums.length, pb.nums.length);
+  for (let i = 0; i < n; i++) {
+    const d = (pa.nums[i] || 0) - (pb.nums[i] || 0);
+    if (d) return d > 0 ? 1 : -1;
+  }
+  if (!pa.pre && !pb.pre) return 0;
+  if (!pa.pre) return 1;             
+  if (!pb.pre) return -1;
+  const m = Math.max(pa.pre.length, pb.pre.length);
+  for (let i = 0; i < m; i++) {
+    const x = pa.pre[i];
+    const y = pb.pre[i];
+    if (x === undefined) return -1;
+    if (y === undefined) return 1;
+    const nx = Number(x);
+    const ny = Number(y);
+    if (isFinite(nx) && isFinite(ny)) {
+      if (nx !== ny) return nx > ny ? 1 : -1;
+    } else if (x !== y) {
+      return x > y ? 1 : -1;
+    }
+  }
+  return 0;
+}
+
+const isNewer = (remote, local) => compareVersions(remote, local) > 0;
 
 
 
@@ -118,6 +193,9 @@ function parseState(raw) {
     opacity: clamp(num(r.opacity, 1), 0, 1),
     
     brightness: clamp(num(r.brightness, 110) / 100, 0.5, 1.5),
+    
+    hue: clamp(num(r.hue, 0), -180, 180),
+    sat: clamp(num(r.sat, 100), 0, 120),
     
     fps30: !(r.fps30 === false || r.fps30 === '0' || r.fps30 === 'false'),
     
@@ -585,9 +663,12 @@ uniform vec2 uDirA, uDirB;
 uniform float uSpeedA, uSpeedB, uScaleA, uScaleB;
 uniform float uParallax, uDeepSlow, uWaveIn, uWaveOut, uPomLayers;
 uniform float uAlongScale, uBrightness, uNoiseLayers;
+uniform float uHue, uSat;       // colour controls: degrees, percent
+uniform float uSpecFloor;       // extra highlight on water too dark to catch it
 uniform float uReveal;          // 0..1 depth-masked intro (deep water first)
 uniform vec4 uWhalePose;        // x, y, heading (rad), depth (tiles below water)
 uniform vec4 uWhaleShape;       // half length, half width, surface fade, enabled
+uniform vec4 uWhaleWake;        // x, y, strength, radius: the ring left behind
 uniform sampler2D uWhaleTex;     // 16x8 body target: RGB colour, A height
 uniform vec2 uWhaleHalf;         // body half extents in tiles (x, y)
 uniform float uWhaleHeight;      // body height in tiles (A = 0..1 of this)
@@ -615,6 +696,37 @@ const float WHALE_MAX_DEPTH = 14.0;
 // exactly. The owner asked for roughly 70-80%, not a complete recolour.
 const float WHALE_TINT = 0.4;
 
+// The least the water tints a submerged body, reached within 0.6 tiles of the
+// surface. The exponential fog alone was invisible there.
+const float WHALE_TINT_FLOOR = 0.22;
+
+// How far the body's baked shadows wash out toward the water once submerged.
+// Under water a near-black rim reads as a hole in the sea rather than a shadow,
+// so the dark end of the shading picks up the water colour; the lit side keeps
+// its own.
+const float WHALE_SHADOW_WASH = 0.45;
+
+// The hue rotation every browser's CSS hue-rotate() uses, so the 2D fallback and
+// the shader land on the same colours. Rotates about the grey axis; luminance
+// survives.
+vec3 hueRotate(vec3 c, float degrees) {
+  float a = radians(degrees);
+  float s = sin(a);
+  float k = cos(a);
+  mat3 m = mat3(
+    0.213 + k * 0.787 - s * 0.213,
+    0.213 - k * 0.213 + s * 0.143,
+    0.213 - k * 0.213 - s * 0.787,
+    0.715 - k * 0.715 - s * 0.715,
+    0.715 + k * 0.285 + s * 0.140,
+    0.715 - k * 0.715 + s * 0.715,
+    0.072 - k * 0.072 + s * 0.928,
+    0.072 - k * 0.072 - s * 0.283,
+    0.072 + k * 0.928 + s * 0.072
+  );
+  return max(m * c, vec3(0.0));
+}
+
 // A whale never rests on the seabed: the deepest it may sink is this fraction of
 // the local water depth, so shallow water makes it surface instead of going
 // black under the (absolute) pose depth. 0.85 leaves a little clearance below.
@@ -631,6 +743,9 @@ const float WHALE_SEABED_GAP = 1.0;
 // derived from the same ratio, so widening this widens the whole ring.
 // Easy to tune.
 const float WHALE_SHORE_W = 3.5;
+
+// The wake's shelf width, in tiles: the soft glow just inside its circle.
+const float WHALE_WAKE_SHELF = 2.5;
 
 float hash(vec2 p) {
   p = fract(p * vec2(123.34, 456.21));
@@ -1016,8 +1131,12 @@ void main() {
     col = 1.0 - (1.0 - col) * (1.0 - lightTint * s);
   } else if (specMode == 2) {
     // carries the water's own colour: the glints pick up the hue under them
-    // instead of turning everything pale white
-    col += s * (col * 2.0 + lightTint * 0.12);
+    // instead of turning everything pale white. Scaling by col alone starves
+    // the deep water, which is exactly where the glints read best, so a floor
+    // takes over as the pixel darkens.
+    float lum = dot(col, vec3(0.2126, 0.7152, 0.0722));
+    float dark = 1.0 - smoothstep(0.0, 0.22, lum);
+    col += s * (col * 2.0 + lightTint * (0.12 + uSpecFloor * dark));
   } else if (specMode == 3) {
     // warm: the screen lift again, on a warm tint, so the sea reads sunlit
     // instead of moonlit against the cold water
@@ -1111,6 +1230,18 @@ void main() {
     float submerged = max(0.0, -zTop);
     float fog = 1.0 - exp(-submerged * 0.22);
     float breach = smoothstep(0.0, 0.30, zTop);
+    // Just under the surface the exponential is still ~0, which left the body
+    // looking dry until it was a couple of tiles down. A floor brings the
+    // water colour in as soon as the body is submerged (and only then: an
+    // aerial breach stays its own colour).
+    float under = clamp(-zTop / 0.6, 0.0, 1.0);
+    fog = max(fog, WHALE_TINT_FLOOR * under);
+    // The rim and the belly are baked dark, which is correct in the air and
+    // wrong underwater: the darker a texel is, the more of the water's own
+    // colour it takes on, so the silhouette stops being an outline of black.
+    float bodyLum = dot(bodyCol, vec3(0.2126, 0.7152, 0.0722));
+    float bodyShade = 1.0 - smoothstep(0.02, 0.30, bodyLum);
+    fog = clamp(fog + WHALE_SHADOW_WASH * bodyShade * under, 0.0, 1.0);
     float gWhale = (1.0 + (n * 1.2 + grainN * 0.16) * uGrain * 1.2 * onWater
                           * (1.0 - 0.45 * deep))
                  * (1.0 + dither * uGrain * 0.25 * onWater);
@@ -1147,7 +1278,38 @@ void main() {
     col *= 1.0 + ringWaves.shelf * ringOn * uWhaleShape.z * uFoam * 1.1;
   }
 
-  col *= uBrightness;   // sea colour only: the border below overrides it
+  // ---- whale wake ----------------------------------------------------------
+  // The ring above is derived from the body's *current* depth, so it vanishes
+  // the instant the whale dives. This is the circle it leaves behind: frozen at
+  // the last surface point, drifting outward and fading, drawn with the coast's
+  // own wave model so it reads as the same water. It outlives the body's gate
+  // because the whale has usually swum away from it.
+  // It hands over to the body's own ring rather than doubling it: as the body
+  // rises into the top 1.5 tiles its ring takes the water back, so the wake
+  // weight falls away with it.
+  float wakeOn = uWhaleWake.z * (1.0 - uWhaleShape.z);
+  if (uWhaleShape.w > 0.5 && wakeOn > 0.002) {
+    float wDist = length(p - uWhaleWake.xy);
+    if (wDist < uWhaleWake.w + WHALE_WAKE_SHELF + 4.0) {
+      ShoreWaves wake = shoreWaves(ShoreParams(
+        p, flow, cycleTravel, ph1, ph2, w1, w2,
+        wDist - uWhaleWake.w, WHALE_SHORE_W, WHALE_WAKE_SHELF, 1.0, -1.0));
+      col += vec3(0.58, 0.80, 0.94) * wake.crest * wake.shore
+           * wakeOn * uFoam * 0.75;
+      col += vec3(0.62, 0.84, 0.98) * wake.edge * wake.lap
+           * wakeOn * uFoam * 0.5;
+      col *= 1.0 + wake.shelf * wakeOn * uFoam * 0.7;
+    }
+  }
+
+  // ---- colour controls -----------------------------------------------------
+  // Saturation about the pixel's own luminance, then the hue rotation, then
+  // brightness, which is the order the 2D path's CSS filters apply. Sea colour
+  // only: the map border below is drawn after them, so the map stays the map.
+  float cLum = dot(col, vec3(0.2126, 0.7152, 0.0722));
+  col = mix(vec3(cLum), col, uSat);
+  col = hueRotate(col, uHue);
+  col *= uBrightness;
 
   // ---- map border ----
   // The border lives on the texel grid: p is snapped to texel centres, so every
@@ -1240,6 +1402,13 @@ const SEA_UI_CAP_LABELS = { 0: 'off', 60: '60', 30: '30' };
 
 
 const SEA_UI_WAVE_PATH = 'M3 2h3v1h-3z M9 2h3v1h-3z M3 3h1v1h-1z M5 3h2v1h-2z M9 3h1v1h-1z M11 3h1v1h-1z M0 4h1v1h-1z M2 4h2v1h-2z M6 4h1v1h-1z M8 4h2v1h-2z M0 5h3v1h-3z M6 5h3v1h-3z M3 7h3v1h-3z M9 7h3v1h-3z M0 8h1v1h-1z M2 8h2v1h-2z M5 8h2v1h-2z M8 8h2v1h-2z M11 8h1v1h-1z M0 9h1v1h-1z M2 9h1v1h-1z M6 9h1v1h-1z M8 9h1v1h-1z M0 10h3v1h-3z M6 10h3v1h-3z';
+
+
+
+
+
+const SEA_UI_ARROW_PATH = 'M2 0h1v1h-1z M1 1h3v1h-3z M0 2h5v1h-5z ' +
+  'M2 3h1v1h-1z M2 4h1v1h-1z';
 
 const SEA_UI_INK = '#dbe6ec';
 const SEA_UI_TRACK = '#4a5f6b';
@@ -1414,7 +1583,25 @@ function mountSeaUi(opts) {
     ].join(';'));
     loadingMark.id = 'zz-sea-loading';
 
-    button.append(wave, label, loadingMark);
+    
+    
+    
+    
+    const updateArrow = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    updateArrow.setAttribute('width', '7.5');
+    updateArrow.setAttribute('height', '7.5');
+    updateArrow.setAttribute('viewBox', '0 0 5 5');
+    updateArrow.setAttribute('fill', 'currentColor');
+    updateArrow.setAttribute('aria-hidden', 'true');
+    updateArrow.setAttribute('focusable', 'false');
+    updateArrow.style.cssText = 'position:absolute;top:0;right:0;display:none;' +
+      'width:7.5px;height:7.5px;pointer-events:none;shape-rendering:crispEdges';
+    updateArrow.id = 'zz-sea-update-mark';
+    const arrowPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    arrowPath.setAttribute('d', SEA_UI_ARROW_PATH);
+    updateArrow.append(arrowPath);
+
+    button.append(wave, label, loadingMark, updateArrow);
 
     
 
@@ -1497,11 +1684,42 @@ function mountSeaUi(opts) {
       const out = seaUiEl('span',
         'flex:0 0 34px;text-align:right;opacity:.7;font-variant-numeric:tabular-nums');
       el.append(name, input, out);
+      
+      
+      
+      
+      input.addEventListener('wheel', e => {
+        if (!e.deltaY) return;
+        e.preventDefault();
+        const step = e.shiftKey ? 5 : 1;
+        input.value = String(Number(input.value) - Math.sign(e.deltaY) * step);
+        
+        
+        
+        const ev = new Event('input', { bubbles: true });
+        ev.zzWheel = true;
+        input.dispatchEvent(ev);
+      }, { passive: false });
       return { el, input, out };
     }
 
     const opacity = rangeRow('opacity', 0, 100);
     const brightness = rangeRow('brightness', 50, 150);
+    const hue = rangeRow('hue', -180, 180);
+    const sat = rangeRow('saturation', 0, 120);
+
+    
+    
+    
+    const resetBtn = document.createElement('button');
+    resetBtn.type = 'button';
+    resetBtn.id = 'zz-sea-reset';
+    resetBtn.textContent = 'reset';
+    resetBtn.title = 'brightness 110, hue 0, saturation 100, opacity 100';
+    resetBtn.style.cssText = 'margin:0;padding:2px 6px;' +
+      'background:#121a21;border:2px solid #3a4a55;border-radius:0;' +
+      'color:inherit;font:inherit;font-family:inherit;font-size:10px;' +
+      'cursor:pointer;display:block;margin-left:auto';
 
     const fpsBox = document.createElement('input');
     fpsBox.type = 'checkbox';
@@ -1534,6 +1752,27 @@ function mountSeaUi(opts) {
     const hiddenRow = row(hiddenBox, 'static when tabbed out');
     hiddenRow.style.marginBottom = '0';
 
+    
+    
+    
+    
+    const updateLine = document.createElement('button');
+    updateLine.type = 'button';
+    updateLine.id = 'zz-sea-update';
+    updateLine.title = 'check now';
+    updateLine.style.cssText = 'display:block;width:100%;margin:0;padding:0;' +
+      'background:transparent;border:0;border-radius:0;color:inherit;' +
+      'font:inherit;font-family:inherit;font-size:10px;line-height:1.4;' +
+      'text-align:left;opacity:.7;cursor:pointer;overflow-wrap:anywhere';
+
+    
+    
+    
+    const updateMain = seaUiEl('span', '');
+    const updateGet = seaUiEl('span',
+      'font-weight:600;text-decoration:underline;margin-left:4px');
+    updateLine.append(updateMain);
+
     const status = document.createElement('div');
     status.id = 'zz-sea-status';
     status.hidden = true;
@@ -1563,6 +1802,38 @@ function mountSeaUi(opts) {
     diagnostics.append(status, retryBtn, diag);
 
     
+    
+    function paintUpdate(u) {
+      const available = !!(u && u.available);
+      updateArrow.style.display = available ? 'block' : 'none';
+      button.title = available ? 'sea — update available' : 'sea';
+      
+      
+      updateLine.style.opacity = available ? '1' : '.7';
+      if (available) {
+        updateMain.textContent = `${u.latest} available —`;
+        updateGet.textContent = 'get';
+        if (!updateGet.parentNode) updateLine.append(updateGet);
+        updateLine.title = `update ${u.latest} (installed ${u.current})`;
+        return;
+      }
+      if (updateGet.parentNode) updateGet.remove();
+      if (!u) {
+        updateMain.textContent = 'update';
+        updateLine.title = 'check now';
+      } else if (u.error) {
+        updateMain.textContent = `couldn't check for updates · ${u.current}`;
+        updateLine.title = String(u.error);
+      } else if (u.latest) {
+        updateMain.textContent = `up to date · ${u.current}`;
+        updateLine.title = 'check again';
+      } else {
+        updateMain.textContent = `checking… · ${u.current}`;
+        updateLine.title = 'check now';
+      }
+    }
+
+    
     function paintStats(s) {
       if (!s) {
         diagLine1.textContent = '';
@@ -1590,10 +1861,11 @@ function mountSeaUi(opts) {
 
     
     
+    
     menu.append(
       onRow, quality, fpsRow, cap, hiddenRow, divider(),
-      opacity.el, brightness.el, divider(),
-      diagnostics,
+      opacity.el, brightness.el, hue.el, sat.el, resetBtn, divider(),
+      updateLine, diagnostics,
     );
 
     const css = document.createElement('style');
@@ -1618,6 +1890,13 @@ function mountSeaUi(opts) {
       const br = Math.round((Number.isFinite(s.brightness) ? s.brightness : 1) * 100);
       brightness.input.value = String(br);
       brightness.out.textContent = `${br}%`;
+      const hu = Math.round(Number.isFinite(s.hue) ? s.hue : 0);
+      hue.input.value = String(hu);
+      hue.out.textContent = `${hu}°`;
+      const sa = Math.round(Number.isFinite(s.sat) ? s.sat : 100);
+      sat.input.value = String(sa);
+      sat.out.textContent = `${sa}%`;
+      paintUpdate(s.update);
       fpsBox.checked = !!s.fps30;
       const capValue = Number(s.frameCap) || 0;
       for (const input of capRadios) input.checked = Number(input.value) === capValue;
@@ -1713,9 +1992,39 @@ function mountSeaUi(opts) {
       emit({ opacity: Number(opacity.input.value) / 100 });
     });
     
-    brightness.input.addEventListener('input', () => {
-      brightness.out.textContent = `${brightness.input.value}%`;
-      emit({ brightness: Number(brightness.input.value) / 100 });
+    
+    
+    const snapInput = (e, raw, targets) => (e && e.zzWheel ? Number(raw)
+      : snapTo(raw, targets));
+
+    
+    brightness.input.addEventListener('input', e => {
+      const v = snapInput(e, brightness.input.value, [SNAP_AT]);
+      brightness.input.value = String(v);
+      brightness.out.textContent = `${v}%`;
+      emit({ brightness: v / 100 });
+    });
+    hue.input.addEventListener('input', e => {
+      const v = snapInput(e, hue.input.value, [0]);
+      hue.input.value = String(v);
+      hue.out.textContent = `${v}°`;
+      emit({ hue: v });
+    });
+    sat.input.addEventListener('input', e => {
+      const v = snapInput(e, sat.input.value, [0, 100]);
+      sat.input.value = String(v);
+      sat.out.textContent = `${v}%`;
+      emit({ sat: v });
+    });
+    resetBtn.addEventListener('click', () => emit({ reset: true }));
+    updateLine.addEventListener('click', () => {
+      const u = (getState() || {}).update;
+      
+      if (u && u.available && u.url) {
+        window.open(u.url, '_blank', 'noopener');
+        return;
+      }
+      emit({ updateCheck: true });
     });
     fpsBox.addEventListener('change', () => emit({ fps30: fpsBox.checked }));
     for (const input of capRadios) {
@@ -1827,6 +2136,8 @@ function mountSeaUi(opts) {
     on: localStorage.getItem('zz-sea-on'),
     opacity: localStorage.getItem('zz-sea-opacity'),
     brightness: localStorage.getItem('zz-sea-brightness'),
+    hue: localStorage.getItem('zz-sea-hue'),
+    sat: localStorage.getItem('zz-sea-sat'),
     fps30: localStorage.getItem('zz-sea-fps'),
     frameCap: localStorage.getItem('zz-sea-cap'),
     staticWhenHidden: localStorage.getItem('zz-sea-hidden'),
@@ -1845,8 +2156,9 @@ function mountSeaUi(opts) {
   const state = {
     on: saved.on,
     mode: 'static',                
-    img: null, raf: 0, sig: '', draws: 0,
-    opacity: saved.opacity, brightness: saved.brightness, fps30: saved.fps30,
+    img: null, raf: 0, timer: 0, sig: '', draws: 0,
+    opacity: saved.opacity, brightness: saved.brightness, hue: saved.hue,
+    sat: saved.sat, fps30: saved.fps30,
     frameCap: saved.frameCap, staticWhenHidden: saved.staticWhenHidden,
     glReady: false, error: null, loading: false, moving: false,
     colourFormat: null,            
@@ -1872,6 +2184,56 @@ function mountSeaUi(opts) {
   let whaleEnabled = true;      
   let whalePinSec = null;       
   let whalePinPose = null;      
+
+  
+  
+  
+  
+  
+  
+  const WAKE_SEC = 4.5;         
+  const WAKE_SPREAD = 0.9;      
+  const WAKE_R0 = 4.0;          
+  const whaleWake = new Float32Array(4);
+  let wakePeak = 0;             
+  let wakeAt = 0;               
+  let wakeX = 0;
+  let wakeY = 0;
+
+  function updateWhaleWake(nowMs, pose) {
+    if (!pose) {
+      wakePeak = 0;
+      whaleWake[2] = 0;
+      return;
+    }
+    const surf = clamp(1 - pose.depth / 1.5, 0, 1);
+    if (surf > 0.05) {
+      wakeX = pose.x;
+      wakeY = pose.y;
+      wakePeak = Math.max(surf, wakePeak);
+      wakeAt = nowMs;
+      whaleWake[0] = wakeX;
+      whaleWake[1] = wakeY;
+      whaleWake[2] = wakePeak;
+      whaleWake[3] = WAKE_R0;
+      return;
+    }
+    if (wakePeak <= 0) {
+      whaleWake[2] = 0;
+      return;
+    }
+    const age = Math.max(0, nowMs - wakeAt) / 1000;
+    const k = 1 - age / WAKE_SEC;
+    if (k <= 0) {
+      wakePeak = 0;
+      whaleWake[2] = 0;
+      return;
+    }
+    whaleWake[0] = wakeX;
+    whaleWake[1] = wakeY;
+    whaleWake[2] = wakePeak * k * k;     
+    whaleWake[3] = WAKE_R0 + age * WAKE_SPREAD;
+  }
   let clockSource = 'local';    
 
   
@@ -2071,6 +2433,7 @@ function mountSeaUi(opts) {
       w: whaleTexSize[0], h: whaleTexSize[1], out: whaleTexBuf,
       depth: p.depth, maxDepth: 14,
     });
+    updateWhaleWake(nowMs, p);
     if (glc) glc.whaleDirty = true;
   }
 
@@ -2331,7 +2694,7 @@ function mountSeaUi(opts) {
     ov.style.display =
       state.on && !(noise && state.mode !== 'static') ? '' : 'none';
     if (!staticFadeAt) ov.style.opacity = String(state.opacity);
-    ov.style.filter = `brightness(${state.brightness})`;
+    ov.style.filter = seaFilter();
     
     
     const cw = deck.clientWidth || deck.width;
@@ -2421,42 +2784,88 @@ function mountSeaUi(opts) {
     }
   }
 
+  
+  
+  
+  const AWAY_RENDER_MS = 100;      
+
+  function nextTick(owner, fn) {
+    if (awayVisible) {
+      owner.timer = setTimeout(() => {
+        owner.timer = 0;
+        fn(performance.now());
+      }, AWAY_RENDER_MS);
+    } else {
+      owner.raf = requestAnimationFrame(fn);
+    }
+  }
+
+  function cancelTick(owner) {
+    if (owner.raf) cancelAnimationFrame(owner.raf);
+    if (owner.timer) clearTimeout(owner.timer);
+    owner.raf = 0;
+    owner.timer = 0;
+  }
+
+  const ticking = owner => !!(owner.raf || owner.timer);
+
   function staticTick(now) {
     state.raf = 0;
+    state.timer = 0;
     if (backgrounded || !state.on || document.hidden || !staticVisible()) return;
     if (!syncMapGate(false)) return;
     if (presenceCheck(now)) { setBackground(true); return; }
     checkDeckRemount();
     try { drawStatic(); } catch (e) { state.error = errText(e); }
-    state.raf = requestAnimationFrame(staticTick);
+    nextTick(state, staticTick);
   }
 
   function startStatic() {
-    if (state.raf || backgrounded || !state.on || document.hidden ||
+    if (ticking(state) || backgrounded || !state.on || document.hidden ||
         !staticVisible() || !mapGateOpen) return;
-    state.raf = requestAnimationFrame(staticTick);
+    nextTick(state, staticTick);
   }
 
   function stopStatic() {
-    if (state.raf) cancelAnimationFrame(state.raf);
-    state.raf = 0;
+    cancelTick(state);
   }
 
+  
+  
+  
+  
+  
+  
   
   
   
   
   
   let awaySince = 0;              
-  let backgrounded = false;
+  let backgrounded = false;       
+  let awayVisible = false;        
 
   const awayNow = () => document.hidden || !document.hasFocus();
 
+  function setAwayVisible(next) {
+    if (awayVisible === next) return;
+    awayVisible = next;
+    
+    
+  }
+
   
   function presenceCheck(now) {
-    if (!state.staticWhenHidden || !awayNow()) { awaySince = 0; return false; }
+    if (!state.staticWhenHidden || !awayNow()) {
+      awaySince = 0;
+      setAwayVisible(false);
+      return false;
+    }
     if (!awaySince) awaySince = now;
-    return backgroundDue(awaySince, now, BACKGROUND_MS);
+    if (!backgroundDue(awaySince, now, BACKGROUND_MS)) return false;
+    if (document.hidden) return true;
+    setAwayVisible(true);
+    return false;
   }
 
   function suspendLoops() {
@@ -2542,7 +2951,12 @@ function mountSeaUi(opts) {
   function setBackground(next) {
     if (backgrounded === next) return;
     backgrounded = next;
-    if (next) suspendLoops(); else resumeLoops();
+    if (next) {
+      setAwayVisible(false);
+      suspendLoops();
+    } else {
+      resumeLoops();
+    }
   }
 
   
@@ -2551,12 +2965,14 @@ function mountSeaUi(opts) {
   function onPresenceChange() {
     if (!awayNow()) {
       awaySince = 0;
+      setAwayVisible(false);
       setBackground(false);
       return;
     }
     if (!state.staticWhenHidden) {
       
       awaySince = 0;
+      setAwayVisible(false);
       setBackground(!!document.hidden);
       return;
     }
@@ -2937,8 +3353,9 @@ function mountSeaUi(opts) {
     'uDeflect', 'uDeflectReach', 'uTravelMax', 'uWarp', 'uWarpBias', 'uDirA', 'uDirB',
     'uSpeedA', 'uSpeedB', 'uScaleA', 'uScaleB', 'uParallax', 'uDeepSlow', 'uWaveIn',
     'uWaveOut', 'uPomLayers', 'uAlongScale', 'uBrightness', 'uNoiseLayers',
-    'uSpec', 'uSpecPow', 'uSpecSize', 'uSpecInvert', 'uSpecMode',
-    'uReveal', 'uWhalePose', 'uWhaleShape',
+    'uSpec', 'uSpecPow', 'uSpecSize', 'uSpecInvert', 'uSpecMode', 'uSpecFloor',
+    'uHue', 'uSat',
+    'uReveal', 'uWhalePose', 'uWhaleShape', 'uWhaleWake',
     'uWhaleTex', 'uWhaleHalf', 'uWhaleHeight',
   ];
 
@@ -2999,6 +3416,7 @@ function mountSeaUi(opts) {
     flowMode: 'uFlowMode', noiseLayers: 'uNoiseLayers', travelMax: 'uTravelMax',
     spec: 'uSpec', specPow: 'uSpecPow', specSize: 'uSpecSize',
     specInvert: 'uSpecInvert', specMode: 'uSpecMode', snap: 'uSnap',
+    specFloor: 'uSpecFloor',
   };
 
   function setModeUniforms(gl, uni, u) {
@@ -3149,7 +3567,7 @@ function mountSeaUi(opts) {
       },
       whaleTex: null,
       whaleDirty: true,
-      size: {}, raf: 0, ready: false, css: '', lost: false, first: false,
+      size: {}, raf: 0, timer: 0, ready: false, css: '', lost: false, first: false,
       onLost: null, onRestored: null,
     };
     glc = c;
@@ -3329,6 +3747,8 @@ function mountSeaUi(opts) {
     gl.uniform1f(uni.uDistMax, seaConsts.distMax);
     gl.uniform1f(uni.uAlongScale, seaConsts.alongScale);
     gl.uniform1f(uni.uBrightness, state.brightness);
+    gl.uniform1f(uni.uHue, state.hue);
+    gl.uniform1f(uni.uSat, state.sat / 100);
     setModeUniforms(gl, uni, settings.uniforms);
 
     
@@ -3338,6 +3758,7 @@ function mountSeaUi(opts) {
     if (!whaleMesh) whale.shape[3] = 0;
     gl.uniform4fv(uni.uWhalePose, whale.pose);
     gl.uniform4fv(uni.uWhaleShape, whale.shape);
+    gl.uniform4fv(uni.uWhaleWake, whaleWake);
     if (whaleMesh) {
       if (!c.whaleTex) c.whaleTex = whaleTexture(gl);
       if (c.whaleDirty) {
@@ -3502,6 +3923,7 @@ function mountSeaUi(opts) {
   function glTick(now) {
     if (!glc) return;
     glc.raf = 0;
+    glc.timer = 0;
     if (backgrounded || glc.lost || state.mode === 'static' || !state.on ||
         document.hidden) return;
     if (!syncMapGate(false)) return;
@@ -3517,7 +3939,10 @@ function mountSeaUi(opts) {
       state.moving = !!sig && lastDrawnSig !== null && sig !== lastDrawnSig;
       const gate = fpsGate(now, nextAt, state.fps30, state.moving, state.frameCap);
       nextAt = gate.nextAt;
-      if (gate.draw) {
+      
+      
+      
+      if (gate.draw && (!awayVisible || state.moving)) {
         if (lastFrameAt) pushRing(frameGaps, now - lastFrameAt);
         lastFrameAt = now;
         drawGL(now / 1000);
@@ -3528,18 +3953,17 @@ function mountSeaUi(opts) {
       fallbackToStatic(e);
       return;
     }
-    if (glc) glc.raf = requestAnimationFrame(glTick);
+    if (glc) nextTick(glc, glTick);
   }
 
   function startGL() {
-    if (!glc || glc.raf || !glc.ready || glc.lost || !mapGateOpen) return;
+    if (!glc || ticking(glc) || !glc.ready || glc.lost || !mapGateOpen) return;
     if (backgrounded || state.mode === 'static' || !state.on || document.hidden) return;
-    glc.raf = requestAnimationFrame(glTick);
+    nextTick(glc, glTick);
   }
 
   function stopGL() {
-    if (glc && glc.raf) cancelAnimationFrame(glc.raf);
-    if (glc) glc.raf = 0;
+    if (glc) cancelTick(glc);
   }
 
   
@@ -3984,6 +4408,8 @@ function mountSeaUi(opts) {
       firstLoad,
       introPending,
       backgrounded,
+      awayVisible,
+      update: updateState(),
       whale: whaleStats(),
     };
   }
@@ -3991,13 +4417,103 @@ function mountSeaUi(opts) {
   
   
   
+  
+  
+  
+  const UPDATE_TIMEOUT_MS = 10000;
+
+  function scriptUrl() {
+    return `${assetBase || seaConsts.assetBase}/sea-zag.user.js`;
+  }
+
+  let updateInfo = { latest: null, checkedAt: 0, error: null };
+  let updateInFlight = false;
+
+  function updateState() {
+    const current = seaConsts.version;
+    const latest = updateInfo.latest;
+    return {
+      current, latest,
+      checkedAt: updateInfo.checkedAt,
+      error: updateInfo.error,
+      available: !!latest && isNewer(latest, current),
+      url: scriptUrl(),
+    };
+  }
+
+  function checkUpdate(manual) {
+    if (updateInFlight) return;
+    
+    
+    if (!manual && document.hidden) return;
+    updateInFlight = true;
+    const ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+    const timer = ctrl ? setTimeout(() => ctrl.abort(), UPDATE_TIMEOUT_MS) : 0;
+    fetch(scriptUrl(), {
+      cache: 'no-store',
+      signal: ctrl ? ctrl.signal : undefined,
+    })
+      .then(res => {
+        if (!res.ok) throw new Error(`update: HTTP ${res.status}`);
+        return res.text();
+      })
+      .then(text => {
+        const latest = parseScriptVersion(text);
+        if (!latest) throw new Error('update: no @version');
+        updateInfo = { latest, checkedAt: Date.now(), error: null };
+      })
+      .catch(e => {
+        
+        updateInfo = { ...updateInfo, checkedAt: Date.now(), error: errText(e) };
+      })
+      .finally(() => {
+        if (timer) clearTimeout(timer);
+        updateInFlight = false;
+        refreshUi();
+      });
+  }
+
+  
+  
+  
+  
+  function seaFilter() {
+    return `saturate(${state.sat}%) hue-rotate(${state.hue}deg)` +
+      ` brightness(${state.brightness})`;
+  }
+
+  function applySeaFilter() {
+    const ov = document.getElementById(OV_ID);
+    if (ov) ov.style.filter = seaFilter();
+  }
+  
+  
   function setBrightness(multiplier) {
     const v = Number(multiplier);
     state.brightness = clamp(isFinite(v) ? v : 1, 0.5, 1.5);
-    const ov = document.getElementById(OV_ID);
-    if (ov) ov.style.filter = `brightness(${state.brightness})`;
+    applySeaFilter();
     refreshUi();
     return state.brightness;
+  }
+
+  
+  
+  function setHue(degrees) {
+    const v = Number(degrees);
+    state.hue = clamp(isFinite(v) ? v : 0, -180, 180);
+    applySeaFilter();
+    if (glc) glc.css = '';
+    refreshUi();
+    return state.hue;
+  }
+
+  function setSat(percent) {
+    const v = Number(percent);
+    state.sat = clamp(isFinite(v) ? v : 100, 0, 120);
+    applySeaFilter();
+    if (glc) glc.css = '';
+    refreshUi();
+    return state.sat;
   }
 
   
@@ -4157,13 +4673,20 @@ function mountSeaUi(opts) {
   
   
   
+  
+  
+  
+  const COLOUR_DEFAULTS = { opacity: 1, brightness: 1.1, hue: 0, sat: 100 };
+
   function uiState() {
     return {
       on: state.on, mode: state.mode, opacity: state.opacity,
-      brightness: state.brightness, fps30: state.fps30,
+      brightness: state.brightness, hue: state.hue, sat: state.sat,
+      fps30: state.fps30,
       frameCap: state.frameCap, staticWhenHidden: state.staticWhenHidden,
       canUseShader: state.canUseShader, maxTextureSize: state.maxTextureSize,
       loading: state.loading, error: state.error,
+      update: updateState(),
     };
   }
 
@@ -4185,6 +4708,26 @@ function mountSeaUi(opts) {
     if ('brightness' in patch) {
       const v = setBrightness(patch.brightness);
       localStorage.setItem('zz-sea-brightness', String(Math.round(v * 100)));
+    }
+    if ('hue' in patch) {
+      localStorage.setItem('zz-sea-hue', String(Math.round(setHue(patch.hue))));
+    }
+    if ('sat' in patch) {
+      localStorage.setItem('zz-sea-sat', String(Math.round(setSat(patch.sat))));
+    }
+    if ('reset' in patch) {
+      setOpacity(COLOUR_DEFAULTS.opacity);
+      setBrightness(COLOUR_DEFAULTS.brightness);
+      setHue(COLOUR_DEFAULTS.hue);
+      setSat(COLOUR_DEFAULTS.sat);
+      localStorage.setItem('zz-sea-opacity', String(COLOUR_DEFAULTS.opacity));
+      localStorage.setItem('zz-sea-brightness',
+        String(Math.round(COLOUR_DEFAULTS.brightness * 100)));
+      localStorage.setItem('zz-sea-hue', String(COLOUR_DEFAULTS.hue));
+      localStorage.setItem('zz-sea-sat', String(COLOUR_DEFAULTS.sat));
+    }
+    if ('updateCheck' in patch) {
+      checkUpdate(true);
     }
     if ('fps30' in patch) {
       localStorage.setItem('zz-sea-fps', setAdaptiveFps(patch.fps30) ? '1' : '0');
@@ -4221,6 +4764,12 @@ function mountSeaUi(opts) {
   
   
   anchorClock(true);
+
+  
+  
+  
+  setTimeout(() => checkUpdate(false), 8000);
+  setInterval(() => checkUpdate(false), UPDATE_CHECK_MS);
 
   
   
