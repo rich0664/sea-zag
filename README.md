@@ -25,7 +25,7 @@ blue abyss.
 
 ## Install
 
-1. Install Tampermonkey in your browser.
+1. Install [Tampermonkey](https://www.tampermonkey.net/) in your browser.
 2. Open
    [`sea-zag.user.js`](https://raw.githubusercontent.com/rich0664/sea-zag/main/dist/sea-zag.user.js)
    and let Tampermonkey install it.
