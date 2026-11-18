@@ -27,19 +27,18 @@ blue abyss.
 
 1. Install Tampermonkey in your browser.
 2. Open
-   [`sea-zag.user.js`](https://raw.githubusercontent.com/rich0664/sea-zag/pre-release/dist/sea-zag.user.js)
+   [`sea-zag.user.js`](https://raw.githubusercontent.com/rich0664/sea-zag/main/dist/sea-zag.user.js)
    and let Tampermonkey install it.
 3. Open the exploration map on zig-zag.fm. A small pixel-wave button appears
    under the notifications button in the header.
 
-For now the link above is the pre-release channel, rebuilt on every publish
-until the first release. Tampermonkey updates the script on its own, so you only
-need the link once. To start over, remove the script from Tampermonkey and
-install it again. If the map ever looks wrong after an update, reload the page
-once.
+Tampermonkey updates the script on its own, so you only need the link once. To
+start over, remove the script from Tampermonkey and install it again. If the map
+ever looks wrong after an update, reload the page once.
 
 ## Settings
 
 Click the pixel-wave button under the notification button to open the panel.
 
 ![The sea settings panel](screenshot-settings.png)
+
