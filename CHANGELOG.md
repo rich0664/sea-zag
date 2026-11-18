@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.5.1 — 2026-11-18
+
+- **Gentler glints.** The surface highlight was too strong on the live map;
+  `spec` 0.05 → 0.035. Nothing else changed.
+
+## 0.5.0 — 2026-11-18
+
+- **Surface highlight.** Sun glints on the wave crests: the crests of the
+  open-water noise, masked by a soft vignette centred on the view so the light
+  gathers under the eye and fades to the edge. Four blends — additive, screen,
+  colour (the glints take the water's own hue) and warm — with amount,
+  sharpness, size and inversion.
+- **A shader per quality tier.** Each tier now compiles its own variant, so a
+  feature it does not use is compiled out instead of merely switched off:
+  `medium` drops the parallax ray march, `low` and `extra-low` also drop the
+  warp, the second noise layer and the LOD current fetches. Same picture, less
+  work.
+- **New map.** The colour map is re-rendered from the `interesting_v2` preset
+  (same depth palette and height field, different filters), with a new asset
+  version so caches pick it up.
+- **Whale.** A touch lighter and less saturated; the ground now occludes the
+  body where the water is shallower than it; the surface roll is staged (breach,
+  hold, roll, unroll) on top of the swim loop instead of replacing it.
+- **Parallax pull-back.** The deep water no longer spreads quite so far from the
+  view centre (0.976 → 0.78).
+- **Loading grain.** Darker, and erased by the depth reveal at full resolution —
+  the shader draws the grain itself and the placeholder only covers the
+  pre-texture phase, so the intro no longer stutters while the textures decode.
+- **Defaults.** Adaptive fps is on by default (idle draws at 30), brightness
+  defaults to 110, and the bench button is gone from the panel.
+- **Smaller bundle.** Comments are stripped in the build: 179 KB → 137 KB.
+
 ## 0.4.0 — 2026-11-16
 
 - **The whale.** One whale roams the deep water on a pre-computed loop: it
