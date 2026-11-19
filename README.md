@@ -42,6 +42,17 @@ Tampermonkey's details, and turn on "Allow user scripts" — on older versions,
 turn on developer mode instead. In Firefox, check that Tampermonkey is allowed to
 run on zig-zag.fm.
 
+## Updating
+
+Tampermonkey updates the script on its own. When a newer version is waiting, the
+pixel-wave button grows a small arrow in its top corner and the settings panel
+names it:
+
+    0.6.1 available — get
+
+Click **get**, let Tampermonkey install it, then reload the page. Once you are on
+the latest, that line reads `up to date · 0.6.1`.
+
 ## Settings
 
 Click the pixel-wave button under the notification button to open the panel.

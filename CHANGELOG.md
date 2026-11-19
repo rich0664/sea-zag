@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.1 — 2026-11-19
+
+- Pirate layout: the map's own water is hidden, so the sea shows through
+- Sea button follows the header when side panels resize
+- Sea button no longer sits on top of open panels and dialogs
+
 ## 0.6.0 — 2026-11-18
 
 - Hue slider, snaps to 0
