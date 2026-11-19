@@ -45,10 +45,10 @@ run on zig-zag.fm.
 ## Updating
 
 Tampermonkey updates the script on its own. When a newer version is waiting, the
-pixel-wave button grows a small arrow in its top corner and the settings panel
-names it:
+pixel-wave button grows an arrow in its top corner and the bottom of the panel
+names it — `0.6.1 available — get`.
 
-    0.6.1 available — get
+![An update waiting, and where to take it](screenshot-update.png)
 
 Click **get**, let Tampermonkey install it, then reload the page. Once you are on
 the latest, that line reads `up to date · 0.6.1`.
