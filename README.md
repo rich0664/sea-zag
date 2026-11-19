@@ -29,7 +29,7 @@ blue abyss.
 2. Open
    [`sea-zag.user.js`](https://raw.githubusercontent.com/rich0664/sea-zag/main/dist/sea-zag.user.js)
    and let Tampermonkey install it.
-3. Open the exploration map on zig-zag.fm. A small pixel-wave button appears
+3. Open the exploration map on zig-zag.fm. A small sea-zag button appears
    under the notifications button in the header.
 
 Tampermonkey updates the script on its own, so you only need the link once. To
@@ -45,7 +45,7 @@ run on zig-zag.fm.
 ## Updating
 
 Tampermonkey updates the script on its own. When a newer version is waiting, the
-pixel-wave button grows an arrow in its top corner and the bottom of the panel
+sea-zag button grows an arrow in its top corner and the bottom of the panel
 names it — `0.6.1 available — get`.
 
 ![An update waiting, and where to take it](screenshot-update.png)
@@ -55,7 +55,7 @@ the latest, that line reads `up to date · 0.6.1`.
 
 ## Settings
 
-Click the pixel-wave button under the notification button to open the panel.
+Click the sea-zag button under the notification button to open the panel.
 
 ![The sea settings panel](screenshot-settings.png)
 
