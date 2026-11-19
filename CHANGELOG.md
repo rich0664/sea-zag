@@ -2,9 +2,11 @@
 
 ## 0.6.1 — 2026-11-19
 
-- Pirate layout: the map's own water is hidden, so the sea shows through
-- Sea button follows the header when side panels resize
-- Sea button no longer sits on top of open panels and dialogs
+- Pirate layout: the map's own water hidden, so the sea shows through
+- Sea-zag button: follows the header when panels resize, no longer sits on top of open panels
+- Sea-zag button: the word slides out on hover, the wave animates
+- Update line: brighter when a version is waiting, reload hint once taken
+- Sea no longer freezes after a long tab-out
 
 ## 0.6.0 — 2026-11-18
 

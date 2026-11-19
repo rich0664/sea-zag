@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         sea-zag
 // @namespace    sea-zag
-// @version      0.6.0
+// @version      0.6.1
 // @description  Draws a bathymetric sea between the zig-zag.fm archipelagos: depth = distance from land, terrain = layered noise, rendered tile-aligned behind the map.
 // @match        https://www.zig-zag.fm/*
 // @grant        none
@@ -11,7 +11,7 @@
 // ==/UserScript==
 
 (() => {
-const seaConsts = {"version":"0.6.0","assetVersion":"2026-11-17a","whaleVersion":"1","assetBase":"https://raw.githubusercontent.com/rich0664/sea-zag/main/dist","map":{"w":7749,"h":5254},"distMax":600,"alongScale":1.03,"heightLo":0.1606,"heightHi":1,"auxScale":2,"flowCell":16,"speedCell":4,"backingCap":2560,"baseline":{"shore":16,"shelf":26,"flow":3.7,"wave":2.5,"spec":0.035,"specPow":14.5,"specMode":2,"specSize":0.76,"specInvert":0.02,"specFloor":0.3,"grain":0.04,"foam":0.25,"deep":0.6,"swell":0.008,"adir":254,"aspeed":1.42,"ascale":0.156,"bdir":45,"bspeed":1.16,"bscale":0.046,"par":0.78,"pom":5,"dslow":0.91,"win":0.58,"wout":0.82,"cycle":7,"warp":2.1,"wbias":1,"deflect":1,"deflectReach":50},"curves":{"pc":[0,0.187,0.339,0.578,1],"sc":[0,0.057,0.274,0.492,0.926],"wc":[0,0.187,0.426,0.594,1]},"meshVersion":"4"};
+const seaConsts = {"version":"0.6.1","assetVersion":"2026-11-17a","whaleVersion":"1","assetBase":"https://raw.githubusercontent.com/rich0664/sea-zag/main/dist","map":{"w":7749,"h":5254},"distMax":600,"alongScale":1.03,"heightLo":0.1606,"heightHi":1,"auxScale":2,"flowCell":16,"speedCell":4,"backingCap":2560,"baseline":{"shore":16,"shelf":26,"flow":3.7,"wave":2.5,"spec":0.035,"specPow":14.5,"specMode":2,"specSize":0.76,"specInvert":0.02,"specFloor":0.3,"grain":0.04,"foam":0.25,"deep":0.6,"swell":0.008,"adir":254,"aspeed":1.42,"ascale":0.156,"bdir":45,"bspeed":1.16,"bscale":0.046,"par":0.78,"pom":5,"dslow":0.91,"win":0.58,"wout":0.82,"cycle":7,"warp":2.1,"wbias":1,"deflect":1,"deflectReach":50},"curves":{"pc":[0,0.187,0.339,0.578,1],"sc":[0,0.057,0.274,0.492,0.926],"wc":[0,0.187,0.426,0.594,1]},"meshVersion":"4"};
 
 /* ---- sea-core.js ---- */
 const MODE_IDS = ['baseline', 'medium', 'low', 'extra-low', 'static'];
@@ -54,6 +54,65 @@ function snapTo(v, targets, window = SNAP_WINDOW) {
 
 function snapPercent(v, at = SNAP_AT, window = SNAP_WINDOW) {
   return snapTo(v, [at], window);
+}
+
+
+
+
+
+function bezierEase(x1, y1, x2, y2) {
+  const cx = 3 * x1;
+  const bx = 3 * (x2 - x1) - cx;
+  const ax = 1 - cx - bx;
+  const cy = 3 * y1;
+  const by = 3 * (y2 - y1) - cy;
+  const ay = 1 - cy - by;
+  const curveX = t => ((ax * t + bx) * t + cx) * t;
+  const curveY = t => ((ay * t + by) * t + cy) * t;
+  const slopeX = t => (3 * ax * t + 2 * bx) * t + cx;
+  return x => {
+    const p = Math.min(1, Math.max(0, Number(x) || 0));
+    if (p === 0 || p === 1) return p;
+    let t = p;
+    for (let i = 0; i < 6; i++) {
+      const dx = curveX(t) - p;
+      if (Math.abs(dx) < 1e-5) return curveY(t);
+      const d = slopeX(t);
+      if (Math.abs(d) < 1e-6) break;
+      t -= dx / d;
+    }
+    
+    let lo = 0;
+    let hi = 1;
+    t = p;
+    for (let i = 0; i < 20; i++) {
+      const v = curveX(t);
+      if (Math.abs(v - p) < 1e-5) break;
+      if (v < p) lo = t; else hi = t;
+      t = (lo + hi) / 2;
+    }
+    return curveY(t);
+  };
+}
+
+
+
+
+
+const OCEAN_LAYER_RE = /(^|\/)ocean-depth$/;
+
+function isPirateOceanLayer(layer) {
+  const id = layer && layer.id;
+  return typeof id === 'string' && OCEAN_LAYER_RE.test(id);
+}
+
+
+
+
+function withoutPirateOcean(layers) {
+  if (!Array.isArray(layers)) return layers;
+  const kept = layers.filter(l => !isPirateOceanLayer(l));
+  return kept.length === layers.length ? layers : kept;
 }
 
 
@@ -1380,7 +1439,8 @@ void main() {
 const SEA_UI_BTN_ID = 'zz-sea-btn';
 const SEA_UI_MENU_ID = 'zz-sea-menu';
 const SEA_UI_WRAP_ID = 'zz-sea-hud';
-const SEA_UI_GAP = 6;             
+const SEA_UI_GAP = 8;             
+const SEA_UI_RIGHT = 12;          
 const SEA_UI_BTN = 30;            
 const SEA_UI_MOUNT_MS = 30000;    
 
@@ -1410,6 +1470,41 @@ const SEA_UI_WAVE_PATH = 'M3 2h3v1h-3z M9 2h3v1h-3z M3 3h1v1h-1z M5 3h2v1h-2z M9
 const SEA_UI_ARROW_PATH = 'M2 0h1v1h-1z M1 1h3v1h-3z M0 2h5v1h-5z ' +
   'M2 3h1v1h-1z M2 4h1v1h-1z';
 
+
+
+
+
+const WAVE_BAND = 6;              
+
+function waveFrames(path, cells = 12, oppose = false) {
+  const runs = [];
+  String(path).replace(/M(\d+) (\d+)h(\d+)v1h-\d+z/g, (all, x, y, w) => {
+    runs.push([Number(x), Number(y), Number(w)]);
+    return all;
+  });
+  return Array.from({ length: cells }, (_, shift) => {
+    const on = new Set();
+    for (const [x, y, w] of runs) {
+      const dir = oppose && y >= WAVE_BAND ? -1 : 1;
+      for (let k = 0; k < w; k++) {
+        on.add(`${(x + k + shift * dir + cells * 2) % cells},${y}`);
+      }
+    }
+    const out = [];
+    for (let y = 0; y < cells; y++) {
+      let x = 0;
+      while (x < cells) {
+        if (!on.has(`${x},${y}`)) { x += 1; continue; }
+        let n = 0;
+        while (on.has(`${x + n},${y}`)) n += 1;
+        out.push(`M${x} ${y}h${n}v1h-${n}z`);
+        x += n;
+      }
+    }
+    return out.join(' ');
+  });
+}
+
 const SEA_UI_INK = '#dbe6ec';
 const SEA_UI_TRACK = '#4a5f6b';
 const SEA_UI_RULE = '#26323a';
@@ -1418,6 +1513,11 @@ const SEA_UI_RULE = '#26323a';
 
 function seaUiCss() {
   return [
+    
+    
+    '@media (prefers-reduced-motion: reduce) {',
+    '  #zz-sea-hud *, #zz-sea-menu * { transition: none !important; }',
+    '}',
     '#zz-sea-menu, #zz-sea-menu * {',
     '  border-radius: 0 !important;',
     '  box-shadow: none !important;',
@@ -1467,13 +1567,13 @@ function seaUiCss() {
 
 
 
-function seaUiPlacement(rect, viewport, menuHeight, gap) {
+
+
+function seaUiPlacement(rect, viewport, gap) {
   const g = gap === undefined ? SEA_UI_GAP : gap;
-  const top = rect.bottom + g;
   return {
     right: viewport.width - rect.right,
-    top,
-    flipped: top + SEA_UI_BTN + g + menuHeight > viewport.height,
+    top: rect.bottom + g,
   };
 }
 
@@ -1503,12 +1603,16 @@ function mountSeaUi(opts) {
   
   function tick() {
     if (!isEnabled()) { teardown(); return; }
-    if (ui && anchor && anchor.isConnected) return;
+    if (ui && anchor && anchor.isConnected &&
+        document.getElementById(SEA_UI_WRAP_ID)) return;
     teardown();
     const live = document.querySelector('button[aria-label^="Notifications"]');
     if (!live) return;
-    const stale = document.getElementById(SEA_UI_WRAP_ID);
-    if (stale) stale.remove();     
+    
+    for (const id of [SEA_UI_WRAP_ID, SEA_UI_MENU_ID]) {
+      const stale = document.getElementById(id);
+      if (stale) stale.remove();
+    }
     anchor = live;
     ui = build(live);
   }
@@ -1531,8 +1635,17 @@ function mountSeaUi(opts) {
       el.style.color = hud.color;
     };
 
+    
+    
+    
+    
+    
+    
+    
+    const actions = liveAnchor.parentElement;  
+    const header = liveAnchor.closest('header');
     const wrap = seaUiEl('div',
-      'position:fixed;width:30px;height:30px;pointer-events:none;z-index:21');
+      'position:absolute;left:0;right:0;pointer-events:none;z-index:19');
     wrap.id = SEA_UI_WRAP_ID;
     applyFont(wrap);
 
@@ -1565,10 +1678,15 @@ function mountSeaUi(opts) {
     wavePath.setAttribute('d', SEA_UI_WAVE_PATH);
     wave.append(wavePath);
 
+    
+    
     const label = seaUiEl('span', [
       'position:absolute', 'right:34px', 'top:50%', 'transform:translateY(-50%)',
-      'white-space:nowrap', 'opacity:0', 'transition:opacity .2s',
-      'pointer-events:none',
+      'white-space:nowrap', 'max-width:0', 'margin-right:0', 'overflow:hidden',
+      'opacity:0', 'pointer-events:none',
+      'transition:max-width .55s cubic-bezier(.22,1,.36,1),' +
+      'margin-right .55s cubic-bezier(.22,1,.36,1),' +
+      'opacity .55s cubic-bezier(.22,1,.36,1)',
     ].join(';'));
     label.className = 'zz-sea-label';
     label.textContent = 'sea';
@@ -1626,11 +1744,13 @@ function mountSeaUi(opts) {
       return el;
     }
 
+    
+    
     const menu = seaUiEl('div', [
-      'position:absolute', 'right:0', 'top:36px', 'width:190px',
-      'box-sizing:border-box', 'background:#0a1016',
-      'border:2px solid ' + SEA_UI_RULE, 'border-radius:0', 'padding:12px',
-      'overflow-y:auto', 'pointer-events:auto',
+      'position:fixed', 'width:190px', 'box-sizing:border-box',
+      'background:#0a1016', 'border:2px solid ' + SEA_UI_RULE,
+      'border-radius:0', 'padding:12px', 'overflow-y:auto',
+      'pointer-events:auto', 'z-index:19',
     ].join(';'));
     menu.id = SEA_UI_MENU_ID;
     menu.hidden = true;
@@ -1805,11 +1925,24 @@ function mountSeaUi(opts) {
     
     function paintUpdate(u) {
       const available = !!(u && u.available);
-      updateArrow.style.display = available ? 'block' : 'none';
-      button.title = available ? 'sea — update available' : 'sea';
       
       
-      updateLine.style.opacity = available ? '1' : '.7';
+      
+      const requested = !!(u && u.requested);
+      const active = available || requested;
+      updateArrow.style.display = active ? 'block' : 'none';
+      button.title = requested ? 'sea — reload to finish updating'
+        : available ? 'sea — update available' : 'sea';
+      
+      
+      updateLine.style.opacity = active ? '1' : '.7';
+      if (requested) {
+        updateMain.textContent = `${u.latest} ready —`;
+        updateGet.textContent = 'reload';
+        if (!updateGet.parentNode) updateLine.append(updateGet);
+        updateLine.title = `update ${u.latest} is installed; this page is still running ${u.current}`;
+        return;
+      }
       if (available) {
         updateMain.textContent = `${u.latest} available —`;
         updateGet.textContent = 'get';
@@ -1870,8 +2003,33 @@ function mountSeaUi(opts) {
 
     const css = document.createElement('style');
     css.textContent = seaUiCss();
-    wrap.append(css, button, menu);
-    document.body.appendChild(wrap);
+    wrap.append(css, button);
+    if (header && header.parentElement) {
+      wrap.style.top = `${header.offsetTop}px`;
+      wrap.style.height = `${header.offsetHeight}px`;
+      header.after(wrap);
+    } else {
+      wrap.style.top = '0px';
+      wrap.style.height = '36px';
+      document.body.append(wrap);
+    }
+    document.body.append(menu);
+
+    
+    
+    button.style.position = 'absolute';
+    button.style.right = `${SEA_UI_RIGHT}px`;
+    button.style.top = '100%';
+    button.style.marginTop = `${SEA_UI_GAP}px`;
+    button.style.pointerEvents = 'auto';
+
+    
+    function syncTransform() {
+      const t = actions &&
+        (actions.style.transform || getComputedStyle(actions).transform);
+      button.style.transform = !t || t === 'none' ? '' : t;
+    }
+    syncTransform();
 
     
 
@@ -1924,31 +2082,19 @@ function mountSeaUi(opts) {
 
     
 
+    
+    
     function reposition() {
-      const r = liveAnchor.getBoundingClientRect();
-      if (!r.width && !r.height) return;
-      let menuHeight = 0;
-      if (!menu.hidden) {
-        menu.style.maxHeight = 'none';
-        menuHeight = menu.getBoundingClientRect().height;
-      }
-      const place = seaUiPlacement(
-        { right: r.right, bottom: r.bottom },
-        { width: window.innerWidth, height: window.innerHeight },
-        menuHeight,
-      );
-      wrap.style.right = `${place.right}px`;
-      wrap.style.top = `${place.top}px`;
       if (menu.hidden) return;
-
+      const r = button.getBoundingClientRect();
+      if (!r.width && !r.height) return;
+      const view = { width: window.innerWidth, height: window.innerHeight };
+      const place = seaUiPlacement({ right: r.right, bottom: r.bottom }, view);
+      menu.style.right = `${place.right}px`;
+      menu.style.top = `${place.top}px`;
       
       
-      const below = Math.max(0, window.innerHeight - (place.top + 36) - 8);
-      
-      const above = Math.max(0, place.top - SEA_UI_GAP - 8);
-      menu.style.top = place.flipped ? 'auto' : '36px';
-      menu.style.bottom = place.flipped ? '36px' : 'auto';
-      menu.style.maxHeight = `${place.flipped ? above : below}px`;
+      menu.style.maxHeight = `${Math.max(0, view.height - place.top - 8)}px`;
     }
 
     
@@ -1968,11 +2114,59 @@ function mountSeaUi(opts) {
       }
     }
 
+    
+    
+    
+    
+    const WAVE_MS = 350;
+    const waveEase = bezierEase(0.4, 0, 0.2, 1);
+    const wavePaths = waveFrames(SEA_UI_WAVE_PATH, 12, true);
+    const calm = !!(window.matchMedia &&
+      matchMedia('(prefers-reduced-motion: reduce)').matches);
+    let waveRaf = 0;
+    let wavePos = 0;        
+    let waveFrom = 0;
+    let waveAt = 0;
+    let waveDur = WAVE_MS;
+
+    function paintWave(pos) {
+      const n = wavePaths.length;
+      wavePath.setAttribute('d', wavePaths[Math.round(pos * n) % n]);
+    }
+
+    function waveStep(now) {
+      const t = Math.min(1, (now - waveAt) / waveDur);
+      wavePos = waveFrom + (1 - waveFrom) * waveEase(t);
+      paintWave(wavePos);
+      if (t < 1) {
+        waveRaf = requestAnimationFrame(waveStep);
+        return;
+      }
+      
+      waveRaf = 0;
+      wavePos = 0;
+      paintWave(0);
+    }
+
+    
+    
+    
+    function runWave() {
+      if (calm || waveRaf) return;
+      waveFrom = wavePos;
+      waveDur = Math.max(16, WAVE_MS * (1 - waveFrom));
+      waveAt = performance.now();
+      waveRaf = requestAnimationFrame(waveStep);
+    }
+
     function showLabel(on) {
+      label.style.maxWidth = on ? '200px' : '0px';
+      label.style.marginRight = on ? '4px' : '0px';
       label.style.opacity = on ? '.6' : '0';
       
       button.style.opacity = on ? '1' : '.6';
       wave.style.opacity = on ? '1' : '.6';
+      if (on) runWave();
     }
 
     button.addEventListener('click', () => setOpen(!open));
@@ -2020,8 +2214,13 @@ function mountSeaUi(opts) {
     updateLine.addEventListener('click', () => {
       const u = (getState() || {}).update;
       
-      if (u && u.available && u.url) {
-        window.open(u.url, '_blank', 'noopener');
+      
+      if (u && u.requested) {
+        location.reload();
+        return;
+      }
+      if (u && u.available) {
+        emit({ updateGet: true });
         return;
       }
       emit({ updateCheck: true });
@@ -2039,7 +2238,9 @@ function mountSeaUi(opts) {
     const onResize = () => reposition();
 
     const onPointerDown = e => {
-      if (open && !wrap.contains(e.target)) setOpen(false);
+      if (open && !wrap.contains(e.target) && !menu.contains(e.target)) {
+        setOpen(false);
+      }
     };
 
     const onKeyDown = e => {
@@ -2050,23 +2251,32 @@ function mountSeaUi(opts) {
     };
 
     window.addEventListener('resize', onResize);
+    window.addEventListener('scroll', onResize, true);
     document.addEventListener('pointerdown', onPointerDown, true);
     document.addEventListener('keydown', onKeyDown);
 
-    const header = liveAnchor.closest('header') || liveAnchor.parentElement;
-    const observer = new ResizeObserver(() => reposition());
-    observer.observe(header);
+    
+    
+    const rowObserver = new MutationObserver(() => {
+      syncTransform();
+      reposition();
+    });
+    if (actions) {
+      rowObserver.observe(actions, { attributes: true, attributeFilter: ['style'] });
+    }
 
     sync(getState());
-    reposition();
 
     function destroy() {
       stopStats();
-      observer.disconnect();
+      if (waveRaf) cancelAnimationFrame(waveRaf);
+      rowObserver.disconnect();
+      window.removeEventListener('scroll', onResize, true);
       window.removeEventListener('resize', onResize);
       document.removeEventListener('pointerdown', onPointerDown, true);
       document.removeEventListener('keydown', onKeyDown);
       wrap.remove();
+      menu.remove();
     }
 
     return { sync, destroy };
@@ -2558,6 +2768,47 @@ function mountSeaUi(opts) {
   
   
   
+  
+  
+  
+  
+  
+  let pirateRawLayers = null;    
+
+  function hidePirateOcean(deck) {
+    if (!deck || deck.__zzSeaOceanFiltered || typeof deck.setProps !== 'function') {
+      return deck;
+    }
+    deck.__zzSeaOceanFiltered = true;
+    const pass = deck.setProps.bind(deck);
+    deck.setProps = next => {
+      if (next && Array.isArray(next.layers)) {
+        pirateRawLayers = next.layers;
+        const kept = state.on ? withoutPirateOcean(next.layers) : next.layers;
+        if (kept !== next.layers) next = { ...next, layers: kept };
+      }
+      return pass(next);
+    };
+    
+    
+    const live = deck.props && deck.props.layers;
+    if (Array.isArray(live)) pirateRawLayers = live;
+    if (Array.isArray(live) && state.on && withoutPirateOcean(live) !== live) {
+      pass({ layers: withoutPirateOcean(live) });
+    }
+    return deck;
+  }
+
+  
+  
+  
+  function syncPirateOcean() {
+    const deck = deckInstance;
+    if (!deck || !pirateRawLayers || typeof deck.setProps !== 'function') return;
+    const want = state.on ? withoutPirateOcean(pirateRawLayers) : pirateRawLayers;
+    if (deck.props && deck.props.layers !== want) deck.setProps({ layers: want });
+  }
+
   let deckInstance = null;
   function findDeck(canvas) {
     if (deckInstance && deckInstance.canvas === canvas) return deckInstance;
@@ -2565,10 +2816,12 @@ function mountSeaUi(opts) {
     if (!key) return null;
     const isDeck = v => !!(v && v.canvas === canvas && v.viewManager);
     for (let f = canvas[key]; f; f = f.return) {
-      if (isDeck(f.stateNode && f.stateNode.deck)) return (deckInstance = f.stateNode.deck);
+      if (isDeck(f.stateNode && f.stateNode.deck)) {
+        return (deckInstance = hidePirateOcean(f.stateNode.deck));
+      }
       for (let hook = f.memoizedState; hook; hook = hook.next) {
         if (isDeck(hook.memoizedState && hook.memoizedState.current && hook.memoizedState.current.deck)) {
-          return (deckInstance = hook.memoizedState.current.deck);
+          return (deckInstance = hidePirateOcean(hook.memoizedState.current.deck));
         }
       }
     }
@@ -2809,10 +3062,20 @@ function mountSeaUi(opts) {
 
   const ticking = owner => !!(owner.raf || owner.timer);
 
+  
+  const loopAlive = () => (state.mode === 'static'
+    ? ticking(state)
+    : !!(glc && ticking(glc)));
+
   function staticTick(now) {
     state.raf = 0;
     state.timer = 0;
-    if (backgrounded || !state.on || document.hidden || !staticVisible()) return;
+    
+    
+    
+    
+    if (document.hidden) { setBackground(true); return; }
+    if (backgrounded || !state.on || !staticVisible()) return;
     if (!syncMapGate(false)) return;
     if (presenceCheck(now)) { setBackground(true); return; }
     checkDeckRemount();
@@ -2967,6 +3230,10 @@ function mountSeaUi(opts) {
       awaySince = 0;
       setAwayVisible(false);
       setBackground(false);
+      
+      
+      
+      if (!loopAlive()) resumeLoops();
       return;
     }
     if (!state.staticWhenHidden) {
@@ -3924,8 +4191,8 @@ function mountSeaUi(opts) {
     if (!glc) return;
     glc.raf = 0;
     glc.timer = 0;
-    if (backgrounded || glc.lost || state.mode === 'static' || !state.on ||
-        document.hidden) return;
+    if (document.hidden) { setBackground(true); return; }
+    if (backgrounded || glc.lost || state.mode === 'static' || !state.on) return;
     if (!syncMapGate(false)) return;
     if (presenceCheck(now)) { setBackground(true); return; }
     try {
@@ -4428,6 +4695,11 @@ function mountSeaUi(opts) {
 
   let updateInfo = { latest: null, checkedAt: 0, error: null };
   let updateInFlight = false;
+  
+  
+  
+  
+  let updateRequested = false;
 
   function updateState() {
     const current = seaConsts.version;
@@ -4437,15 +4709,16 @@ function mountSeaUi(opts) {
       checkedAt: updateInfo.checkedAt,
       error: updateInfo.error,
       available: !!latest && isNewer(latest, current),
+      requested: updateRequested && !!latest && isNewer(latest, current),
       url: scriptUrl(),
     };
   }
 
-  function checkUpdate(manual) {
+  
+  
+  
+  function checkUpdate() {
     if (updateInFlight) return;
-    
-    
-    if (!manual && document.hidden) return;
     updateInFlight = true;
     const ctrl = typeof AbortController === 'function' ? new AbortController() : null;
     const timer = ctrl ? setTimeout(() => ctrl.abort(), UPDATE_TIMEOUT_MS) : 0;
@@ -4585,6 +4858,7 @@ function mountSeaUi(opts) {
   
   function setOn(on) {
     state.on = !!on;
+    syncPirateOcean();
     for (const id of [OV_ID, GL_ID]) {
       const c = document.getElementById(id);
       if (c) c.style.display = state.on ? '' : 'none';
@@ -4727,7 +5001,13 @@ function mountSeaUi(opts) {
       localStorage.setItem('zz-sea-sat', String(COLOUR_DEFAULTS.sat));
     }
     if ('updateCheck' in patch) {
-      checkUpdate(true);
+      checkUpdate();
+    }
+    if ('updateGet' in patch) {
+      
+      
+      updateRequested = true;
+      try { window.open(scriptUrl(), '_blank', 'noopener'); } catch {}
     }
     if ('fps30' in patch) {
       localStorage.setItem('zz-sea-fps', setAdaptiveFps(patch.fps30) ? '1' : '0');
@@ -4768,8 +5048,8 @@ function mountSeaUi(opts) {
   
   
   
-  setTimeout(() => checkUpdate(false), 8000);
-  setInterval(() => checkUpdate(false), UPDATE_CHECK_MS);
+  setTimeout(checkUpdate, 8000);
+  setInterval(checkUpdate, UPDATE_CHECK_MS);
 
   
   
