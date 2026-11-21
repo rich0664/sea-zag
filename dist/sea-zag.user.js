@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         sea-zag
 // @namespace    sea-zag
-// @version      0.6.1-pre.68
+// @version      0.7.0-pre.69
 // @description  Draws a bathymetric sea between the zig-zag.fm archipelagos: depth = distance from land, terrain = layered noise, rendered tile-aligned behind the map.
 // @match        https://www.zig-zag.fm/*
 // @grant        none
@@ -11,7 +11,7 @@
 // ==/UserScript==
 
 (() => {
-const seaConsts = {"version":"0.6.1-pre.68","assetVersion":"2026-11-17a","whaleVersion":"1","assetBase":"https://raw.githubusercontent.com/rich0664/sea-zag/pre-release/dist","map":{"w":7749,"h":5254},"distMax":600,"alongScale":1.03,"heightLo":0.1606,"heightHi":1,"auxScale":2,"flowCell":16,"speedCell":4,"backingCap":2560,"baseline":{"shore":16,"shelf":26,"flow":3.7,"wave":2.5,"spec":0.035,"specPow":14.5,"specMode":2,"specSize":0.76,"specInvert":0.02,"specFloor":0.3,"grain":0.04,"foam":0.25,"deep":0.6,"swell":0.008,"adir":254,"aspeed":1.42,"ascale":0.156,"bdir":45,"bspeed":1.16,"bscale":0.046,"par":0.78,"pom":5,"dslow":0.91,"win":0.58,"wout":0.82,"cycle":7,"warp":2.1,"wbias":1,"deflect":1,"deflectReach":50},"curves":{"pc":[0,0.187,0.339,0.578,1],"sc":[0,0.057,0.274,0.492,0.926],"wc":[0,0.187,0.426,0.594,1]},"meshVersion":"4"};
+const seaConsts = {"version":"0.7.0-pre.69","assetVersion":"2026-11-17a","whaleVersion":"1","assetBase":"https://raw.githubusercontent.com/rich0664/sea-zag/pre-release/dist","map":{"id":64,"stamp":"2026-11-01T22-21-31Z","w":7749,"h":5254},"pipelineStamp":"fb94ef28e9d3","distMax":600,"alongScale":1.03,"heightLo":0.1606,"heightHi":1,"auxScale":2,"flowCell":16,"speedCell":4,"backingCap":2560,"baseline":{"shore":16,"shelf":26,"flow":3.7,"wave":2.5,"spec":0.035,"specPow":14.5,"specMode":2,"specSize":0.76,"specInvert":0.02,"specFloor":0.3,"grain":0.04,"foam":0.25,"deep":0.6,"swell":0.008,"adir":254,"aspeed":1.42,"ascale":0.156,"bdir":45,"bspeed":1.16,"bscale":0.046,"par":0.78,"pom":5,"dslow":0.91,"win":0.58,"wout":0.82,"cycle":7,"warp":2.1,"wbias":1,"deflect":1,"deflectReach":50},"curves":{"pc":[0,0.187,0.339,0.578,1],"sc":[0,0.057,0.274,0.492,0.926],"wc":[0,0.187,0.426,0.594,1]},"meshVersion":"4"};
 
 /* ---- sea-core.js ---- */
 const MODE_IDS = ['baseline', 'medium', 'low', 'extra-low', 'static'];
@@ -347,8 +347,213 @@ function introRampsAt(elapsedMs) {
 }
 
 function assetUrl(name, base = seaConsts.assetBase,
-  version = seaConsts.assetVersion ?? seaConsts.version) {
-  return `${base}/${name}?v=${version}`;
+  version = seaConsts.assetVersion ?? seaConsts.version, versionDir = false) {
+  return versionDir ? `${base}/assets/${version}/${name}` : `${base}/${name}?v=${version}`;
+}
+
+
+
+
+
+
+
+
+function assetSourceList(name, {
+  base = seaConsts.assetBase,
+  assetVersion = seaConsts.assetVersion,
+  rootVersion = assetVersion,
+  inlinedVersion = seaConsts.assetVersion,
+  pointerLoaded = false,
+} = {}) {
+  const root = assetUrl(name, base, rootVersion, false);
+  if (!pointerLoaded) return [root];
+  const dir = assetUrl(name, base, assetVersion, true);
+  return String(assetVersion) === String(inlinedVersion) ? [dir, root] : [dir];
+}
+
+
+
+
+
+function paintHold() {
+  let resolve;
+  const promise = new Promise(r => { resolve = r; });
+  let settled = false;
+  return {
+    promise,
+    settled: () => settled,
+    settle(value) {
+      if (settled) return false;
+      settled = true;
+      resolve(value);
+      return true;
+    },
+  };
+}
+
+
+
+
+
+const POINTER_FILE = 'sea-zag-assets.json';
+
+
+
+const MANIFEST_CHECK_MS = 5 * 60 * 1000;
+
+
+
+
+const STAMP_RE =
+  /\/(?:maps|community-maps|supporter-maps|user-maps)\/[^/]+\/(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}Z)(?:-[0-9a-fA-F]+)?\//;
+
+function extractMapStamp(pathOrUrl) {
+  const m = STAMP_RE.exec(String(pathOrUrl || ''));
+  return m ? m[1] : null;
+}
+
+
+
+
+function pickLiveMainEntry(manifest) {
+  const entries = manifest && Array.isArray(manifest.main) ? manifest.main : [];
+  let best = null;
+  for (const e of entries) {
+    if (!e) continue;
+    const stamp = extractMapStamp(e.png_url || e.base_url);
+    if (!stamp) continue;
+    if (!best || stamp > best.stamp) {
+      best = {
+        map_id: Number(e.map_id),
+        stamp,
+        png_url: e.png_url || '',
+        base_url: e.base_url || '',
+      };
+    }
+  }
+  return best;
+}
+
+function pointerUrl(base = seaConsts.assetBase) {
+  return `${base}/${POINTER_FILE}`;
+}
+
+
+
+function positive(raw, fallback) {
+  const v = Number(raw);
+  return isFinite(v) && v > 0 ? v : Number(fallback);
+}
+
+function pointerText(raw, fallback) {
+  return typeof raw === 'string' && raw ? raw : String(fallback ?? '');
+}
+
+
+
+
+
+function parsePointer(raw, fallback = seaConsts) {
+  const p = raw && typeof raw === 'object' ? raw : {};
+  const fb = fallback || {};
+  const map = p.map && typeof p.map === 'object' ? p.map : {};
+  const fbMap = fb.map || {};
+  return {
+    schema: 1,
+    assetVersion: pointerText(p.assetVersion, fb.assetVersion ?? fb.version),
+    whaleVersion: pointerText(p.whaleVersion, fb.whaleVersion),
+    meshVersion: pointerText(p.meshVersion, fb.meshVersion),
+    map: {
+      kind: pointerText(map.kind, fbMap.kind ?? 'exploration'),
+      id: positive(map.id, fbMap.id),
+      stamp: pointerText(map.stamp, fbMap.stamp),
+      w: positive(map.w, fbMap.w),
+      h: positive(map.h, fbMap.h),
+    },
+    pipelineStamp: pointerText(p.pipelineStamp, fb.pipelineStamp),
+    distMax: positive(p.distMax, fb.distMax),
+    alongScale: positive(p.alongScale, fb.alongScale),
+    heightLo: positive(p.heightLo, fb.heightLo),
+    heightHi: positive(p.heightHi, fb.heightHi),
+    auxScale: positive(p.auxScale, fb.auxScale),
+    flowCell: positive(p.flowCell, fb.flowCell),
+    speedCell: positive(p.speedCell, fb.speedCell),
+  };
+}
+
+
+
+
+
+const EXPLORATION_BASE_RE = /\/maps\/[^/]+\/[^/]+\/base\.bin\.br(?:[?#]|$)/;
+
+
+
+function newestBaseStamp(urls) {
+  let best = null;
+  for (const u of Array.isArray(urls) ? urls : []) {
+    const s = String(u || '');
+    if (!EXPLORATION_BASE_RE.test(s)) continue;
+    const stamp = extractMapStamp(s);
+    if (stamp && (!best || stamp > best)) best = stamp;
+  }
+  return best;
+}
+
+
+
+
+function checkMapGate({ pointerStamp, timingUrls = [], cacheUrls = [], manifest = null } = {}) {
+  const timingStamp = newestBaseStamp(timingUrls);
+  const manifestEntry = pickLiveMainEntry(manifest);
+  const manifestStamp = manifestEntry ? manifestEntry.stamp : null;
+  const cacheStamp = newestBaseStamp(cacheUrls);
+  const pointer = pointerStamp || null;
+  const differs = s => s && s !== pointer;
+
+  
+  
+  if (timingStamp && manifestStamp && (differs(timingStamp) || differs(manifestStamp))) {
+    return differs(timingStamp)
+      ? { status: 'outdated', liveStamp: timingStamp, source: 'timing' }
+      : { status: 'outdated', liveStamp: manifestStamp, source: 'manifest' };
+  }
+
+  const [liveStamp, source] = timingStamp
+    ? [timingStamp, 'timing']
+    : manifestStamp
+      ? [manifestStamp, 'manifest']
+      : cacheStamp
+        ? [cacheStamp, 'cache']
+        : [null, 'none'];
+
+  if (!liveStamp || !pointer) return { status: 'unknown', liveStamp: null, source: 'none' };
+  return {
+    status: liveStamp === pointer ? 'match' : 'outdated', liveStamp, source,
+  };
+}
+
+
+
+
+const OUTDATED_TEXT = 'sea out of date';
+const OUTDATED_TILE_W = 220;
+const OUTDATED_TILE_H = 110;
+
+function outdatedTileLayout(cssW, cssH, dpr = 1) {
+  return {
+    tileW: OUTDATED_TILE_W,
+    tileH: OUTDATED_TILE_H,
+    
+    cols: Math.ceil(Math.max(1, cssW) / OUTDATED_TILE_W) + 2,
+    rows: Math.ceil(Math.max(1, cssH) / OUTDATED_TILE_H) + 2,
+    fontPx: 13,
+    alpha: 0.22,
+    angleRad: -12 * Math.PI / 180,
+    
+    
+    dpr: Math.max(1, Math.min(2, Number(dpr) || 1)),
+  };
 }
 
 /* ---- whale-core.js ---- */
@@ -2309,15 +2514,90 @@ function mountSeaUi(opts) {
 (() => {
   'use strict';
 
-  const MAP_W = seaConsts.map.w;   
-  const MAP_H = seaConsts.map.h;
   const OV_ID = 'zz-sea';
   const GL_ID = 'zz-sea-gl';
+  const OUTDATED_ID = 'zz-sea-outdated';
   const WARP_MAX = 3.0;            
 
+  
+  
+  
+  let activePointer = parsePointer(null, seaConsts);
+  let pointerLoaded = false;
+  let pointerPromise = null;
+  const mapW = () => activePointer.map.w;   
+  const mapH = () => activePointer.map.h;
+
+  
+  
+  
+  
+  const initialGate = paintHold();
+  const initialMapCheck = initialGate.promise;
+  
+  
+  
+  
+  const MANIFEST_TIMEOUT_MS = 5000;
+  const INITIAL_HOLD_MS = MANIFEST_TIMEOUT_MS;
+  let initialHoldTimer = setTimeout(() => settleInitialGate(null),
+                                    INITIAL_HOLD_MS);
+
   const assetBase = window.__ZZ_SEA_ASSET_BASE || undefined;
-  const url = name => assetUrl(name, assetBase);
   const errText = e => String((e && e.message) || e);
+
+  
+  
+  
+  function assetSources(name, rootVersion = activePointer.assetVersion) {
+    return assetSourceList(name, {
+      base: assetBase,
+      assetVersion: activePointer.assetVersion,
+      rootVersion,
+      inlinedVersion: seaConsts.assetVersion,
+      pointerLoaded,
+    });
+  }
+
+  function fetchAsset(sources, label) {
+    const attempt = i => fetch(sources[i])
+      .then(res => {
+        if (!res.ok) throw new Error(`${label}: HTTP ${res.status}`);
+        return res;
+      })
+      .catch(e => {
+        if (i + 1 < sources.length) return attempt(i + 1);
+        throw e;
+      });
+    return attempt(0);
+  }
+
+  const POINTER_TIMEOUT_MS = 2500;
+
+  
+  
+  
+  function loadPointer() {
+    if (pointerPromise) return pointerPromise;
+    const ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+    const timer = ctrl ? setTimeout(() => ctrl.abort(), POINTER_TIMEOUT_MS) : 0;
+    pointerPromise = fetch(pointerUrl(assetBase), {
+      cache: 'no-cache',
+      signal: ctrl ? ctrl.signal : undefined,
+    })
+      .then(res => {
+        if (!res.ok) throw new Error(`pointer: HTTP ${res.status}`);
+        return res.json();
+      })
+      .then(json => {
+        activePointer = parsePointer(json, seaConsts);
+        pointerLoaded = true;
+        return activePointer;
+      })
+      .catch(() => activePointer)
+      .finally(() => { if (timer) clearTimeout(timer); });
+    return pointerPromise;
+  }
 
   
   
@@ -2374,6 +2654,15 @@ function mountSeaUi(opts) {
     colourFormat: null,            
     canUseShader, maxTextureSize: probe.maxTextureSize,
     whalePose: null,               
+    mapOutdated: false,            
+    liveMapStamp: null,
+    mapCheck: {
+      status: 'unknown',
+      pointerStamp: activePointer.map.stamp,
+      liveStamp: null,
+      source: 'none',
+      assetVersion: activePointer.assetVersion,
+    },
   };
   window.__zzSea = state;
 
@@ -2525,11 +2814,8 @@ function mountSeaUi(opts) {
     if (whaleRoute) return Promise.resolve(whaleRoute);
     if (whaleLoad) return whaleLoad;
     try {
-      whaleLoad = fetch(assetUrl('sea-zag-whale.bin', assetBase, seaConsts.whaleVersion))
-        .then(res => {
-          if (!res.ok) throw new Error(`whale route: HTTP ${res.status}`);
-          return res.arrayBuffer();
-        })
+      whaleLoad = fetchAsset(assetSources('sea-zag-whale.bin', activePointer.whaleVersion), 'whale route')
+        .then(res => res.arrayBuffer())
         .then(buf => {
           whaleRoute = parseWhaleRoute(buf);
           return whaleRoute;
@@ -2584,11 +2870,8 @@ function mountSeaUi(opts) {
     if (whaleMesh) return Promise.resolve(whaleMesh);
     if (whaleMeshLoad) return whaleMeshLoad;
     try {
-      whaleMeshLoad = fetch(assetUrl('sea-zag-whale-mesh.bin', assetBase, seaConsts.meshVersion))
-        .then(res => {
-          if (!res.ok) throw new Error(`whale mesh: HTTP ${res.status}`);
-          return res.arrayBuffer();
-        })
+      whaleMeshLoad = fetchAsset(assetSources('sea-zag-whale-mesh.bin', activePointer.meshVersion), 'whale mesh')
+        .then(res => res.arrayBuffer())
         .then(buf => {
           whaleMesh = parseWhaleMesh(buf);
           const h = whaleMesh.half;
@@ -2648,6 +2931,7 @@ function mountSeaUi(opts) {
   }
 
   function updateWhalePose(nowMs) {
+    if (state.mapOutdated) { paintOutdatedPlaceholder(); return; }
     if (state.mode === 'static' || !whaleEnabled || !whaleRoute || !mapGateOpen) {
       state.whalePose = null;
       return;
@@ -2960,6 +3244,10 @@ function mountSeaUi(opts) {
   }
 
   function drawStatic(force) {
+    if (state.mapOutdated) { paintOutdatedPlaceholder(); return; }
+    
+    
+    if (!initialGate.settled()) { showNoise(); return; }
     if (!state.on || !staticVisible() || !mapGateOpen) return;
     const deck = deckCanvas();
     const img = state.img;
@@ -2984,7 +3272,7 @@ function mountSeaUi(opts) {
     const dx = clamp(((pad.left || 0) + W - (pad.right || 0)) / 2, 0, W) - W / 2;
     const dy = clamp(((pad.top || 0) + H - (pad.bottom || 0)) / 2, 0, H) - H / 2;
 
-    const pxt = img.width / MAP_W;                 
+    const pxt = img.width / mapW();                
     const s = z / pxt;                             
     
     
@@ -2992,7 +3280,7 @@ function mountSeaUi(opts) {
     
     const tx = vs.target[0] + 0.5, ty = vs.target[1];
     const ox = W / 2 + dx - tx * z;
-    const oy = H / 2 + dy + (MAP_H - 0.5 - ty) * z;   
+    const oy = H / 2 + dy + (mapH() - 0.5 - ty) * z;   
 
     
     const wx0 = (0 - W / 2 - dx) / z + vs.target[0];
@@ -3002,8 +3290,8 @@ function mountSeaUi(opts) {
 
     const sx0 = clamp(Math.floor((wx0 + 0.5) * pxt) - 1, 0, img.width);
     const sx1 = clamp(Math.ceil((wx1 + 0.5) * pxt) + 1, 0, img.width);
-    const sy0 = clamp(Math.floor((MAP_H - 0.5 - wy1) * pxt) - 1, 0, img.height);
-    const sy1 = clamp(Math.ceil((MAP_H - 0.5 - wy0) * pxt) + 1, 0, img.height);
+    const sy0 = clamp(Math.floor((mapH() - 0.5 - wy1) * pxt) - 1, 0, img.height);
+    const sy1 = clamp(Math.ceil((mapH() - 0.5 - wy0) * pxt) + 1, 0, img.height);
     if (sx1 <= sx0 || sy1 <= sy0) return;
 
     const t0 = performance.now();
@@ -3084,6 +3372,7 @@ function mountSeaUi(opts) {
   }
 
   function startStatic() {
+    if (state.mapOutdated) { paintOutdatedPlaceholder(); return; }
     if (ticking(state) || backgrounded || !state.on || document.hidden ||
         !staticVisible() || !mapGateOpen) return;
     nextTick(state, staticTick);
@@ -3173,12 +3462,23 @@ function mountSeaUi(opts) {
     state.moving = false;
     
     
+    hideOutdatedPlaceholder();
+    
+    
     
     if (state.mode === 'static') state.img = null;
     refreshUi();                  
   }
 
   function openSeaForMap() {
+    if (state.mapOutdated) {
+      paintOutdatedPlaceholder();
+      
+      
+      refreshUi();
+      return;
+    }
+    checkLiveMap();
     refreshUi();
     if (!state.on || backgrounded || document.hidden) return;
     nextAt = 0;
@@ -3256,6 +3556,130 @@ function mountSeaUi(opts) {
   
   
   
+  
+  const MANIFEST_URL = '/api/v2/maps/manifest';
+  const MAP_CACHE = 'zigzag-map-binaries';
+  let mapCheckInFlight = false;
+
+  function settleInitialGate(verdict) {
+    if (!initialGate.settle(verdict)) return;
+    if (initialHoldTimer) {
+      clearTimeout(initialHoldTimer);
+      initialHoldTimer = 0;
+    }
+  }
+
+  function timingUrls() {
+    try {
+      return performance.getEntriesByType('resource').map(e => e.name);
+    } catch {
+      return [];
+    }
+  }
+
+  function cacheUrls() {
+    if (typeof caches === 'undefined' || !caches || typeof caches.open !== 'function') {
+      return Promise.resolve([]);
+    }
+    return caches.open(MAP_CACHE)
+      .then(c => c.keys())
+      .then(reqs => reqs.map(r => (typeof r === 'string' ? r : r.url)))
+      .catch(() => []);
+  }
+
+  function fetchManifest() {
+    const ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+    const timer = ctrl ? setTimeout(() => ctrl.abort(), MANIFEST_TIMEOUT_MS) : 0;
+    return fetch(MANIFEST_URL, {
+      cache: 'no-store',
+      signal: ctrl ? ctrl.signal : undefined,
+    })
+      .then(res => {
+        if (!res.ok) throw new Error(`manifest: HTTP ${res.status}`);
+        return res.json();
+      })
+      .catch(() => null)          
+      .finally(() => { if (timer) clearTimeout(timer); });
+  }
+
+  function checkLiveMap() {
+    if (!onExplorationMap() || state.mapOutdated || mapCheckInFlight) {
+      return initialMapCheck;
+    }
+    mapCheckInFlight = true;
+    loadPointer().then(() => {
+      if (state.mapOutdated) { settleInitialGate(null); return; }
+      const timing = timingUrls();
+      
+      
+      const quick = checkMapGate({
+        pointerStamp: activePointer.map.stamp, timingUrls: timing,
+      });
+      if (quick.status === 'outdated') {
+        state.mapCheck = {
+          ...quick,
+          pointerStamp: activePointer.map.stamp,
+          assetVersion: activePointer.assetVersion,
+        };
+        settleInitialGate(quick);
+        enterOutdated(quick);
+        return;
+      }
+      return cacheUrls().then(cache => fetchManifest().then(manifest => {
+        if (state.mapOutdated) { settleInitialGate(null); return; }
+        const verdict = checkMapGate({
+          pointerStamp: activePointer.map.stamp,
+          timingUrls: timing, cacheUrls: cache, manifest,
+        });
+        state.mapCheck = {
+          ...verdict,
+          pointerStamp: activePointer.map.stamp,
+          assetVersion: activePointer.assetVersion,
+        };
+        settleInitialGate(verdict);
+        if (verdict.status === 'outdated') enterOutdated(verdict);
+      }));
+    }).catch(() => {}).finally(() => {
+      
+      
+      settleInitialGate(null);
+      mapCheckInFlight = false;
+    });
+    return initialMapCheck;
+  }
+
+  
+  
+  function enterOutdated(verdict) {
+    if (state.mapOutdated) { paintOutdatedPlaceholder(); return; }
+    state.mapOutdated = true;
+    state.liveMapStamp = verdict.liveStamp;
+    state.mapCheck = {
+      status: 'outdated',
+      pointerStamp: activePointer.map.stamp,
+      liveStamp: verdict.liveStamp,
+      source: verdict.source,
+      assetVersion: activePointer.assetVersion,
+    };
+    
+    
+    stopStatic();
+    stopGL();
+    hideNoise(0);
+    removeStaticCanvas();
+    releaseGL();
+    state.whalePose = null;
+    state.img = null;
+    state.loading = false;
+    paintOutdatedPlaceholder();
+    refreshUi();
+  }
+
+  
+  
+  
+  
+  
   const COLOUR_SOURCES = [
     ['avif', 'sea-zag.avif'],
     ['webp', 'sea-zag.webp'],
@@ -3263,16 +3687,36 @@ function mountSeaUi(opts) {
   let colourPromise = null;
 
   function loadColour() {
+    if (state.mapOutdated) return Promise.resolve(state.img);
     if (state.img) return Promise.resolve(state.img);
     if (colourPromise) return colourPromise;
-    colourPromise = new Promise((resolve, reject) => {
+    
+    
+    
+    
+    colourPromise = loadPointer().then(() => new Promise((resolve, reject) => {
       let i = 0;
+      
+      
+      const sources = COLOUR_SOURCES.flatMap(([format, name]) =>
+        assetSources(name).map(src => ({ format, src })));
       const tryNext = () => {
-        const [format, name] = COLOUR_SOURCES[i++];
+        if (i >= sources.length) {
+          colourPromise = null;
+          state.error = 'texture: colour';
+          hideNoise(0);
+          refreshUi();
+          reject(new Error(state.error));
+          return;
+        }
+        const { format, src } = sources[i++];
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = () => {
           colourPromise = null;
+          
+          
+          if (state.mapOutdated) { resolve(img); return; }
           state.colourFormat = format;
           state.img = img;
           state.sig = '';
@@ -3286,18 +3730,11 @@ function mountSeaUi(opts) {
           if (glc && glc.ready && !glc.lost && state.mode !== 'static') state.img = null;
           resolve(img);
         };
-        img.onerror = () => {
-          if (i < COLOUR_SOURCES.length) { tryNext(); return; }
-          colourPromise = null;
-          state.error = 'texture: colour';
-          hideNoise(0);
-          refreshUi();
-          reject(new Error(state.error));
-        };
-        img.src = url(name);
+        img.onerror = () => tryNext();
+        img.src = src;
       };
       tryNext();
-    });
+    }));
     return colourPromise;
   }
 
@@ -3490,6 +3927,82 @@ function mountSeaUi(opts) {
       else { noiseFade = 0; remove(); }
     };
     step();
+  }
+
+  
+  
+  
+  
+  
+  
+  
+  function paintOutdatedPlaceholder() {
+    const deck = deckCanvas();
+    if (!deck || !deck.parentNode || !state.on || !mapGateOpen || !state.mapOutdated) {
+      hideOutdatedPlaceholder();
+      return false;
+    }
+    const cw = deck.clientWidth || 0;
+    const ch = deck.clientHeight || 0;
+    if (!cw || !ch) return false;
+
+    let el = document.getElementById(OUTDATED_ID);
+    if (!el) {
+      el = document.createElement('canvas');
+      el.id = OUTDATED_ID;
+    }
+    
+    if (el.parentNode !== deck.parentNode || el.nextSibling !== deck) {
+      deck.parentNode.insertBefore(el, deck);
+    }
+    
+    
+    
+    el.style.cssText = 'pointer-events:none;position:absolute;left:0;top:0'
+      + `;width:${cw}px;height:${ch}px`;
+
+    
+    
+    
+    const layout = outdatedTileLayout(cw, ch, window.devicePixelRatio || 1);
+    const bw = Math.round(cw * layout.dpr);
+    const bh = Math.round(ch * layout.dpr);
+    if (el.width !== bw || el.height !== bh) {
+      el.width = bw;
+      el.height = bh;
+    }
+    const c = el.getContext('2d');
+    c.setTransform(layout.dpr, 0, 0, layout.dpr, 0, 0);
+    c.fillStyle = '#050a0e';
+    c.fillRect(0, 0, cw, ch);
+    c.font = `500 ${layout.fontPx}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
+    c.fillStyle = `rgba(155, 185, 205, ${layout.alpha})`;
+    c.textAlign = 'center';
+    c.textBaseline = 'middle';
+    
+    for (let row = 0; row < layout.rows; row++) {
+      const y = (row - 0.5) * layout.tileH;
+      for (let col = 0; col < layout.cols; col++) {
+        const x = (col - 0.5 + (row % 2) * 0.5) * layout.tileW;
+        c.save();
+        c.translate(x, y);
+        c.rotate(layout.angleRad);
+        c.fillText(OUTDATED_TEXT, 0, 0);
+        c.restore();
+      }
+    }
+    return true;
+  }
+
+  
+  
+  function showOutdatedPlaceholder() {
+    return paintOutdatedPlaceholder();
+  }
+
+  function hideOutdatedPlaceholder() {
+    const el = document.getElementById(OUTDATED_ID);
+    if (el) el.remove();
   }
 
   
@@ -3709,22 +4222,28 @@ function mountSeaUi(opts) {
   
   
   
-  function decodeTexture(src) {
-    if (typeof createImageBitmap === 'function') {
-      return fetch(src, { mode: 'cors' })
-        .then(r => {
-          if (!r.ok) throw new Error(`texture: ${src} HTTP ${r.status}`);
-          return r.blob();
-        })
-        .then(b => createImageBitmap(b));
-    }
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => resolve(img);
-      img.onerror = () => reject(new Error('texture: failed to load ' + src));
-      img.src = src;
-    });
+  function decodeTexture(name) {
+    const sources = assetSources(name);
+    const load = src => {
+      if (typeof createImageBitmap === 'function') {
+        return fetch(src, { mode: 'cors' })
+          .then(r => {
+            if (!r.ok) throw new Error(`texture: ${src} HTTP ${r.status}`);
+            return r.blob();
+          })
+          .then(b => createImageBitmap(b));
+      }
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error('texture: failed to load ' + src));
+        img.src = src;
+      });
+    };
+    return sources.length > 1
+      ? load(sources[0]).catch(() => load(sources[1]))
+      : load(sources[0]);
   }
 
   
@@ -3789,7 +4308,19 @@ function mountSeaUi(opts) {
     for (let i = 0; i < 16 && gl.getError() !== gl.NO_ERROR; i++) {  }
   }
 
+  
+  
+  
+  
   function buildGL() {
+    loadPointer().then(() => {
+      try { buildGLNow(); } catch (e) { fallbackToStatic(e); }
+    }).catch(e => fallbackToStatic(e));
+  }
+
+  function buildGLNow() {
+    if (!state.on || !mapGateOpen) return;      
+    if (state.mapOutdated) { paintOutdatedPlaceholder(); return; }
     const deck = deckCanvas();
     if (!deck || !deck.parentNode) throw new Error('no deck canvas');
     if (!canUseShader) {
@@ -3872,7 +4403,7 @@ function mountSeaUi(opts) {
     Promise.all(specs.map(([key, name, nearest]) =>
       
       
-      (key === 'colour' ? loadColour() : decodeTexture(url(name)))
+      (key === 'colour' ? loadColour() : decodeTexture(name))
         .then(source => {
           if (glc !== c || c.lost) {
             if (typeof source.close === 'function') source.close();
@@ -4002,17 +4533,18 @@ function mountSeaUi(opts) {
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     gl.uniform2f(uni.uTarget, cam.tx, cam.ty);
-    gl.uniform2f(uni.uSize, MAP_W, MAP_H);
+    gl.uniform2f(uni.uSize, mapW(), mapH());
     gl.uniform2f(uni.uFlowSize, size.flow[0], size.flow[1]);
-    gl.uniform1f(uni.uFlowCell, MAP_W / size.flow[0]);
+    gl.uniform1f(uni.uFlowCell, mapW() / size.flow[0]);
     gl.uniform2f(uni.uSpeedSize, size.speed[0], size.speed[1]);
-    gl.uniform2f(uni.uAuxSpan, size.aux[0] * 2, size.aux[1] * 2);
+    gl.uniform2f(uni.uAuxSpan, size.aux[0] * activePointer.auxScale,
+      size.aux[1] * activePointer.auxScale);
     gl.uniform2f(uni.uCenter, cam.centerX, cam.centerY);
     gl.uniform1f(uni.uZoom, cam.zoom);
     gl.uniform1f(uni.uZoomCss, cam.zoomCss);
     gl.uniform1f(uni.uTime, t);
-    gl.uniform1f(uni.uDistMax, seaConsts.distMax);
-    gl.uniform1f(uni.uAlongScale, seaConsts.alongScale);
+    gl.uniform1f(uni.uDistMax, activePointer.distMax);
+    gl.uniform1f(uni.uAlongScale, activePointer.alongScale);
     gl.uniform1f(uni.uBrightness, state.brightness);
     gl.uniform1f(uni.uHue, state.hue);
     gl.uniform1f(uni.uSat, state.sat / 100);
@@ -4099,9 +4631,12 @@ function mountSeaUi(opts) {
   
   
   
-  const seaTarget = vs => [vs.target[0] + 0.5, MAP_H - 0.5 - vs.target[1]];
+  const seaTarget = vs => [vs.target[0] + 0.5, mapH() - 0.5 - vs.target[1]];
 
   function drawGL(t) {
+    if (state.mapOutdated) { paintOutdatedPlaceholder(); return; }
+    
+    if (!initialGate.settled()) { showNoise(); return; }
     if (!glc || !glc.ready || glc.lost || !mapGateOpen) return;
     const deck = deckCanvas();
     if (!deck) return;
@@ -4224,6 +4759,7 @@ function mountSeaUi(opts) {
   }
 
   function startGL() {
+    if (state.mapOutdated) { paintOutdatedPlaceholder(); return; }
     if (!glc || ticking(glc) || !glc.ready || glc.lost || !mapGateOpen) return;
     if (backgrounded || state.mode === 'static' || !state.on || document.hidden) return;
     nextTick(glc, glTick);
@@ -4401,6 +4937,10 @@ function mountSeaUi(opts) {
     if (pendingMode !== 'static' && !deckCanvas()) return false;
     
     if (!onExplorationMap()) return false;
+    
+    
+    
+    checkLiveMap();
     mapGateOpen = true;             
     applyMode(pendingMode);
     return true;
@@ -4640,7 +5180,7 @@ function mountSeaUi(opts) {
       return {
         mode: state.mode,
         
-        vramMB: (MAP_W * MAP_H * 4) / 1e6,
+        vramMB: (mapW() * mapH() * 4) / 1e6,
         fps: staticDraws.length,      
         ms: lastDrawMs,
         msKind: 'cpu',
@@ -4651,6 +5191,7 @@ function mountSeaUi(opts) {
         mapStatus: mapStatus(),
         mapVariant: mapVariant(),
         mapGate: mapGateOpen,
+        mapCheck: state.mapCheck,
         colourFormat: state.colourFormat,
         firstLoad,
         introPending,
@@ -4671,6 +5212,7 @@ function mountSeaUi(opts) {
       mapStatus: mapStatus(),
       mapVariant: mapVariant(),
       mapGate: mapGateOpen,
+      mapCheck: state.mapCheck,
       colourFormat: state.colourFormat,
       firstLoad,
       introPending,
@@ -4867,10 +5409,19 @@ function mountSeaUi(opts) {
       stopStatic();
       stopGL();
       hideNoise(0);
+      
+      
+      hideOutdatedPlaceholder();
       refreshUi();
       return state.on;
     }
     if (!mapGateOpen) { refreshUi(); return state.on; }
+    if (state.mapOutdated) {
+      
+      paintOutdatedPlaceholder();
+      refreshUi();
+      return state.on;
+    }
     if (pendingMode && applyPendingMode()) return state.on;
     if (state.mode === 'static') {
       if (!state.img) loadColour().catch(() => {});
@@ -4901,6 +5452,22 @@ function mountSeaUi(opts) {
   state.setWhalePose = setWhalePose;
   state.whale = setWhale;
   state.whaleAt = setWhaleAt;
+  
+  
+  state.mapGateStatus = () => state.mapCheck;
+  state.applyMapCheckForTest = ({ pointer, timingUrls = [], cacheUrls = [], manifest = null }) => {
+    if (pointer) activePointer = parsePointer(pointer, seaConsts);
+    const v = checkMapGate({
+      pointerStamp: activePointer.map.stamp, timingUrls, cacheUrls, manifest,
+    });
+    state.mapCheck = {
+      ...v,
+      pointerStamp: activePointer.map.stamp,
+      assetVersion: activePointer.assetVersion,
+    };
+    if (v.status === 'outdated') enterOutdated(v);
+    return state.mapCheck;
+  };
   
   
   
@@ -5033,17 +5600,37 @@ function mountSeaUi(opts) {
     
     
     
-    if (!document.hidden) anchorClock(false);
+    if (!document.hidden) {
+      anchorClock(false);
+      checkLiveMap();
+    }
     onPresenceChange();
   });
   window.addEventListener('blur', onPresenceChange);
-  window.addEventListener('focus', onPresenceChange);
+  window.addEventListener('focus', () => {
+    onPresenceChange();
+    checkLiveMap();
+  });
+  
+  
+  setInterval(() => {
+    if (!document.hidden && onExplorationMap()) checkLiveMap();
+  }, MANIFEST_CHECK_MS);
+  
+  
+  window.addEventListener('resize', () => {
+    if (state.mapOutdated && state.on && mapGateOpen) paintOutdatedPlaceholder();
+  });
 
   
 
   
   
   anchorClock(true);
+
+  
+  
+  loadPointer();
 
   
   
