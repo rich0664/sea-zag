@@ -5,5 +5,11 @@
     "assetVersion": "2026-11-17T16-58-34Z-gems-fb94ef28e9d3",
     "rasterSha256": "5fd2e7e27eaf8f99a949cea3aaaedd8a4cbf474eb37cc1efdd03065741feaf9f"
   },
+  "supporters": {
+    "stamp": "2026-11-21T16-56-23Z",
+    "pipelineStamp": "fb94ef28e9d3",
+    "assetVersion": "2026-11-21T16-56-23Z-supporters-fb94ef28e9d3",
+    "rasterSha256": "efdcc139851e79640d5d7793f52b5a4aa3c3220808378c550ec96587844bcd12"
+  },
   "schema": 1
 }
