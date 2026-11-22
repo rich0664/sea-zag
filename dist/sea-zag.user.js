@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         sea-zag
 // @namespace    sea-zag
-// @version      0.7.0-pre.71
+// @version      0.7.0-pre.72
 // @description  Draws a bathymetric sea between the zig-zag.fm archipelagos: depth = distance from land, terrain = layered noise, rendered tile-aligned behind the map.
 // @match        https://www.zig-zag.fm/*
 // @grant        none
@@ -11,7 +11,7 @@
 // ==/UserScript==
 
 (() => {
-const seaConsts = {"version":"0.7.0-pre.71","assetVersion":"2026-11-17a","whaleVersion":"1","assetBase":"https://raw.githubusercontent.com/rich0664/sea-zag/pre-release/dist","map":{"id":64,"stamp":"2026-11-01T22-21-31Z","w":7749,"h":5254},"pipelineStamp":"fb94ef28e9d3","distMax":600,"alongScale":1.03,"heightLo":0.1606,"heightHi":1,"auxScale":2,"flowCell":16,"speedCell":4,"backingCap":2560,"baseline":{"shore":16,"shelf":26,"flow":3.7,"wave":2.5,"spec":0.035,"specPow":14.5,"specMode":2,"specSize":0.76,"specInvert":0.02,"specFloor":0.3,"grain":0.04,"foam":0.25,"deep":0.6,"swell":0.008,"adir":254,"aspeed":1.42,"ascale":0.156,"bdir":45,"bspeed":1.16,"bscale":0.046,"par":0.78,"pom":5,"dslow":0.91,"win":0.58,"wout":0.82,"cycle":7,"warp":2.1,"wbias":1,"deflect":1,"deflectReach":50},"curves":{"pc":[0,0.187,0.339,0.578,1],"sc":[0,0.057,0.274,0.492,0.926],"wc":[0,0.187,0.426,0.594,1]},"meshVersion":"4"};
+const seaConsts = {"version":"0.7.0-pre.72","assetVersion":"2026-11-17a","whaleVersion":"1","assetBase":"https://raw.githubusercontent.com/rich0664/sea-zag/pre-release/dist","map":{"id":64,"stamp":"2026-11-01T22-21-31Z","w":7749,"h":5254},"pipelineStamp":"932abe7686db","distMax":600,"alongScale":1.03,"heightLo":0.1606,"heightHi":1,"auxScale":2,"flowCell":16,"speedCell":4,"pad":0,"backingCap":2560,"baseline":{"shore":16,"shelf":26,"flow":3.7,"wave":2.5,"spec":0.035,"specPow":14.5,"specMode":2,"specSize":0.76,"specInvert":0.02,"specFloor":0.3,"grain":0.04,"foam":0.25,"deep":0.6,"swell":0.008,"adir":254,"aspeed":1.42,"ascale":0.156,"bdir":45,"bspeed":1.16,"bscale":0.046,"par":0.78,"pom":5,"dslow":0.91,"win":0.58,"wout":0.82,"cycle":7,"warp":2.1,"wbias":1,"deflect":1,"deflectReach":50},"curves":{"pc":[0,0.187,0.339,0.578,1],"sc":[0,0.057,0.274,0.492,0.926],"wc":[0,0.187,0.426,0.594,1]},"meshVersion":"4"};
 
 /* ---- sea-core.js ---- */
 const MODE_IDS = ['baseline', 'medium', 'low', 'extra-low', 'static'];
@@ -294,6 +294,43 @@ function cameraUniforms(vs, cssW, cssH, backingW, backingH) {
 
 
 
+const LEGACY_BLEED_TILES = 6.0;
+
+
+
+
+
+
+
+function staticBlitLayout(vs, cssW, cssH, imgW, imgH, mapW, mapH, pad = 0) {
+  const bw = mapW + 2 * pad;
+  if (!(bw > 0 && imgW > 0 && imgH > 0)) return null;
+  const p = vs.padding || {};
+  const z = Math.pow(2, vs.zoom);
+  const dx = clamp(((p.left || 0) + cssW - (p.right || 0)) / 2, 0, cssW) - cssW / 2;
+  const dy = clamp(((p.top || 0) + cssH - (p.bottom || 0)) / 2, 0, cssH) - cssH / 2;
+  const pxt = imgW / bw;                         
+  const s = z / pxt;                             
+  const ox = cssW / 2 + dx - (vs.target[0] + 0.5 + pad) * z;
+  const oy = cssH / 2 + dy + (mapH - 0.5 - vs.target[1] + pad) * z;
+
+  
+  const wx0 = (0 - cssW / 2 - dx) / z + vs.target[0];
+  const wx1 = (cssW - cssW / 2 - dx) / z + vs.target[0];
+  const wy0 = (0 - cssH / 2 - dy) / z + vs.target[1];
+  const wy1 = (cssH - cssH / 2 - dy) / z + vs.target[1];
+
+  const sx0 = clamp(Math.floor((wx0 + 0.5 + pad) * pxt) - 1, 0, imgW);
+  const sx1 = clamp(Math.ceil((wx1 + 0.5 + pad) * pxt) + 1, 0, imgW);
+  const sy0 = clamp(Math.floor((mapH - 0.5 - wy1 + pad) * pxt) - 1, 0, imgH);
+  const sy1 = clamp(Math.ceil((mapH - 0.5 - wy0 + pad) * pxt) + 1, 0, imgH);
+  if (sx1 <= sx0 || sy1 <= sy0) return null;
+  return { s, ox, oy, sx0, sy0, sx1, sy1 };
+}
+
+
+
+
 
 
 
@@ -364,7 +401,16 @@ function assetSourceList(name, {
   rootVersion = assetVersion,
   inlinedVersion = seaConsts.assetVersion,
   pointerLoaded = false,
+  allowRootFallback = true,
 } = {}) {
+  
+  
+  
+  if (!allowRootFallback) {
+    return pointerLoaded && assetVersion
+      ? [assetUrl(name, base, assetVersion, true)]
+      : [];
+  }
   const root = assetUrl(name, base, rootVersion, false);
   if (!pointerLoaded) return [root];
   const dir = assetUrl(name, base, assetVersion, true);
@@ -396,6 +442,69 @@ function paintHold() {
 
 
 const POINTER_FILE = 'sea-zag-assets.json';
+
+
+
+
+
+const MAP_KINDS = ['exploration', 'gems', 'supporters'];
+
+
+
+const MAPS_RECORD_FILE = 'sea-zag-maps.json';
+
+
+
+
+const MANIFEST_URLS = {
+  exploration: '/api/v2/maps/manifest',
+  gems: '/api/v2/maps/manifest',
+  supporters: '/api/v2/supporter-map/manifest',
+};
+
+
+
+const SAILORS_ATLAS_RE = /^\/sailors-map(?:\/|$)/;
+
+function mapKindForVariant(variant, pathname = '') {
+  if (variant === 'music') return 'exploration';
+  if (variant === 'community') return 'gems';
+  if (variant === 'sailors') {
+    return SAILORS_ATLAS_RE.test(String(pathname || '')) ? null : 'supporters';
+  }
+  return null;
+}
+
+function manifestUrlForKind(kind) {
+  return MANIFEST_URLS[kind] || null;
+}
+
+function mapsRecordUrl(base = seaConsts.assetBase) {
+  return `${base}/${MAPS_RECORD_FILE}`;
+}
+
+
+
+function snapshotUrl(assetVersion, base = seaConsts.assetBase) {
+  return assetUrl(POINTER_FILE, base, assetVersion, true);
+}
+
+
+
+function parseKindRecord(raw, kind) {
+  if (!raw || typeof raw !== 'object') return null;
+  if (!MAP_KINDS.includes(kind)) return null;
+  const e = raw[kind];
+  if (!e || typeof e !== 'object') return null;
+  if (typeof e.stamp !== 'string' || !e.stamp) return null;
+  if (typeof e.assetVersion !== 'string' || !e.assetVersion) return null;
+  return {
+    stamp: e.stamp,
+    pipelineStamp: pointerText(e.pipelineStamp, ''),
+    assetVersion: e.assetVersion,
+    rasterSha256: pointerText(e.rasterSha256, ''),
+  };
+}
 
 
 
@@ -434,6 +543,26 @@ function pickLiveMainEntry(manifest) {
   return best;
 }
 
+
+
+
+function pickLiveEntry(kind, manifest) {
+  if (kind === 'exploration') return pickLiveMainEntry(manifest);
+  if (kind !== 'gems' && kind !== 'supporters') return null;
+  const e = kind === 'gems'
+    ? (manifest && typeof manifest === 'object' ? manifest.community : null)
+    : manifest;
+  if (!e || typeof e !== 'object') return null;
+  const stamp = extractMapStamp(e.png_url || e.base_url);
+  if (!stamp) return null;
+  return {
+    map_id: Number(e.map_id),
+    stamp,
+    png_url: e.png_url || '',
+    base_url: e.base_url || '',
+  };
+}
+
 function pointerUrl(base = seaConsts.assetBase) {
   return `${base}/${POINTER_FILE}`;
 }
@@ -451,13 +580,29 @@ function pointerText(raw, fallback) {
 
 
 
+function nonNegInt(raw, fallback = 0) {
+  const n = Number(raw);
+  if (raw === null || raw === '' || typeof raw === 'boolean') return fallback;
+  return Number.isInteger(n) && n >= 0 ? n : fallback;
+}
+
+
+
 
 
 function parsePointer(raw, fallback = seaConsts) {
-  const p = raw && typeof raw === 'object' ? raw : {};
+  const hasRaw = !!(raw && typeof raw === 'object');
+  const p = hasRaw ? raw : {};
   const fb = fallback || {};
   const map = p.map && typeof p.map === 'object' ? p.map : {};
   const fbMap = fb.map || {};
+  const w = positive(map.w, fbMap.w);
+  const h = positive(map.h, fbMap.h);
+  
+  
+  
+  
+  const pad = hasRaw ? ('pad' in p ? nonNegInt(p.pad, 0) : 0) : nonNegInt(fb.pad, 0);
   return {
     schema: 1,
     assetVersion: pointerText(p.assetVersion, fb.assetVersion ?? fb.version),
@@ -467,9 +612,12 @@ function parsePointer(raw, fallback = seaConsts) {
       kind: pointerText(map.kind, fbMap.kind ?? 'exploration'),
       id: positive(map.id, fbMap.id),
       stamp: pointerText(map.stamp, fbMap.stamp),
-      w: positive(map.w, fbMap.w),
-      h: positive(map.h, fbMap.h),
+      w,
+      h,
     },
+    pad,
+    bakeW: w + 2 * pad,
+    bakeH: h + 2 * pad,
     pipelineStamp: pointerText(p.pipelineStamp, fb.pipelineStamp),
     distMax: positive(p.distMax, fb.distMax),
     alongScale: positive(p.alongScale, fb.alongScale),
@@ -485,15 +633,113 @@ function parsePointer(raw, fallback = seaConsts) {
 
 
 
-const EXPLORATION_BASE_RE = /\/maps\/[^/]+\/[^/]+\/base\.bin\.br(?:[?#]|$)/;
+
+
+function kindFinite(raw) {
+  if (raw === null || raw === undefined || raw === '' || typeof raw === 'boolean') {
+    return null;
+  }
+  const v = Number(raw);
+  return isFinite(v) ? v : null;
+}
+
+function kindPositive(raw) {
+  const v = kindFinite(raw);
+  return v !== null && v > 0 ? v : null;
+}
+
+function kindPad(raw) {
+  if (typeof raw !== 'number' && typeof raw !== 'string') return null;
+  const n = Number(raw);
+  return Number.isInteger(n) && n >= 0 ? n : null;
+}
+
+function parseKindPointer(raw, expectedKind) {
+  if (!raw || typeof raw !== 'object') return null;
+  if (!MAP_KINDS.includes(expectedKind)) return null;
+  const map = raw.map;
+  if (!map || typeof map !== 'object') return null;
+  const kind = map.kind === undefined && expectedKind === 'exploration'
+    ? 'exploration'
+    : map.kind;
+  if (kind !== expectedKind) return null;
+  if (typeof raw.assetVersion !== 'string' || !raw.assetVersion) return null;
+  if (typeof map.stamp !== 'string' || !map.stamp) return null;
+  const w = kindPositive(map.w);
+  const h = kindPositive(map.h);
+  const distMax = kindPositive(raw.distMax);
+  const alongScale = kindPositive(raw.alongScale);
+  const heightHi = kindPositive(raw.heightHi);
+  const auxScale = kindPositive(raw.auxScale);
+  const flowCell = kindPositive(raw.flowCell);
+  const speedCell = kindPositive(raw.speedCell);
+  const heightLo = kindFinite(raw.heightLo);
+  if (![w, h, distMax, alongScale, heightHi, auxScale, flowCell, speedCell]
+    .every(v => v !== null)) return null;
+  if (heightLo === null || heightLo < 0 || heightLo >= heightHi) return null;
+  const pad = 'pad' in raw ? kindPad(raw.pad) : 0;
+  if (pad === null) return null;
+  const bakeW = w + 2 * pad;
+  const bakeH = h + 2 * pad;
+  for (const [key, want] of [['bakeW', bakeW], ['bakeH', bakeH]]) {
+    if (!(key in raw)) continue;
+    if (kindFinite(raw[key]) !== want) return null;
+  }
+  return {
+    schema: 1,
+    assetVersion: raw.assetVersion,
+    whaleVersion: pointerText(raw.whaleVersion, ''),
+    meshVersion: pointerText(raw.meshVersion, ''),
+    map: {
+      kind,
+      id: kindPositive(map.id) ?? 0,
+      stamp: map.stamp,
+      w,
+      h,
+      rasterSha256: pointerText(map.rasterSha256, ''),
+    },
+    pad,
+    bakeW,
+    bakeH,
+    pipelineStamp: pointerText(raw.pipelineStamp, ''),
+    distMax,
+    alongScale,
+    heightLo,
+    heightHi,
+    auxScale,
+    flowCell,
+    speedCell,
+  };
+}
 
 
 
-function newestBaseStamp(urls) {
+function bakeDims(pointer) {
+  if (!pointer || !pointer.map) return { pad: 0, bakeW: 0, bakeH: 0 };
+  const pad = nonNegInt(pointer.pad, 0);
+  return { pad, bakeW: pointer.map.w + 2 * pad, bakeH: pointer.map.h + 2 * pad };
+}
+
+
+
+
+
+
+const MAP_BASE_RES = {
+  exploration: /\/maps\/(?!seller-map\/)[^/]+\/[^/]+\/base\.bin\.br(?:[?#]|$)/,
+  gems: /\/community-maps\/[^/]+\/[^/]+\/base\.bin\.br(?:[?#]|$)/,
+  supporters: /\/supporter-maps\/[^/]+\/[^/]+\/base\.bin\.br(?:[?#]|$)/,
+};
+
+
+
+function newestBaseStamp(urls, kind = 'exploration') {
+  const re = MAP_BASE_RES[kind];
+  if (!re) return null;
   let best = null;
   for (const u of Array.isArray(urls) ? urls : []) {
     const s = String(u || '');
-    if (!EXPLORATION_BASE_RE.test(s)) continue;
+    if (!re.test(s)) continue;
     const stamp = extractMapStamp(s);
     if (stamp && (!best || stamp > best)) best = stamp;
   }
@@ -503,11 +749,25 @@ function newestBaseStamp(urls) {
 
 
 
-function checkMapGate({ pointerStamp, timingUrls = [], cacheUrls = [], manifest = null } = {}) {
-  const timingStamp = newestBaseStamp(timingUrls);
-  const manifestEntry = pickLiveMainEntry(manifest);
+
+
+
+
+
+
+
+
+
+
+function checkMapGate({
+  kind = 'exploration', pointerStamp, timingUrls = [], cacheUrls = [],
+  manifest = null, manifestFailed = false,
+} = {}) {
+  const timingStamp = newestBaseStamp(timingUrls, kind);
+  const manifestEntry = pickLiveEntry(kind, manifest);
   const manifestStamp = manifestEntry ? manifestEntry.stamp : null;
-  const cacheStamp = newestBaseStamp(cacheUrls);
+  const unreadable = manifestFailed || (manifest != null && !manifestEntry);
+  const cacheStamp = newestBaseStamp(cacheUrls, kind);
   const pointer = pointerStamp || null;
   const differs = s => s && s !== pointer;
 
@@ -527,7 +787,11 @@ function checkMapGate({ pointerStamp, timingUrls = [], cacheUrls = [], manifest 
         ? [cacheStamp, 'cache']
         : [null, 'none'];
 
-  if (!liveStamp || !pointer) return { status: 'unknown', liveStamp: null, source: 'none' };
+  if (!liveStamp || !pointer) {
+    return unreadable && kind !== 'exploration'
+      ? { status: 'unavailable', liveStamp: null, source: 'none' }
+      : { status: 'unknown', liveStamp: null, source: 'none' };
+  }
   return {
     status: liveStamp === pointer ? 'match' : 'outdated', liveStamp, source,
   };
@@ -915,6 +1179,7 @@ out vec4 outColor;
 uniform sampler2D uColour, uAux, uDist, uFlow, uSpeedTex, uCurve, uSliceCurve, uWarpCurve;
 uniform vec2 uTarget, uSize, uFlowSize, uSpeedSize, uAuxSpan, uCenter;
 uniform float uFlowCell;   // map tiles per coarse flow texel
+uniform float uBleed;      // tiles of water past the rect: 0 padded, 6 legacy
 uniform float uZoom, uTime, uDistMax;
 uniform float uShoreW, uShelf, uFlowSpeed, uGrain, uFoam, uDeep, uSwell, uSnap, uWaveSpeed, uFlowMode, uZoomCss;
 uniform float uCycle;   // seconds for one advection cycle
@@ -939,11 +1204,11 @@ uniform float uWhaleHeight;      // body height in tiles (A = 0..1 of this)
 
 // ---- map border -------------------------------------------------------------
 // Everything here is in map texels (one texel per cell), so the trim scales
-// with zoom like the rest of the sea: the water bleeds BLEED_TILES past the
-// rectangle, then a 9-texel band: black, line, black, 3-texel zigzag, black,
-// line, black. The band is a solid opaque-black backing, the zigzag's unpainted
-// cells included; only past it does the page show through.
-const float BLEED_TILES = 6.0;
+// with zoom like the rest of the sea: the water bleeds uBleed past the
+// rectangle (0 for a padded bake, whose ring is real water already; 6 for a
+// legacy unpadded bake), then a 9-texel band: black, line, black, 3-texel
+// zigzag, black, line, black. The band is a solid opaque-black backing, the
+// zigzag's unpainted cells included; only past it does the page show through.
 const float BORDER_BLACK_IN = 1.0;
 const float BORDER_LINE1 = 1.0;
 const float BORDER_BLACK1 = 1.0;
@@ -1578,7 +1843,7 @@ void main() {
   // ---- map border ----
   // The border lives on the texel grid: p is snapped to texel centres, so every
   // cell below is exactly one map texel wide and the edges stay crisp at any
-  // zoom. The sea runs BLEED_TILES past the rectangle (the bakes clamp), then
+  // zoom. The sea runs uBleed past the rectangle (the bakes clamp), then
   // the 9-texel band starts; outside it the page shows through. The band is an
   // opaque black backing with white rules on it, drawn after the sea, so it
   // takes no brightness, parallax or warp.
@@ -1605,35 +1870,42 @@ void main() {
     seaA = 1.0;
   }
   vec2 overTiles = max(vec2(0.0), max(-p, p - uSize));  // tiles out, >= 0
-  vec2 outIdx = floor(overTiles);            // 0-based texel index outside
-  float outT = max(outIdx.x, outIdx.y);      // Chebyshev: nearest side wins
-  if (outT >= BLEED_TILES) {
-    float b0 = BLEED_TILES;                  // black band starts here
-    float b1 = b0 + BORDER_BLACK_IN;         // inner white line
-    float b2 = b1 + BORDER_LINE1;            // black
-    float b3 = b2 + BORDER_BLACK1;           // 3-texel zigzag
-    float b4 = b3 + BORDER_ZIG;              // black
-    float b5 = b4 + BORDER_BLACK2;           // outer white line
-    float b6 = b5 + BORDER_LINE2;            // black
-    float b7 = b6 + BORDER_BLACK_OUT;        // end of the band
-    // every cell in the band is opaque; only past b7 is the page visible
-    seaA = outT < b7 ? 1.0 : 0.0;
-    col = vec3(0.0);                         // black backing
-    if (outT >= b1 && outT < b2) {           // inner white line
-      col = vec3(1.0);
-    } else if (outT >= b3 && outT < b4) {    // 3-texel zigzag
-      // along the nearest side: vertical position for left/right, horizontal
-      // for top/bottom. The painted column steps 0,1,2,1 every 4 texels, so
-      // the chain reads as a diagonal staircase.
-      float along = floor(overTiles.x >= overTiles.y ? p.y : p.x);
-      float across = outT - b3;              // 0..2 within the sub-band
-      float k = mod(along, 4.0);
-      float zigCol = k < 0.5 ? 0.0 : (k < 1.5 ? 1.0 : (k < 2.5 ? 2.0 : 1.0));
-      if (abs(across - zigCol) < 0.5) {
+  // Chebyshev: the nearest side wins, so the band corners are square. Interior
+  // water has maxOver = 0, the same reading as "outside at texel 0". The guard
+  // keeps it out of the band: with uBleed = 0.0 a padded bake's band starts at
+  // the first texel outside, and an unguarded 0.0 >= 0.0 would paint the whole
+  // sea black.
+  float maxOver = max(overTiles.x, overTiles.y);
+  if (maxOver > 0.0) {
+    float outT = floor(maxOver);           // 0-based texel index outside
+    if (outT >= uBleed) {
+      float b0 = uBleed;                   // black band starts here
+      float b1 = b0 + BORDER_BLACK_IN;     // inner white line
+      float b2 = b1 + BORDER_LINE1;        // black
+      float b3 = b2 + BORDER_BLACK1;       // 3-texel zigzag
+      float b4 = b3 + BORDER_ZIG;          // black
+      float b5 = b4 + BORDER_BLACK2;       // outer white line
+      float b6 = b5 + BORDER_LINE2;        // black
+      float b7 = b6 + BORDER_BLACK_OUT;    // end of the band
+      // every cell in the band is opaque; only past b7 is the page visible
+      seaA = outT < b7 ? 1.0 : 0.0;
+      col = vec3(0.0);                     // black backing
+      if (outT >= b1 && outT < b2) {       // inner white line
+        col = vec3(1.0);
+      } else if (outT >= b3 && outT < b4) { // 3-texel zigzag
+        // along the nearest side: vertical position for left/right, horizontal
+        // for top/bottom. The painted column steps 0,1,2,1 every 4 texels, so
+        // the chain reads as a diagonal staircase.
+        float along = floor(overTiles.x >= overTiles.y ? p.y : p.x);
+        float across = outT - b3;          // 0..2 within the sub-band
+        float k = mod(along, 4.0);
+        float zigCol = k < 0.5 ? 0.0 : (k < 1.5 ? 1.0 : (k < 2.5 ? 2.0 : 1.0));
+        if (abs(across - zigCol) < 0.5) {
+          col = vec3(1.0);
+        }
+      } else if (outT >= b5 && outT < b6) { // outer white line
         col = vec3(1.0);
       }
-    } else if (outT >= b5 && outT < b6) {    // outer white line
-      col = vec3(1.0);
     }
   }
 
@@ -2522,26 +2794,122 @@ function mountSeaUi(opts) {
   
   
   
+  
+  
   let activePointer = parsePointer(null, seaConsts);
   let pointerLoaded = false;
-  let pointerPromise = null;
-  const mapW = () => activePointer.map.w;   
-  const mapH = () => activePointer.map.h;
+
+  
+  let activeMapKind = null;
+  let mapGateOpen = false;
+  let routeEpoch = 0;               
+  let mapsRecordPromise = null;
+  const kindStates = new Map();
+
+  const mapW = () => (activePointer ? activePointer.map.w : 0);   
+  const mapH = () => (activePointer ? activePointer.map.h : 0);
+  
+  
+  const mapPad = () => bakeDims(activePointer).pad;
+  const bakeW = () => bakeDims(activePointer).bakeW;
+  const bakeH = () => bakeDims(activePointer).bakeH;
+
+  
+  const MANIFEST_TIMEOUT_MS = 5000;
+  const INITIAL_HOLD_MS = MANIFEST_TIMEOUT_MS;
+
+  
+  
+  
+  function getKindState(kind) {
+    let ks = kindStates.get(kind);
+    if (ks) return ks;
+    ks = {
+      kind,
+      outdated: false,
+      
+      
+      
+      unverified: false,
+      liveMapStamp: null,
+      pointer: kind === 'exploration' ? parsePointer(null, seaConsts) : null,
+      pointerLoaded: false,
+      pointerPromise: null,
+      recordStamp: null,
+      gate: null,
+      holdTimer: 0,
+      checkInFlight: false,
+      mapCheck: {
+        kind,
+        status: 'unknown',
+        pointerStamp: kind === 'exploration' ? seaConsts.map.stamp : null,
+        liveStamp: null,
+        source: 'none',
+        assetVersion: kind === 'exploration' ? seaConsts.assetVersion : null,
+      },
+    };
+    kindStates.set(kind, ks);
+    return ks;
+  }
 
   
   
   
   
-  const initialGate = paintHold();
-  const initialMapCheck = initialGate.promise;
   
   
   
   
-  const MANIFEST_TIMEOUT_MS = 5000;
-  const INITIAL_HOLD_MS = MANIFEST_TIMEOUT_MS;
-  let initialHoldTimer = setTimeout(() => settleInitialGate(null),
-                                    INITIAL_HOLD_MS);
+  
+  
+  function holdBudgetMs(kind) {
+    if (kind === 'exploration') return INITIAL_HOLD_MS;
+    return 2 * POINTER_TIMEOUT_MS + MANIFEST_TIMEOUT_MS + 1000;
+  }
+
+  function ensureKindGate(ks) {
+    if (!ks.gate) {
+      ks.gate = paintHold();
+      ks.holdTimer = setTimeout(() => {
+        ks.holdTimer = 0;
+        
+        
+        if (ks.kind !== 'exploration') { closeUnverifiedSea(ks.kind); return; }
+        settleKindGate(ks, null);
+      }, holdBudgetMs(ks.kind));
+    }
+    return ks.gate;
+  }
+
+  function settleKindGate(ks, verdict) {
+    if (!ks || !ks.gate) return false;
+    if (ks.holdTimer) {
+      clearTimeout(ks.holdTimer);
+      ks.holdTimer = 0;
+    }
+    return ks.gate.settle(verdict);
+  }
+
+  function initialGateSettled() {
+    const ks = activeMapKind ? kindStates.get(activeMapKind) : null;
+    return Boolean(ks && ks.gate && ks.gate.settled());
+  }
+
+  
+  
+  function syncActiveMirrors(kind) {
+    const ks = kind ? getKindState(kind) : null;
+    
+    
+    activePointer = ks && !ks.unverified ? ks.pointer : null;
+    pointerLoaded = ks ? ks.pointerLoaded : false;
+    state.mapOutdated = ks ? ks.outdated : false;
+    state.liveMapStamp = ks ? ks.liveMapStamp : null;
+    state.mapCheck = ks ? ks.mapCheck : {
+      kind: null, status: 'unknown', pointerStamp: null,
+      liveStamp: null, source: 'none', assetVersion: null,
+    };
+  }
 
   const assetBase = window.__ZZ_SEA_ASSET_BASE || undefined;
   const errText = e => String((e && e.message) || e);
@@ -2549,13 +2917,17 @@ function mountSeaUi(opts) {
   
   
   
-  function assetSources(name, rootVersion = activePointer.assetVersion) {
+  
+  function assetSources(name, rootVersion, kind = activeMapKind) {
+    const ks = kind ? getKindState(kind) : null;
+    if (!ks || !ks.pointer) return [];
     return assetSourceList(name, {
       base: assetBase,
-      assetVersion: activePointer.assetVersion,
-      rootVersion,
+      assetVersion: ks.pointer.assetVersion,
+      rootVersion: rootVersion ?? ks.pointer.assetVersion,
       inlinedVersion: seaConsts.assetVersion,
-      pointerLoaded,
+      pointerLoaded: ks.pointerLoaded,
+      allowRootFallback: kind === 'exploration',
     });
   }
 
@@ -2574,29 +2946,73 @@ function mountSeaUi(opts) {
 
   const POINTER_TIMEOUT_MS = 2500;
 
-  
-  
-  
-  function loadPointer() {
-    if (pointerPromise) return pointerPromise;
+  function fetchJsonWithTimeout(url, timeoutMs, cache = 'no-cache') {
     const ctrl = typeof AbortController === 'function' ? new AbortController() : null;
-    const timer = ctrl ? setTimeout(() => ctrl.abort(), POINTER_TIMEOUT_MS) : 0;
-    pointerPromise = fetch(pointerUrl(assetBase), {
-      cache: 'no-cache',
+    const timer = ctrl ? setTimeout(() => ctrl.abort(), timeoutMs) : 0;
+    return fetch(url, {
+      cache,
       signal: ctrl ? ctrl.signal : undefined,
     })
       .then(res => {
-        if (!res.ok) throw new Error(`pointer: HTTP ${res.status}`);
+        if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
         return res.json();
       })
-      .then(json => {
-        activePointer = parsePointer(json, seaConsts);
-        pointerLoaded = true;
-        return activePointer;
-      })
-      .catch(() => activePointer)
       .finally(() => { if (timer) clearTimeout(timer); });
-    return pointerPromise;
+  }
+
+  
+  
+  
+  function loadMapsRecord() {
+    if (mapsRecordPromise) return mapsRecordPromise;
+    mapsRecordPromise = fetchJsonWithTimeout(mapsRecordUrl(assetBase), POINTER_TIMEOUT_MS)
+      .catch(() => null);
+    return mapsRecordPromise;
+  }
+
+  
+  
+  
+  
+  function loadPointerForKind(kind) {
+    const ks = getKindState(kind);
+    if (ks.pointerPromise) return ks.pointerPromise;
+    ks.pointerPromise = loadMapsRecord()
+      .then(record => {
+        const entry = parseKindRecord(record, kind);
+        if (!entry) return null;
+        ks.recordStamp = entry.stamp;
+        return fetchJsonWithTimeout(snapshotUrl(entry.assetVersion, assetBase),
+          POINTER_TIMEOUT_MS)
+          .then(json => parseKindPointer(json, kind))
+          .catch(() => null);
+      })
+      .then(parsed => {
+        if (parsed) {
+          ks.pointer = parsed;
+          ks.pointerLoaded = true;
+          ks.mapCheck.pointerStamp = parsed.map.stamp;
+          ks.mapCheck.assetVersion = parsed.assetVersion;
+          return;
+        }
+        if (kind !== 'exploration') return;
+        
+        
+        return fetchJsonWithTimeout(pointerUrl(assetBase), POINTER_TIMEOUT_MS)
+          .then(json => {
+            const root = parsePointer(json, seaConsts);
+            ks.pointer = root;
+            ks.pointerLoaded = true;
+            ks.mapCheck.pointerStamp = root.map.stamp;
+            ks.mapCheck.assetVersion = root.assetVersion;
+          })
+          .catch(() => {});
+      })
+      .then(() => {
+        if (activeMapKind === kind) syncActiveMirrors(kind);
+        return ks;
+      });
+    return ks.pointerPromise;
   }
 
   
@@ -2657,6 +3073,7 @@ function mountSeaUi(opts) {
     mapOutdated: false,            
     liveMapStamp: null,
     mapCheck: {
+      kind: 'exploration',
       status: 'unknown',
       pointerStamp: activePointer.map.stamp,
       liveStamp: null,
@@ -2694,6 +3111,9 @@ function mountSeaUi(opts) {
   const WAKE_SPREAD = 0.9;      
   const WAKE_R0 = 4.0;          
   const whaleWake = new Float32Array(4);
+  
+  
+  const ZERO_WAKE = new Float32Array(4);
   let wakePeak = 0;             
   let wakeAt = 0;               
   let wakeX = 0;
@@ -2814,7 +3234,8 @@ function mountSeaUi(opts) {
     if (whaleRoute) return Promise.resolve(whaleRoute);
     if (whaleLoad) return whaleLoad;
     try {
-      whaleLoad = fetchAsset(assetSources('sea-zag-whale.bin', activePointer.whaleVersion), 'whale route')
+      whaleLoad = fetchAsset(assetSources('sea-zag-whale.bin',
+        activePointer && activePointer.whaleVersion), 'whale route')
         .then(res => res.arrayBuffer())
         .then(buf => {
           whaleRoute = parseWhaleRoute(buf);
@@ -2870,7 +3291,8 @@ function mountSeaUi(opts) {
     if (whaleMesh) return Promise.resolve(whaleMesh);
     if (whaleMeshLoad) return whaleMeshLoad;
     try {
-      whaleMeshLoad = fetchAsset(assetSources('sea-zag-whale-mesh.bin', activePointer.meshVersion), 'whale mesh')
+      whaleMeshLoad = fetchAsset(assetSources('sea-zag-whale-mesh.bin',
+        activePointer && activePointer.meshVersion), 'whale mesh')
         .then(res => res.arrayBuffer())
         .then(buf => {
           whaleMesh = parseWhaleMesh(buf);
@@ -2932,8 +3354,12 @@ function mountSeaUi(opts) {
 
   function updateWhalePose(nowMs) {
     if (state.mapOutdated) { paintOutdatedPlaceholder(); return; }
-    if (state.mode === 'static' || !whaleEnabled || !whaleRoute || !mapGateOpen) {
+    
+    
+    if (state.mode === 'static' || !whaleEnabled || !whaleRoute ||
+        activeMapKind !== 'exploration') {
       state.whalePose = null;
+      updateWhaleWake(nowMs, null);
       return;
     }
     if (whalePinPose) {
@@ -3144,6 +3570,7 @@ function mountSeaUi(opts) {
   
   
   
+  
   function mapVariant() {
     const canvas = deckCanvas();
     if (!canvas) return null;
@@ -3163,7 +3590,9 @@ function mountSeaUi(opts) {
   }
 
   
-  const onExplorationMap = () => mapVariant() === 'music';
+  
+  
+  const currentMapKind = () => mapKindForVariant(mapVariant(), location.pathname);
 
   
   
@@ -3244,10 +3673,13 @@ function mountSeaUi(opts) {
   }
 
   function drawStatic(force) {
+    
+    
+    if (!activePointer) return;
     if (state.mapOutdated) { paintOutdatedPlaceholder(); return; }
     
     
-    if (!initialGate.settled()) { showNoise(); return; }
+    if (!initialGateSettled()) { showNoise(); return; }
     if (!state.on || !staticVisible() || !mapGateOpen) return;
     const deck = deckCanvas();
     const img = state.img;
@@ -3257,7 +3689,6 @@ function mountSeaUi(opts) {
     if (!vs) return;
 
     const pad = vs.padding || {};
-    const z = Math.pow(2, vs.zoom);
     const W = deck.clientWidth || deck.width;
     const H = deck.clientHeight || deck.height;
 
@@ -3269,30 +3700,11 @@ function mountSeaUi(opts) {
     const c = ov.getContext('2d');
 
     
-    const dx = clamp(((pad.left || 0) + W - (pad.right || 0)) / 2, 0, W) - W / 2;
-    const dy = clamp(((pad.top || 0) + H - (pad.bottom || 0)) / 2, 0, H) - H / 2;
-
-    const pxt = img.width / mapW();                
-    const s = z / pxt;                             
     
     
-    
-    
-    const tx = vs.target[0] + 0.5, ty = vs.target[1];
-    const ox = W / 2 + dx - tx * z;
-    const oy = H / 2 + dy + (mapH() - 0.5 - ty) * z;   
-
-    
-    const wx0 = (0 - W / 2 - dx) / z + vs.target[0];
-    const wx1 = (W - W / 2 - dx) / z + vs.target[0];
-    const wy0 = (0 - H / 2 - dy) / z + vs.target[1];
-    const wy1 = (H - H / 2 - dy) / z + vs.target[1];
-
-    const sx0 = clamp(Math.floor((wx0 + 0.5) * pxt) - 1, 0, img.width);
-    const sx1 = clamp(Math.ceil((wx1 + 0.5) * pxt) + 1, 0, img.width);
-    const sy0 = clamp(Math.floor((mapH() - 0.5 - wy1) * pxt) - 1, 0, img.height);
-    const sy1 = clamp(Math.ceil((mapH() - 0.5 - wy0) * pxt) + 1, 0, img.height);
-    if (sx1 <= sx0 || sy1 <= sy0) return;
+    const blit = staticBlitLayout(vs, W, H, img.width, img.height, mapW(), mapH(), mapPad());
+    if (!blit) return;
+    const { s, ox, oy, sx0, sy0, sx1, sy1 } = blit;
 
     const t0 = performance.now();
     c.setTransform(1, 0, 0, 1, 0, 0);
@@ -3446,45 +3858,55 @@ function mountSeaUi(opts) {
   
   
   
-  let mapGateOpen = null;
-
+  
   function closeSeaForMap() {
     stopStatic();
     stopGL();
     hideNoise(0);
     removeStaticCanvas();
-    if (glc && glc.canvas) {
-      glc.canvas.style.display = 'none';
-      glc.css = '';
-    }
+    releaseGL();
+    colourPromise = null;
+    state.img = null;
+    state.loading = false;
+    state.error = null;
     state.sig = '';
     state.whalePose = null;
+    wakePeak = 0;
+    whaleWake[2] = 0;
     state.moving = false;
-    
+    firstLoad = true;             
     
     hideOutdatedPlaceholder();
-    
-    
-    
-    if (state.mode === 'static') state.img = null;
     refreshUi();                  
   }
 
-  function openSeaForMap() {
-    if (state.mapOutdated) {
+  function openSeaForMap(kind) {
+    const ks = getKindState(kind);
+    activeMapKind = kind;
+    mapGateOpen = true;
+    syncActiveMirrors(kind);
+    ensureKindGate(ks);
+    if (ks.outdated) {
       paintOutdatedPlaceholder();
       
       
       refreshUi();
       return;
     }
-    checkLiveMap();
+    if (ks.unverified) {
+      
+      
+      hideNoise(0);
+      refreshUi();
+      return;
+    }
+    checkLiveMap(kind);
     refreshUi();
+    if (pendingMode) { applyMode(pendingMode); return; }
     if (!state.on || backgrounded || document.hidden) return;
     nextAt = 0;
-    if (pendingMode) { applyMode(pendingMode); return; }
     if (state.mode === 'static') {
-      if (!state.img) loadColour().catch(() => {});
+      if (!state.img) loadColour(kind).catch(() => {});
       startStatic();
     } else if (glc && glc.ready && !glc.lost) {
       startGL();
@@ -3499,16 +3921,23 @@ function mountSeaUi(opts) {
   
   
   
+  
+  
+  
   function syncMapGate(restart) {
-    const open = onExplorationMap();
-    if (open === mapGateOpen) return open;
-    mapGateOpen = open;
-    if (open) {
-      if (restart) openSeaForMap();
-    } else {
-      closeSeaForMap();
+    const nextKind = currentMapKind();
+    if (nextKind === activeMapKind) return nextKind !== null;
+    routeEpoch++;
+    if (activeMapKind !== null) closeSeaForMap();
+    if (nextKind === null) {
+      activeMapKind = null;
+      mapGateOpen = false;
+      syncActiveMirrors(null);
+      refreshUi();
+      return false;
     }
-    return open;
+    openSeaForMap(nextKind);
+    return false;
   }
 
   function setBackground(next) {
@@ -3557,17 +3986,8 @@ function mountSeaUi(opts) {
   
   
   
-  const MANIFEST_URL = '/api/v2/maps/manifest';
+  
   const MAP_CACHE = 'zigzag-map-binaries';
-  let mapCheckInFlight = false;
-
-  function settleInitialGate(verdict) {
-    if (!initialGate.settle(verdict)) return;
-    if (initialHoldTimer) {
-      clearTimeout(initialHoldTimer);
-      initialHoldTimer = 0;
-    }
-  }
 
   function timingUrls() {
     try {
@@ -3587,92 +4007,149 @@ function mountSeaUi(opts) {
       .catch(() => []);
   }
 
-  function fetchManifest() {
-    const ctrl = typeof AbortController === 'function' ? new AbortController() : null;
-    const timer = ctrl ? setTimeout(() => ctrl.abort(), MANIFEST_TIMEOUT_MS) : 0;
-    return fetch(MANIFEST_URL, {
-      cache: 'no-store',
-      signal: ctrl ? ctrl.signal : undefined,
-    })
-      .then(res => {
-        if (!res.ok) throw new Error(`manifest: HTTP ${res.status}`);
-        return res.json();
-      })
-      .catch(() => null)          
-      .finally(() => { if (timer) clearTimeout(timer); });
+  function fetchManifest(kind) {
+    const url = manifestUrlForKind(kind);
+    if (!url) return Promise.resolve(null);
+    return fetchJsonWithTimeout(url, MANIFEST_TIMEOUT_MS, 'no-store')
+      .catch(() => null);         
   }
 
-  function checkLiveMap() {
-    if (!onExplorationMap() || state.mapOutdated || mapCheckInFlight) {
-      return initialMapCheck;
-    }
-    mapCheckInFlight = true;
-    loadPointer().then(() => {
-      if (state.mapOutdated) { settleInitialGate(null); return; }
+  
+  
+  function hideSeaForNoPointer() {
+    hideNoise(0);
+    state.loading = false;
+    refreshUi();
+  }
+
+  function checkLiveMap(kind = activeMapKind) {
+    if (!kind || kind !== currentMapKind()) return null;
+    const ks = getKindState(kind);
+    const gate = ensureKindGate(ks);
+    if (ks.outdated || ks.unverified || ks.checkInFlight) return gate.promise;
+    const epoch = routeEpoch;
+    ks.checkInFlight = true;
+    loadPointerForKind(kind).then(() => {
+      if (epoch !== routeEpoch || activeMapKind !== kind) return;
+      const pointerStamp =
+        (ks.pointer && ks.pointer.map.stamp) || ks.recordStamp || null;
+      const assetVersion = ks.pointer ? ks.pointer.assetVersion : null;
+      if (!pointerStamp) {
+        
+        ks.mapCheck = {
+          kind, status: 'unavailable', pointerStamp: null, liveStamp: null,
+          source: 'none', assetVersion: null,
+        };
+        settleKindGate(ks, null);
+        hideSeaForNoPointer();
+        return;
+      }
       const timing = timingUrls();
       
       
-      const quick = checkMapGate({
-        pointerStamp: activePointer.map.stamp, timingUrls: timing,
-      });
+      const quick = checkMapGate({ kind, pointerStamp, timingUrls: timing });
       if (quick.status === 'outdated') {
-        state.mapCheck = {
-          ...quick,
-          pointerStamp: activePointer.map.stamp,
-          assetVersion: activePointer.assetVersion,
-        };
-        settleInitialGate(quick);
-        enterOutdated(quick);
+        ks.mapCheck = { ...quick, kind, pointerStamp, assetVersion };
+        settleKindGate(ks, quick);
+        enterOutdated(kind, quick);
         return;
       }
-      return cacheUrls().then(cache => fetchManifest().then(manifest => {
-        if (state.mapOutdated) { settleInitialGate(null); return; }
+      return cacheUrls().then(cache => fetchManifest(kind).then(manifest => {
+        if (epoch !== routeEpoch || activeMapKind !== kind) return;
+        if (ks.outdated) { settleKindGate(ks, null); return; }
         const verdict = checkMapGate({
-          pointerStamp: activePointer.map.stamp,
-          timingUrls: timing, cacheUrls: cache, manifest,
+          kind, pointerStamp, timingUrls: timing, cacheUrls: cache, manifest,
+          
+          
+          manifestFailed: !manifest,
         });
-        state.mapCheck = {
-          ...verdict,
-          pointerStamp: activePointer.map.stamp,
-          assetVersion: activePointer.assetVersion,
-        };
-        settleInitialGate(verdict);
-        if (verdict.status === 'outdated') enterOutdated(verdict);
+        ks.mapCheck = { ...verdict, kind, pointerStamp, assetVersion };
+        settleKindGate(ks, verdict);
+        if (verdict.status === 'outdated') {
+          enterOutdated(kind, verdict);
+          return;
+        }
+        if (verdict.status === 'unavailable') {
+          closeUnverifiedSea(kind);
+          return;
+        }
+        
+        
+        if (!ks.pointer) hideSeaForNoPointer();
       }));
     }).catch(() => {}).finally(() => {
+      ks.checkInFlight = false;
       
       
-      settleInitialGate(null);
-      mapCheckInFlight = false;
+      
+      
+      if (epoch !== routeEpoch || activeMapKind !== kind) {
+        if (activeMapKind === kind && !ks.outdated && !ks.unverified) {
+          checkLiveMap(kind);
+        }
+        return;
+      }
+      
+      
+      settleKindGate(ks, null);
+      syncActiveMirrors(kind);
     });
-    return initialMapCheck;
+    return gate.promise;
   }
 
   
   
-  function enterOutdated(verdict) {
-    if (state.mapOutdated) { paintOutdatedPlaceholder(); return; }
-    state.mapOutdated = true;
-    state.liveMapStamp = verdict.liveStamp;
-    state.mapCheck = {
+  function enterOutdated(kind, verdict) {
+    const ks = getKindState(kind);
+    const pointerStamp =
+      (ks.pointer && ks.pointer.map.stamp) || ks.recordStamp || null;
+    ks.outdated = true;
+    ks.liveMapStamp = verdict.liveStamp;
+    ks.mapCheck = {
+      kind,
       status: 'outdated',
-      pointerStamp: activePointer.map.stamp,
+      pointerStamp,
       liveStamp: verdict.liveStamp,
       source: verdict.source,
-      assetVersion: activePointer.assetVersion,
+      assetVersion: ks.pointer ? ks.pointer.assetVersion : null,
     };
+    if (kind !== activeMapKind) return;
+    syncActiveMirrors(kind);
     
     
+    tearDownSeaLayers();
+    paintOutdatedPlaceholder();
+    refreshUi();
+  }
+
+  
+  
+  
+  
+  
+  
+  function closeUnverifiedSea(kind) {
+    const ks = getKindState(kind);
+    ks.unverified = true;
+    if (kind !== activeMapKind) return;
+    syncActiveMirrors(kind);
+    tearDownSeaLayers();
+    refreshUi();
+  }
+
+  
+  
+  function tearDownSeaLayers() {
     stopStatic();
     stopGL();
     hideNoise(0);
     removeStaticCanvas();
     releaseGL();
     state.whalePose = null;
+    wakePeak = 0;
+    whaleWake[2] = 0;
     state.img = null;
     state.loading = false;
-    paintOutdatedPlaceholder();
-    refreshUi();
   }
 
   
@@ -3685,56 +4162,91 @@ function mountSeaUi(opts) {
     ['webp', 'sea-zag.webp'],
   ];
   let colourPromise = null;
+  let colourToken = 0;
 
-  function loadColour() {
-    if (state.mapOutdated) return Promise.resolve(state.img);
+  
+  
+  function releaseColour(token) {
+    if (colourToken === token) colourPromise = null;
+  }
+
+  function loadColour(kind = activeMapKind) {
+    if (!kind || kind !== activeMapKind) return Promise.resolve(null);
+    const ks = getKindState(kind);
+    if (ks.outdated) return Promise.resolve(state.img);
+    if (ks.unverified) return Promise.resolve(null);
     if (state.img) return Promise.resolve(state.img);
     if (colourPromise) return colourPromise;
+    const epoch = routeEpoch;
+    const token = ++colourToken;
     
     
     
     
-    colourPromise = loadPointer().then(() => new Promise((resolve, reject) => {
-      let i = 0;
+    colourPromise = loadPointerForKind(kind).then(() => {
       
       
-      const sources = COLOUR_SOURCES.flatMap(([format, name]) =>
-        assetSources(name).map(src => ({ format, src })));
-      const tryNext = () => {
-        if (i >= sources.length) {
-          colourPromise = null;
-          state.error = 'texture: colour';
-          hideNoise(0);
-          refreshUi();
-          reject(new Error(state.error));
-          return;
-        }
-        const { format, src } = sources[i++];
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => {
-          colourPromise = null;
-          
-          
-          if (state.mapOutdated) { resolve(img); return; }
-          state.colourFormat = format;
-          state.img = img;
-          state.sig = '';
-          
-          
-          if (!mapGateOpen) { state.img = null; resolve(img); return; }
-          if (staticVisible()) startStatic();
-          
-          
-          
-          if (glc && glc.ready && !glc.lost && state.mode !== 'static') state.img = null;
-          resolve(img);
+      if (epoch !== routeEpoch || activeMapKind !== kind || ks.outdated) {
+        releaseColour(token);
+        return null;
+      }
+      if (!ks.pointer || ks.unverified) {
+        
+        
+        releaseColour(token);
+        hideSeaForNoPointer();
+        return null;
+      }
+      return new Promise((resolve, reject) => {
+        let i = 0;
+        
+        
+        const sources = COLOUR_SOURCES.flatMap(([format, name]) =>
+          assetSources(name, undefined, kind).map(src => ({ format, src })));
+        const tryNext = () => {
+          if (epoch !== routeEpoch || activeMapKind !== kind) {
+            releaseColour(token);
+            resolve(null);
+            return;
+          }
+          if (i >= sources.length) {
+            releaseColour(token);
+            state.error = 'texture: colour';
+            hideNoise(0);
+            refreshUi();
+            reject(new Error(state.error));
+            return;
+          }
+          const { format, src } = sources[i++];
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            releaseColour(token);
+            
+            
+            if (epoch !== routeEpoch || activeMapKind !== kind) { resolve(null); return; }
+            if (ks.outdated) { resolve(img); return; }
+            
+            if (ks.unverified) { resolve(null); return; }
+            state.colourFormat = format;
+            state.img = img;
+            state.sig = '';
+            
+            
+            if (!mapGateOpen) { state.img = null; resolve(img); return; }
+            if (staticVisible()) startStatic();
+            
+            
+            
+            if (glc && glc.ready && !glc.lost && state.mode !== 'static') state.img = null;
+            resolve(img);
+          };
+          img.onerror = () => tryNext();
+          img.src = src;
         };
-        img.onerror = () => tryNext();
-        img.src = src;
-      };
-      tryNext();
-    }));
+        tryNext();
+      });
+    });
     return colourPromise;
   }
 
@@ -4036,7 +4548,9 @@ function mountSeaUi(opts) {
     firstLoad = true;
     state.sig = '';
     hideNoise(0);
-    if (state.mode !== 'static' && state.on) {
+    
+    
+    if (state.mode !== 'static' && state.on && activePointer) {
       showNoise();                        
       if (glc && glc.ready && !glc.lost) startIntro();   
     }
@@ -4128,6 +4642,7 @@ function mountSeaUi(opts) {
   const UNIFORM_NAMES = [
     'uColour', 'uAux', 'uDist', 'uFlow', 'uSpeedTex', 'uCurve', 'uSliceCurve', 'uWarpCurve',
     'uTarget', 'uSize', 'uFlowSize', 'uSpeedSize', 'uAuxSpan', 'uCenter', 'uFlowCell',
+    'uBleed',
     'uZoom', 'uTime', 'uDistMax', 'uShoreW', 'uShelf', 'uFlowSpeed', 'uGrain', 'uFoam',
     'uDeep', 'uSwell', 'uSnap', 'uWaveSpeed', 'uFlowMode', 'uZoomCss', 'uCycle',
     'uDeflect', 'uDeflectReach', 'uTravelMax', 'uWarp', 'uWarpBias', 'uDirA', 'uDirB',
@@ -4158,6 +4673,9 @@ function mountSeaUi(opts) {
     
     gl.uniform2f(uni.uWhaleHalf, 5.5, 2.0);
     gl.uniform1f(uni.uWhaleHeight, 1.0);
+    
+    
+    gl.uniform1f(uni.uBleed, 0.0);
     return { prog, uni };
   }
 
@@ -4222,8 +4740,8 @@ function mountSeaUi(opts) {
   
   
   
-  function decodeTexture(name) {
-    const sources = assetSources(name);
+  function decodeTexture(name, kind = activeMapKind) {
+    const sources = assetSources(name, undefined, kind);
     const load = src => {
       if (typeof createImageBitmap === 'function') {
         return fetch(src, { mode: 'cors' })
@@ -4312,13 +4830,27 @@ function mountSeaUi(opts) {
   
   
   
-  function buildGL() {
-    loadPointer().then(() => {
-      try { buildGLNow(); } catch (e) { fallbackToStatic(e); }
-    }).catch(e => fallbackToStatic(e));
+  function buildGL(kind = activeMapKind) {
+    if (!kind || kind !== activeMapKind) return;
+    const ks = getKindState(kind);
+    const epoch = routeEpoch;
+    loadPointerForKind(kind).then(() => {
+      if (epoch !== routeEpoch || activeMapKind !== kind || !state.on || !mapGateOpen) return;
+      if (ks.outdated) { paintOutdatedPlaceholder(); return; }
+      if (!ks.pointer || ks.unverified) {
+        
+        
+        
+        hideSeaForNoPointer();
+        return;
+      }
+      try { buildGLNow(kind, epoch); } catch (e) { fallbackToStatic(e); }
+    }).catch(e => {
+      if (epoch === routeEpoch && activeMapKind === kind) fallbackToStatic(e);
+    });
   }
 
-  function buildGLNow() {
+  function buildGLNow(kind, epoch) {
     if (!state.on || !mapGateOpen) return;      
     if (state.mapOutdated) { paintOutdatedPlaceholder(); return; }
     const deck = deckCanvas();
@@ -4380,8 +4912,8 @@ function mountSeaUi(opts) {
 
     
     
-    loadWhale();
-    loadWhaleMesh();
+    
+    if (kind === 'exploration') { loadWhale(); loadWhaleMesh(); }
 
     
     
@@ -4403,10 +4935,10 @@ function mountSeaUi(opts) {
     Promise.all(specs.map(([key, name, nearest]) =>
       
       
-      (key === 'colour' ? loadColour() : decodeTexture(name))
+      (key === 'colour' ? loadColour(kind) : decodeTexture(name, kind))
         .then(source => {
-          if (glc !== c || c.lost) {
-            if (typeof source.close === 'function') source.close();
+          if (epoch !== routeEpoch || glc !== c || c.lost) {
+            if (source && typeof source.close === 'function') source.close();
             return;
           }
           const up = uploadTexture(gl, source, nearest, key);
@@ -4414,7 +4946,7 @@ function mountSeaUi(opts) {
           c.size[key] = [up.w, up.h];
         }),
     )).then(() => {
-      if (glc !== c || c.lost) return;
+      if (epoch !== routeEpoch || glc !== c || c.lost) return;
       
       
       const glErr = gl.getError();
@@ -4437,6 +4969,7 @@ function mountSeaUi(opts) {
       refreshUi();
     }).catch(e => {
       state.loading = false;
+      if (epoch !== routeEpoch) return;         
       if (glc === c && !c.lost) fallbackToStatic(e);
       else refreshUi();
     });
@@ -4532,13 +5065,25 @@ function mountSeaUi(opts) {
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    gl.uniform2f(uni.uTarget, cam.tx, cam.ty);
-    gl.uniform2f(uni.uSize, mapW(), mapH());
+    
+    
+    
+    const pad = mapPad();
+    gl.uniform2f(uni.uTarget, cam.tx + pad, cam.ty + pad);
+    gl.uniform2f(uni.uSize, bakeW(), bakeH());
     gl.uniform2f(uni.uFlowSize, size.flow[0], size.flow[1]);
-    gl.uniform1f(uni.uFlowCell, mapW() / size.flow[0]);
+    
+    
+    
+    
+    gl.uniform1f(uni.uFlowCell,
+      pad > 0 ? activePointer.flowCell : bakeW() / size.flow[0]);
     gl.uniform2f(uni.uSpeedSize, size.speed[0], size.speed[1]);
     gl.uniform2f(uni.uAuxSpan, size.aux[0] * activePointer.auxScale,
       size.aux[1] * activePointer.auxScale);
+    
+    
+    gl.uniform1f(uni.uBleed, pad > 0 ? 0.0 : LEGACY_BLEED_TILES);
     gl.uniform2f(uni.uCenter, cam.centerX, cam.centerY);
     gl.uniform1f(uni.uZoom, cam.zoom);
     gl.uniform1f(uni.uZoomCss, cam.zoomCss);
@@ -4552,13 +5097,21 @@ function mountSeaUi(opts) {
 
     
     
+    
+    
     const whale = whaleUniforms(state.whalePose, WHALE_SHAPE);
     
-    if (!whaleMesh) whale.shape[3] = 0;
-    gl.uniform4fv(uni.uWhalePose, whale.pose);
+    if (!whaleMesh || activeMapKind !== 'exploration') whale.shape[3] = 0;
+    
+    
+    const whalePose = [whale.pose[0] + pad, whale.pose[1] + pad, whale.pose[2], whale.pose[3]];
+    const wake = activeMapKind === 'exploration'
+      ? [whaleWake[0] + pad, whaleWake[1] + pad, whaleWake[2], whaleWake[3]]
+      : [ZERO_WAKE[0] + pad, ZERO_WAKE[1] + pad, ZERO_WAKE[2], ZERO_WAKE[3]];
+    gl.uniform4fv(uni.uWhalePose, whalePose);
     gl.uniform4fv(uni.uWhaleShape, whale.shape);
-    gl.uniform4fv(uni.uWhaleWake, whaleWake);
-    if (whaleMesh) {
+    gl.uniform4fv(uni.uWhaleWake, wake);
+    if (whaleMesh && activeMapKind === 'exploration') {
       if (!c.whaleTex) c.whaleTex = whaleTexture(gl);
       if (c.whaleDirty) {
         gl.activeTexture(gl.TEXTURE8);
@@ -4634,9 +5187,12 @@ function mountSeaUi(opts) {
   const seaTarget = vs => [vs.target[0] + 0.5, mapH() - 0.5 - vs.target[1]];
 
   function drawGL(t) {
+    
+    
+    if (!activePointer) return;
     if (state.mapOutdated) { paintOutdatedPlaceholder(); return; }
     
-    if (!initialGate.settled()) { showNoise(); return; }
+    if (!initialGateSettled()) { showNoise(); return; }
     if (!glc || !glc.ready || glc.lost || !mapGateOpen) return;
     const deck = deckCanvas();
     if (!deck) return;
@@ -4936,13 +5492,11 @@ function mountSeaUi(opts) {
     if (!pendingMode || !state.on) return false;
     if (pendingMode !== 'static' && !deckCanvas()) return false;
     
-    if (!onExplorationMap()) return false;
+    const kind = currentMapKind();
+    if (!kind) return false;
     
     
-    
-    checkLiveMap();
-    mapGateOpen = true;             
-    applyMode(pendingMode);
+    openSeaForMap(kind);
     return true;
   }
 
@@ -5180,16 +5734,18 @@ function mountSeaUi(opts) {
       return {
         mode: state.mode,
         
-        vramMB: (mapW() * mapH() * 4) / 1e6,
+        vramMB: (bakeW() * bakeH() * 4) / 1e6,
         fps: staticDraws.length,      
         ms: lastDrawMs,
         msKind: 'cpu',
         renderer: '2D',
         draws: state.draws,
         moving: false,
+        pad: mapPad(),
         intro: { ...liveRamps(performance.now()) },
         mapStatus: mapStatus(),
         mapVariant: mapVariant(),
+        mapKind: activeMapKind,
         mapGate: mapGateOpen,
         mapCheck: state.mapCheck,
         colourFormat: state.colourFormat,
@@ -5211,6 +5767,7 @@ function mountSeaUi(opts) {
       intro: { ...liveRamps(performance.now()) },
       mapStatus: mapStatus(),
       mapVariant: mapVariant(),
+      mapKind: activeMapKind,
       mapGate: mapGateOpen,
       mapCheck: state.mapCheck,
       colourFormat: state.colourFormat,
@@ -5218,6 +5775,7 @@ function mountSeaUi(opts) {
       introPending,
       backgrounded,
       awayVisible,
+      pad: mapPad(),
       update: updateState(),
       whale: whaleStats(),
     };
@@ -5454,19 +6012,36 @@ function mountSeaUi(opts) {
   state.whaleAt = setWhaleAt;
   
   
+  
   state.mapGateStatus = () => state.mapCheck;
-  state.applyMapCheckForTest = ({ pointer, timingUrls = [], cacheUrls = [], manifest = null }) => {
-    if (pointer) activePointer = parsePointer(pointer, seaConsts);
+  state.applyMapCheckForTest = ({
+    kind = activeMapKind || 'exploration',
+    pointer, timingUrls: urls = [], cacheUrls: cached = [], manifest = null,
+    manifestFailed = false,
+  }) => {
+    const ks = getKindState(kind);
+    if (pointer) {
+      const parsed = kind === 'exploration'
+        ? parsePointer(pointer, seaConsts)
+        : parseKindPointer(pointer, kind);
+      ks.pointer = parsed;
+      ks.pointerLoaded = !!parsed;
+    }
+    const pointerStamp = ks.pointer ? ks.pointer.map.stamp : null;
     const v = checkMapGate({
-      pointerStamp: activePointer.map.stamp, timingUrls, cacheUrls, manifest,
+      kind, pointerStamp, timingUrls: urls, cacheUrls: cached, manifest,
+      manifestFailed,
     });
-    state.mapCheck = {
+    ks.mapCheck = {
       ...v,
-      pointerStamp: activePointer.map.stamp,
-      assetVersion: activePointer.assetVersion,
+      kind,
+      pointerStamp,
+      assetVersion: ks.pointer ? ks.pointer.assetVersion : null,
     };
-    if (v.status === 'outdated') enterOutdated(v);
-    return state.mapCheck;
+    if (v.status === 'outdated') enterOutdated(kind, v);
+    if (v.status === 'unavailable') closeUnverifiedSea(kind);
+    if (kind === activeMapKind) syncActiveMirrors(kind);
+    return ks.mapCheck;
   };
   
   
@@ -5591,7 +6166,7 @@ function mountSeaUi(opts) {
 
   seaUi = mountSeaUi({
     getState: uiState, onChange: applyChange, getStats: stats, bench,
-    getEnabled: onExplorationMap,
+    getEnabled: () => currentMapKind() !== null,
   });
 
   
@@ -5602,19 +6177,19 @@ function mountSeaUi(opts) {
     
     if (!document.hidden) {
       anchorClock(false);
-      checkLiveMap();
+      checkLiveMap(activeMapKind);
     }
     onPresenceChange();
   });
   window.addEventListener('blur', onPresenceChange);
   window.addEventListener('focus', () => {
     onPresenceChange();
-    checkLiveMap();
+    checkLiveMap(activeMapKind);
   });
   
   
   setInterval(() => {
-    if (!document.hidden && onExplorationMap()) checkLiveMap();
+    if (!document.hidden && currentMapKind()) checkLiveMap(activeMapKind);
   }, MANIFEST_CHECK_MS);
   
   
@@ -5630,7 +6205,7 @@ function mountSeaUi(opts) {
 
   
   
-  loadPointer();
+  loadMapsRecord();
 
   
   
