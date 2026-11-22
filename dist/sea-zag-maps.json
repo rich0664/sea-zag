@@ -1,21 +1,21 @@
 {
+  "exploration": {
+    "stamp": "2026-11-01T22-21-31Z",
+    "pipelineStamp": "932abe7686db",
+    "assetVersion": "2026-11-01T22-21-31Z-exploration-932abe7686db",
+    "rasterSha256": "64a9e03c4869c82901e4400c22707f0982ff1c49e372e5f17f5821ef7e666ca1"
+  },
   "gems": {
     "stamp": "2026-11-17T16-58-34Z",
-    "pipelineStamp": "fb94ef28e9d3",
-    "assetVersion": "2026-11-17T16-58-34Z-gems-fb94ef28e9d3",
+    "pipelineStamp": "932abe7686db",
+    "assetVersion": "2026-11-17T16-58-34Z-gems-932abe7686db",
     "rasterSha256": "5fd2e7e27eaf8f99a949cea3aaaedd8a4cbf474eb37cc1efdd03065741feaf9f"
   },
   "supporters": {
-    "stamp": "2026-11-21T16-56-23Z",
-    "pipelineStamp": "fb94ef28e9d3",
-    "assetVersion": "2026-11-21T16-56-23Z-supporters-fb94ef28e9d3",
-    "rasterSha256": "efdcc139851e79640d5d7793f52b5a4aa3c3220808378c550ec96587844bcd12"
-  },
-  "exploration": {
-    "stamp": "2026-11-01T22-21-31Z",
-    "pipelineStamp": "fb94ef28e9d3",
-    "assetVersion": "2026-11-01T22-21-31Z-exploration-fb94ef28e9d3",
-    "rasterSha256": "64a9e03c4869c82901e4400c22707f0982ff1c49e372e5f17f5821ef7e666ca1"
+    "stamp": "2026-11-22T02-31-33Z",
+    "pipelineStamp": "932abe7686db",
+    "assetVersion": "2026-11-22T02-31-33Z-supporters-932abe7686db",
+    "rasterSha256": "3bfd39be8d1ee3722d94a18af0cb57b18cb962ff406989b8c221fa48f89851a5"
   },
   "schema": 1
 }

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "assetVersion": "2026-11-01T22-21-31Z-exploration-fb94ef28e9d3",
+  "assetVersion": "2026-11-01T22-21-31Z-exploration-932abe7686db",
   "whaleVersion": "1",
   "meshVersion": "4",
   "map": {
@@ -11,12 +11,15 @@
     "h": 5254,
     "rasterSha256": "64a9e03c4869c82901e4400c22707f0982ff1c49e372e5f17f5821ef7e666ca1"
   },
-  "pipelineStamp": "fb94ef28e9d3",
+  "pipelineStamp": "932abe7686db",
   "distMax": 600,
   "alongScale": 1.03,
   "heightLo": 0.1606,
   "heightHi": 1.0,
   "auxScale": 2,
   "flowCell": 16,
-  "speedCell": 4
+  "speedCell": 4,
+  "pad": 20,
+  "bakeW": 7789,
+  "bakeH": 5294
 }

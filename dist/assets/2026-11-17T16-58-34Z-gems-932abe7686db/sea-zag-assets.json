@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "assetVersion": "2026-11-17T16-58-34Z-gems-932abe7686db",
+  "whaleVersion": "1",
+  "meshVersion": "4",
+  "map": {
+    "kind": "gems",
+    "id": 69,
+    "stamp": "2026-11-17T16-58-34Z",
+    "w": 715,
+    "h": 553,
+    "rasterSha256": "5fd2e7e27eaf8f99a949cea3aaaedd8a4cbf474eb37cc1efdd03065741feaf9f"
+  },
+  "pipelineStamp": "932abe7686db",
+  "distMax": 600,
+  "alongScale": 1.0,
+  "heightLo": 0.6094,
+  "heightHi": 1.0,
+  "auxScale": 2,
+  "flowCell": 16,
+  "speedCell": 4,
+  "pad": 20,
+  "bakeW": 755,
+  "bakeH": 593
+}
