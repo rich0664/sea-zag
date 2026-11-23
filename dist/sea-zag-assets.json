@@ -1,22 +1,25 @@
 {
   "schema": 1,
-  "assetVersion": "2026-11-22T02-31-33Z-supporters-0f004edee135",
+  "assetVersion": "2026-11-01T22-21-31Z-exploration-5dd805af5252",
   "whaleVersion": "1",
   "meshVersion": "4",
   "map": {
-    "kind": "supporters",
-    "id": 192,
-    "stamp": "2026-11-22T02-31-33Z",
-    "w": 1866,
-    "h": 2232,
-    "rasterSha256": "3bfd39be8d1ee3722d94a18af0cb57b18cb962ff406989b8c221fa48f89851a5"
+    "kind": "exploration",
+    "id": 64,
+    "stamp": "2026-11-01T22-21-31Z",
+    "w": 7749,
+    "h": 5254,
+    "rasterSha256": "64a9e03c4869c82901e4400c22707f0982ff1c49e372e5f17f5821ef7e666ca1"
   },
-  "pipelineStamp": "0f004edee135",
+  "pipelineStamp": "5dd805af5252",
   "distMax": 600,
-  "alongScale": 1.01,
-  "heightLo": 0.3467,
+  "alongScale": 1.03,
+  "heightLo": 0.1606,
   "heightHi": 1.0,
   "auxScale": 2,
   "flowCell": 16,
-  "speedCell": 4
+  "speedCell": 4,
+  "pad": 20,
+  "bakeW": 7789,
+  "bakeH": 5294
 }

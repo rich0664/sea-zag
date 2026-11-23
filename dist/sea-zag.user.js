@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         sea-zag
 // @namespace    sea-zag
-// @version      0.7.0-pre.72
+// @version      0.7.0-pre.73
 // @description  Draws a bathymetric sea between the zig-zag.fm archipelagos: depth = distance from land, terrain = layered noise, rendered tile-aligned behind the map.
 // @match        https://www.zig-zag.fm/*
 // @grant        none
@@ -11,7 +11,7 @@
 // ==/UserScript==
 
 (() => {
-const seaConsts = {"version":"0.7.0-pre.72","assetVersion":"2026-11-17a","whaleVersion":"1","assetBase":"https://raw.githubusercontent.com/rich0664/sea-zag/pre-release/dist","map":{"id":64,"stamp":"2026-11-01T22-21-31Z","w":7749,"h":5254},"pipelineStamp":"932abe7686db","distMax":600,"alongScale":1.03,"heightLo":0.1606,"heightHi":1,"auxScale":2,"flowCell":16,"speedCell":4,"pad":0,"backingCap":2560,"baseline":{"shore":16,"shelf":26,"flow":3.7,"wave":2.5,"spec":0.035,"specPow":14.5,"specMode":2,"specSize":0.76,"specInvert":0.02,"specFloor":0.3,"grain":0.04,"foam":0.25,"deep":0.6,"swell":0.008,"adir":254,"aspeed":1.42,"ascale":0.156,"bdir":45,"bspeed":1.16,"bscale":0.046,"par":0.78,"pom":5,"dslow":0.91,"win":0.58,"wout":0.82,"cycle":7,"warp":2.1,"wbias":1,"deflect":1,"deflectReach":50},"curves":{"pc":[0,0.187,0.339,0.578,1],"sc":[0,0.057,0.274,0.492,0.926],"wc":[0,0.187,0.426,0.594,1]},"meshVersion":"4"};
+const seaConsts = {"version":"0.7.0-pre.73","assetVersion":"2026-11-17a","whaleVersion":"1","assetBase":"https://raw.githubusercontent.com/rich0664/sea-zag/pre-release/dist","map":{"id":64,"stamp":"2026-11-01T22-21-31Z","w":7749,"h":5254},"pipelineStamp":"5dd805af5252","distMax":600,"alongScale":1.03,"heightLo":0.1606,"heightHi":1,"auxScale":2,"flowCell":16,"speedCell":4,"pad":0,"backingCap":2560,"baseline":{"shore":16,"shelf":26,"flow":3.7,"wave":2.5,"spec":0.035,"specPow":14.5,"specMode":2,"specSize":0.76,"specInvert":0.02,"specFloor":0.3,"grain":0.04,"foam":0.25,"deep":0.6,"swell":0.008,"adir":254,"aspeed":1.42,"ascale":0.156,"bdir":45,"bspeed":1.16,"bscale":0.046,"par":0.78,"pom":5,"dslow":0.91,"win":0.58,"wout":0.82,"cycle":7,"warp":2.1,"wbias":1,"deflect":1,"deflectReach":50},"curves":{"pc":[0,0.187,0.339,0.578,1],"sc":[0,0.057,0.274,0.492,0.926],"wc":[0,0.187,0.426,0.594,1]},"meshVersion":"4"};
 
 /* ---- sea-core.js ---- */
 const MODE_IDS = ['baseline', 'medium', 'low', 'extra-low', 'static'];
