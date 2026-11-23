@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         sea-zag
 // @namespace    sea-zag
-// @version      0.7.0-pre.73
+// @version      0.7.0-pre.74
 // @description  Draws a bathymetric sea between the zig-zag.fm archipelagos: depth = distance from land, terrain = layered noise, rendered tile-aligned behind the map.
 // @match        https://www.zig-zag.fm/*
 // @grant        none
@@ -11,7 +11,7 @@
 // ==/UserScript==
 
 (() => {
-const seaConsts = {"version":"0.7.0-pre.73","assetVersion":"2026-11-17a","whaleVersion":"1","assetBase":"https://raw.githubusercontent.com/rich0664/sea-zag/pre-release/dist","map":{"id":64,"stamp":"2026-11-01T22-21-31Z","w":7749,"h":5254},"pipelineStamp":"5dd805af5252","distMax":600,"alongScale":1.03,"heightLo":0.1606,"heightHi":1,"auxScale":2,"flowCell":16,"speedCell":4,"pad":0,"backingCap":2560,"baseline":{"shore":16,"shelf":26,"flow":3.7,"wave":2.5,"spec":0.035,"specPow":14.5,"specMode":2,"specSize":0.76,"specInvert":0.02,"specFloor":0.3,"grain":0.04,"foam":0.25,"deep":0.6,"swell":0.008,"adir":254,"aspeed":1.42,"ascale":0.156,"bdir":45,"bspeed":1.16,"bscale":0.046,"par":0.78,"pom":5,"dslow":0.91,"win":0.58,"wout":0.82,"cycle":7,"warp":2.1,"wbias":1,"deflect":1,"deflectReach":50},"curves":{"pc":[0,0.187,0.339,0.578,1],"sc":[0,0.057,0.274,0.492,0.926],"wc":[0,0.187,0.426,0.594,1]},"meshVersion":"4"};
+const seaConsts = {"version":"0.7.0-pre.74","assetVersion":"2026-11-17a","whaleVersion":"1","assetBase":"https://raw.githubusercontent.com/rich0664/sea-zag/pre-release/dist","map":{"id":64,"stamp":"2026-11-01T22-21-31Z","w":7749,"h":5254},"pipelineStamp":"5dd805af5252","distMax":600,"alongScale":1.03,"heightLo":0.1606,"heightHi":1,"auxScale":2,"flowCell":16,"speedCell":4,"pad":0,"backingCap":2560,"baseline":{"shore":16,"shelf":26,"flow":3.7,"wave":2.5,"spec":0.035,"specPow":14.5,"specMode":2,"specSize":0.76,"specInvert":0.02,"specFloor":0.3,"grain":0.04,"foam":0.25,"deep":0.6,"swell":0.008,"adir":254,"aspeed":1.42,"ascale":0.156,"bdir":45,"bspeed":1.16,"bscale":0.046,"par":0.78,"pom":5,"dslow":0.91,"win":0.58,"wout":0.82,"cycle":7,"warp":2.1,"wbias":1,"deflect":1,"deflectReach":50},"curves":{"pc":[0,0.187,0.339,0.578,1],"sc":[0,0.057,0.274,0.492,0.926],"wc":[0,0.187,0.426,0.594,1]},"meshVersion":"4"};
 
 /* ---- sea-core.js ---- */
 const MODE_IDS = ['baseline', 'medium', 'low', 'extra-low', 'static'];
@@ -302,7 +302,8 @@ const LEGACY_BLEED_TILES = 6.0;
 
 
 
-function staticBlitLayout(vs, cssW, cssH, imgW, imgH, mapW, mapH, pad = 0) {
+function staticBlitLayout(vs, cssW, cssH, imgW, imgH, mapW, mapH, pad = 0,
+                          mapOx = 0, mapOy = 0) {
   const bw = mapW + 2 * pad;
   if (!(bw > 0 && imgW > 0 && imgH > 0)) return null;
   const p = vs.padding || {};
@@ -311,14 +312,20 @@ function staticBlitLayout(vs, cssW, cssH, imgW, imgH, mapW, mapH, pad = 0) {
   const dy = clamp(((p.top || 0) + cssH - (p.bottom || 0)) / 2, 0, cssH) - cssH / 2;
   const pxt = imgW / bw;                         
   const s = z / pxt;                             
-  const ox = cssW / 2 + dx - (vs.target[0] + 0.5 + pad) * z;
-  const oy = cssH / 2 + dy + (mapH - 0.5 - vs.target[1] + pad) * z;
+  
+  
+  
+  
+  const tx = vs.target[0] - mapOx;
+  const ty = vs.target[1] - mapOy;
+  const ox = cssW / 2 + dx - (tx + 0.5 + pad) * z;
+  const oy = cssH / 2 + dy + (mapH - 0.5 - ty + pad) * z;
 
   
-  const wx0 = (0 - cssW / 2 - dx) / z + vs.target[0];
-  const wx1 = (cssW - cssW / 2 - dx) / z + vs.target[0];
-  const wy0 = (0 - cssH / 2 - dy) / z + vs.target[1];
-  const wy1 = (cssH - cssH / 2 - dy) / z + vs.target[1];
+  const wx0 = (0 - cssW / 2 - dx) / z + tx;
+  const wx1 = (cssW - cssW / 2 - dx) / z + tx;
+  const wy0 = (0 - cssH / 2 - dy) / z + ty;
+  const wy1 = (cssH - cssH / 2 - dy) / z + ty;
 
   const sx0 = clamp(Math.floor((wx0 + 0.5 + pad) * pxt) - 1, 0, imgW);
   const sx1 = clamp(Math.ceil((wx1 + 0.5 + pad) * pxt) + 1, 0, imgW);
@@ -326,6 +333,13 @@ function staticBlitLayout(vs, cssW, cssH, imgW, imgH, mapW, mapH, pad = 0) {
   const sy1 = clamp(Math.ceil((mapH - 0.5 - wy0 + pad) * pxt) + 1, 0, imgH);
   if (sx1 <= sx0 || sy1 <= sy0) return null;
   return { s, ox, oy, sx0, sy0, sx1, sy1 };
+}
+
+
+
+
+function seaTarget(vs, mapH, mapOx = 0, mapOy = 0) {
+  return [vs.target[0] - mapOx + 0.5, mapH - 0.5 - (vs.target[1] - mapOy)];
 }
 
 
@@ -589,6 +603,17 @@ function nonNegInt(raw, fallback = 0) {
 
 
 
+function intOr(raw, fallback = 0) {
+  if (raw === null || raw === undefined || raw === '' || typeof raw === 'boolean') {
+    return fallback;
+  }
+  const n = Number(raw);
+  return Number.isInteger(n) ? n : fallback;
+}
+
+
+
+
 
 function parsePointer(raw, fallback = seaConsts) {
   const hasRaw = !!(raw && typeof raw === 'object');
@@ -603,6 +628,11 @@ function parsePointer(raw, fallback = seaConsts) {
   
   
   const pad = hasRaw ? ('pad' in p ? nonNegInt(p.pad, 0) : 0) : nonNegInt(fb.pad, 0);
+  
+  
+  
+  const ox = hasRaw ? ('ox' in map ? intOr(map.ox, 0) : 0) : intOr(fbMap.ox, 0);
+  const oy = hasRaw ? ('oy' in map ? intOr(map.oy, 0) : 0) : intOr(fbMap.oy, 0);
   return {
     schema: 1,
     assetVersion: pointerText(p.assetVersion, fb.assetVersion ?? fb.version),
@@ -614,6 +644,8 @@ function parsePointer(raw, fallback = seaConsts) {
       stamp: pointerText(map.stamp, fbMap.stamp),
       w,
       h,
+      ox,
+      oy,
     },
     pad,
     bakeW: w + 2 * pad,
@@ -654,6 +686,13 @@ function kindPad(raw) {
   return Number.isInteger(n) && n >= 0 ? n : null;
 }
 
+
+
+function kindInt(raw) {
+  const v = kindFinite(raw);
+  return v !== null && Number.isInteger(v) ? v : null;
+}
+
 function parseKindPointer(raw, expectedKind) {
   if (!raw || typeof raw !== 'object') return null;
   if (!MAP_KINDS.includes(expectedKind)) return null;
@@ -679,6 +718,12 @@ function parseKindPointer(raw, expectedKind) {
   if (heightLo === null || heightLo < 0 || heightLo >= heightHi) return null;
   const pad = 'pad' in raw ? kindPad(raw.pad) : 0;
   if (pad === null) return null;
+  
+  
+  if (('ox' in map) !== ('oy' in map)) return null;
+  const ox = 'ox' in map ? kindInt(map.ox) : 0;
+  const oy = 'oy' in map ? kindInt(map.oy) : 0;
+  if (ox === null || oy === null) return null;
   const bakeW = w + 2 * pad;
   const bakeH = h + 2 * pad;
   for (const [key, want] of [['bakeW', bakeW], ['bakeH', bakeH]]) {
@@ -696,6 +741,8 @@ function parseKindPointer(raw, expectedKind) {
       stamp: map.stamp,
       w,
       h,
+      ox,
+      oy,
       rasterSha256: pointerText(map.rasterSha256, ''),
     },
     pad,
@@ -2039,6 +2086,7 @@ function seaUiCss() {
     '  border: 0; border-radius: 0; font-family: inherit;',
     '}',
     '#zz-sea-menu fieldset { min-width: 0; }',
+    '#zz-sea-menu #zz-sea-github:hover { opacity: 1; }',
   ].join('\n');
 }
 
@@ -2053,6 +2101,42 @@ function seaUiPlacement(rect, viewport, gap) {
     top: rect.bottom + g,
   };
 }
+
+
+
+
+
+function stampDate(stamp) {
+  const m = /^(\d{4}-\d{2}-\d{2})T(\d{2})-(\d{2})-(\d{2})Z$/.exec(String(stamp || ''));
+  if (!m) return null;
+  const d = new Date(`${m[1]}T${m[2]}:${m[3]}:${m[4]}Z`);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+
+function stampAbsolute(stamp) {
+  const d = stampDate(stamp);
+  if (!d) return null;
+  return d.toISOString().slice(0, 19).replace('T', ' ') + ' UTC';
+}
+
+
+
+
+function relativeAge(stamp, now = Date.now()) {
+  const d = stampDate(stamp);
+  if (!d) return null;
+  const min = Math.floor(Math.max(0, Number(now) - d.getTime()) / 60000);
+  if (min < 1) return 'just now';
+  if (min < 60) return `${min}m ago`;
+  const hours = Math.floor(min / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
+
+
+
+const SEA_UI_REPO_URL = 'https://github.com/rich0664/sea-zag';
 
 function seaUiEl(tag, css) {
   const el = document.createElement(tag);
@@ -2370,6 +2454,20 @@ function mountSeaUi(opts) {
       'font-weight:600;text-decoration:underline;margin-left:4px');
     updateLine.append(updateMain);
 
+    
+    
+    
+    
+    const dates = seaUiEl('div', 'font-size:10px;line-height:1.4;opacity:.6;' +
+      'margin:2px 0 0;overflow-wrap:anywhere');
+    dates.id = 'zz-sea-dates';
+    const mapAge = seaUiEl('span', '');
+    const seaAge = seaUiEl('span', '');
+    const datesSep = seaUiEl('span', '');
+    datesSep.textContent = ' · ';
+    dates.append(mapAge, datesSep, seaAge);
+    dates.hidden = true;
+
     const status = document.createElement('div');
     status.id = 'zz-sea-status';
     status.hidden = true;
@@ -2397,6 +2495,18 @@ function mountSeaUi(opts) {
     
     const diagnostics = seaUiEl('div', 'display:block;margin:0');
     diagnostics.append(status, retryBtn, diag);
+
+    
+    
+    const repo = document.createElement('a');
+    repo.id = 'zz-sea-github';
+    repo.href = SEA_UI_REPO_URL;
+    repo.target = '_blank';
+    repo.rel = 'noopener noreferrer';
+    repo.textContent = 'sea-zag on GitHub';
+    repo.style.cssText = 'display:inline-block;margin:0;font:inherit;' +
+      'font-family:inherit;font-size:10px;line-height:1.4;color:inherit;' +
+      'opacity:.55;text-decoration:underline;text-underline-offset:2px';
 
     
     
@@ -2444,6 +2554,21 @@ function mountSeaUi(opts) {
     }
 
     
+    
+    
+    
+    function paintDates(s) {
+      const map = s ? relativeAge(s.mapStamp) : null;
+      const sea = s ? relativeAge(s.seaStamp) : null;
+      mapAge.textContent = map ? `map updated ${map}` : '';
+      mapAge.title = map ? stampAbsolute(s.mapStamp) : '';
+      seaAge.textContent = sea ? `sea baked ${sea}` : '';
+      seaAge.title = sea ? stampAbsolute(s.seaStamp) : '';
+      datesSep.hidden = !(map && sea);
+      dates.hidden = !(map || sea);
+    }
+
+    
     function paintStats(s) {
       if (!s) {
         diagLine1.textContent = '';
@@ -2475,7 +2600,7 @@ function mountSeaUi(opts) {
     menu.append(
       onRow, quality, fpsRow, cap, hiddenRow, divider(),
       opacity.el, brightness.el, hue.el, sat.el, resetBtn, divider(),
-      updateLine, diagnostics,
+      updateLine, dates, diagnostics, divider(), repo,
     );
 
     const css = document.createElement('style');
@@ -2532,6 +2657,7 @@ function mountSeaUi(opts) {
       sat.input.value = String(sa);
       sat.out.textContent = `${sa}%`;
       paintUpdate(s.update);
+      paintDates(s);
       fpsBox.checked = !!s.fps30;
       const capValue = Number(s.frameCap) || 0;
       for (const input of capRadios) input.checked = Number(input.value) === capValue;
@@ -2808,6 +2934,11 @@ function mountSeaUi(opts) {
 
   const mapW = () => (activePointer ? activePointer.map.w : 0);   
   const mapH = () => (activePointer ? activePointer.map.h : 0);
+  
+  
+  
+  const mapOx = () => (activePointer && activePointer.map ? activePointer.map.ox || 0 : 0);
+  const mapOy = () => (activePointer && activePointer.map ? activePointer.map.oy || 0 : 0);
   
   
   const mapPad = () => bakeDims(activePointer).pad;
@@ -3692,7 +3823,8 @@ function mountSeaUi(opts) {
     const W = deck.clientWidth || deck.width;
     const H = deck.clientHeight || deck.height;
 
-    const sig = [vs.zoom, vs.target[0], vs.target[1], pad.left, pad.right, W, H].join('|');
+    const sig = [vs.zoom, vs.target[0], vs.target[1], pad.left, pad.right, W, H,
+      mapOx(), mapOy()].join('|');
     if (!force && sig === state.sig) return;
     state.sig = sig;
 
@@ -3702,7 +3834,10 @@ function mountSeaUi(opts) {
     
     
     
-    const blit = staticBlitLayout(vs, W, H, img.width, img.height, mapW(), mapH(), mapPad());
+    
+    const blit = staticBlitLayout(
+      vs, W, H, img.width, img.height, mapW(), mapH(), mapPad(), mapOx(), mapOy(),
+    );
     if (!blit) return;
     const { s, ox, oy, sx0, sy0, sx1, sy1 } = blit;
 
@@ -5184,7 +5319,8 @@ function mountSeaUi(opts) {
   
   
   
-  const seaTarget = vs => [vs.target[0] + 0.5, mapH() - 0.5 - vs.target[1]];
+  
+  const liveSeaTarget = vs => seaTarget(vs, mapH(), mapOx(), mapOy());
 
   function drawGL(t) {
     
@@ -5223,7 +5359,7 @@ function mountSeaUi(opts) {
     }
 
     const cam = cameraUniforms(vs, cssW, cssH, w, h);
-    const target = seaTarget(vs);
+    const target = liveSeaTarget(vs);
     state.camTarget = target;
     const now = performance.now();
     
@@ -5561,7 +5697,7 @@ function mountSeaUi(opts) {
       const c = deckCanvas();
       const vs = c && viewState(c);
       if (!vs) throw new Error('debugRender has no live camera');
-      live = seaTarget(vs);
+      live = liveSeaTarget(vs);
       opts = {
         ...opts,
         zoom: opts.zoom === undefined ? 2 ** vs.zoom : opts.zoom,
@@ -5679,7 +5815,7 @@ function mountSeaUi(opts) {
       if (!sized) throw new Error('no viewport');
 
       const cam = cameraUniforms(vs, sized.cssW, sized.cssH, sized.w, sized.h);
-      const target = seaTarget(vs);
+      const target = liveSeaTarget(vs);
       const frame = {
         tx: target[0], ty: target[1],
         zoom: cam.zoomPx, zoomCss: cam.zoomPx / sized.scale,
@@ -5742,6 +5878,7 @@ function mountSeaUi(opts) {
         draws: state.draws,
         moving: false,
         pad: mapPad(),
+        mapOrigin: [mapOx(), mapOy()],
         intro: { ...liveRamps(performance.now()) },
         mapStatus: mapStatus(),
         mapVariant: mapVariant(),
@@ -5776,6 +5913,7 @@ function mountSeaUi(opts) {
       backgrounded,
       awayVisible,
       pad: mapPad(),
+      mapOrigin: [mapOx(), mapOy()],
       update: updateState(),
       whale: whaleStats(),
     };
@@ -6103,6 +6241,10 @@ function mountSeaUi(opts) {
       canUseShader: state.canUseShader, maxTextureSize: state.maxTextureSize,
       loading: state.loading, error: state.error,
       update: updateState(),
+      
+      
+      mapStamp: state.mapCheck ? state.mapCheck.liveStamp : null,
+      seaStamp: activePointer && activePointer.map ? activePointer.map.stamp : null,
     };
   }
 
