@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         sea-zag
 // @namespace    sea-zag
-// @version      0.7.0-pre.74
+// @version      0.7.0-pre.75
 // @description  Draws a bathymetric sea between the zig-zag.fm archipelagos: depth = distance from land, terrain = layered noise, rendered tile-aligned behind the map.
 // @match        https://www.zig-zag.fm/*
 // @grant        none
@@ -11,7 +11,7 @@
 // ==/UserScript==
 
 (() => {
-const seaConsts = {"version":"0.7.0-pre.74","assetVersion":"2026-11-17a","whaleVersion":"1","assetBase":"https://raw.githubusercontent.com/rich0664/sea-zag/pre-release/dist","map":{"id":64,"stamp":"2026-11-01T22-21-31Z","w":7749,"h":5254},"pipelineStamp":"5dd805af5252","distMax":600,"alongScale":1.03,"heightLo":0.1606,"heightHi":1,"auxScale":2,"flowCell":16,"speedCell":4,"pad":0,"backingCap":2560,"baseline":{"shore":16,"shelf":26,"flow":3.7,"wave":2.5,"spec":0.035,"specPow":14.5,"specMode":2,"specSize":0.76,"specInvert":0.02,"specFloor":0.3,"grain":0.04,"foam":0.25,"deep":0.6,"swell":0.008,"adir":254,"aspeed":1.42,"ascale":0.156,"bdir":45,"bspeed":1.16,"bscale":0.046,"par":0.78,"pom":5,"dslow":0.91,"win":0.58,"wout":0.82,"cycle":7,"warp":2.1,"wbias":1,"deflect":1,"deflectReach":50},"curves":{"pc":[0,0.187,0.339,0.578,1],"sc":[0,0.057,0.274,0.492,0.926],"wc":[0,0.187,0.426,0.594,1]},"meshVersion":"4"};
+const seaConsts = {"version":"0.7.0-pre.75","assetVersion":"2026-11-17a","whaleVersion":"1","assetBase":"https://raw.githubusercontent.com/rich0664/sea-zag/pre-release/dist","map":{"id":64,"stamp":"2026-11-01T22-21-31Z","w":7749,"h":5254},"pipelineStamp":"5dd805af5252","distMax":600,"alongScale":1.03,"heightLo":0.1606,"heightHi":1,"auxScale":2,"flowCell":16,"speedCell":4,"pad":0,"backingCap":2560,"baseline":{"shore":16,"shelf":26,"flow":3.7,"wave":2.5,"spec":0.035,"specPow":14.5,"specMode":2,"specSize":0.76,"specInvert":0.02,"specFloor":0.3,"grain":0.04,"foam":0.25,"deep":0.6,"swell":0.008,"adir":254,"aspeed":1.42,"ascale":0.156,"bdir":45,"bspeed":1.16,"bscale":0.046,"par":0.78,"pom":5,"dslow":0.91,"win":0.58,"wout":0.82,"cycle":7,"warp":2.1,"wbias":1,"deflect":1,"deflectReach":50},"curves":{"pc":[0,0.187,0.339,0.578,1],"sc":[0,0.057,0.274,0.492,0.926],"wc":[0,0.187,0.426,0.594,1]},"meshVersion":"4"};
 
 /* ---- sea-core.js ---- */
 const MODE_IDS = ['baseline', 'medium', 'low', 'extra-low', 'static'];
@@ -772,6 +772,25 @@ function bakeDims(pointer) {
 
 
 
+function parallaxDepthScale(pointer, ref = seaConsts) {
+  const p = pointer && typeof pointer === 'object' ? pointer : {};
+  const r = ref && typeof ref === 'object' ? ref : {};
+  const lo = kindFinite(p.heightLo);
+  const hi = kindFinite(p.heightHi);
+  const refLo = kindFinite(r.heightLo);
+  const refHi = kindFinite(r.heightHi);
+  if (lo === null || hi === null || refLo === null || refHi === null) return 1;
+  const span = hi - lo;
+  const refSpan = refHi - refLo;
+  if (!(span > 0) || !(refSpan > 0)) return 1;
+  return span / refSpan;
+}
+
+
+
+
+
+
 const MAP_BASE_RES = {
   exploration: /\/maps\/(?!seller-map\/)[^/]+\/[^/]+\/base\.bin\.br(?:[?#]|$)/,
   gems: /\/community-maps\/[^/]+\/[^/]+\/base\.bin\.br(?:[?#]|$)/,
@@ -1238,6 +1257,7 @@ uniform float uSpecMode;   // 0 add, 1 screen, 2 water-coloured, 3 multiply
 uniform vec2 uDirA, uDirB;
 uniform float uSpeedA, uSpeedB, uScaleA, uScaleB;
 uniform float uParallax, uDeepSlow, uWaveIn, uWaveOut, uPomLayers;
+uniform float uDepthScale;      // un-stretches the bake's per-map depth span
 uniform float uAlongScale, uBrightness, uNoiseLayers;
 uniform float uHue, uSat;       // colour controls: degrees, percent
 uniform float uSpecFloor;       // extra highlight on water too dark to catch it
@@ -1385,8 +1405,12 @@ float warpCurveAt(float t) {
 vec2 parShift(vec2 w, float depth) {
 #if HAS_PARALLAX
   // depth is a map-space quantity: scale the parallax with zoom so the same
-  // number of map tiles shifts at every zoom (3.2 is the reference zoom)
-  float k = uParallax * parCurve(depth) * (uZoomCss / 3.2);
+  // number of map tiles shifts at every zoom (3.2 is the reference zoom).
+  // The bake stretches each map's own height range onto 0..1; uDepthScale puts
+  // that back onto exploration's span, so equal physical depths shift equally.
+  // An unset uniform reads 0.0 in WebGL2, which would kill parallax entirely.
+  float depthScale = uDepthScale > 0.0 ? uDepthScale : 1.0;
+  float k = uParallax * parCurve(depth * depthScale) * (uZoomCss / 3.2);
   return (uTarget - w) * k;
 #else
   return vec2(0.0);
@@ -2458,14 +2482,14 @@ function mountSeaUi(opts) {
     
     
     
+    
+    
     const dates = seaUiEl('div', 'font-size:10px;line-height:1.4;opacity:.6;' +
       'margin:2px 0 0;overflow-wrap:anywhere');
     dates.id = 'zz-sea-dates';
-    const mapAge = seaUiEl('span', '');
-    const seaAge = seaUiEl('span', '');
-    const datesSep = seaUiEl('span', '');
-    datesSep.textContent = ' · ';
-    dates.append(mapAge, datesSep, seaAge);
+    const mapAge = seaUiEl('div', '');
+    const seaAge = seaUiEl('div', '');
+    dates.append(mapAge, seaAge);
     dates.hidden = true;
 
     const status = document.createElement('div');
@@ -2564,7 +2588,6 @@ function mountSeaUi(opts) {
       mapAge.title = map ? stampAbsolute(s.mapStamp) : '';
       seaAge.textContent = sea ? `sea baked ${sea}` : '';
       seaAge.title = sea ? stampAbsolute(s.seaStamp) : '';
-      datesSep.hidden = !(map && sea);
       dates.hidden = !(map || sea);
     }
 
@@ -4783,6 +4806,7 @@ function mountSeaUi(opts) {
     'uDeflect', 'uDeflectReach', 'uTravelMax', 'uWarp', 'uWarpBias', 'uDirA', 'uDirB',
     'uSpeedA', 'uSpeedB', 'uScaleA', 'uScaleB', 'uParallax', 'uDeepSlow', 'uWaveIn',
     'uWaveOut', 'uPomLayers', 'uAlongScale', 'uBrightness', 'uNoiseLayers',
+    'uDepthScale',
     'uSpec', 'uSpecPow', 'uSpecSize', 'uSpecInvert', 'uSpecMode', 'uSpecFloor',
     'uHue', 'uSat',
     'uReveal', 'uWhalePose', 'uWhaleShape', 'uWhaleWake',
@@ -4811,6 +4835,8 @@ function mountSeaUi(opts) {
     
     
     gl.uniform1f(uni.uBleed, 0.0);
+    
+    gl.uniform1f(uni.uDepthScale, 1.0);
     return { prog, uni };
   }
 
@@ -5225,6 +5251,9 @@ function mountSeaUi(opts) {
     gl.uniform1f(uni.uTime, t);
     gl.uniform1f(uni.uDistMax, activePointer.distMax);
     gl.uniform1f(uni.uAlongScale, activePointer.alongScale);
+    
+    
+    gl.uniform1f(uni.uDepthScale, parallaxDepthScale(activePointer));
     gl.uniform1f(uni.uBrightness, state.brightness);
     gl.uniform1f(uni.uHue, state.hue);
     gl.uniform1f(uni.uSat, state.sat / 100);
@@ -5879,6 +5908,7 @@ function mountSeaUi(opts) {
         moving: false,
         pad: mapPad(),
         mapOrigin: [mapOx(), mapOy()],
+        depthScale: parallaxDepthScale(activePointer),
         intro: { ...liveRamps(performance.now()) },
         mapStatus: mapStatus(),
         mapVariant: mapVariant(),
@@ -5914,6 +5944,7 @@ function mountSeaUi(opts) {
       awayVisible,
       pad: mapPad(),
       mapOrigin: [mapOx(), mapOy()],
+      depthScale: parallaxDepthScale(activePointer),
       update: updateState(),
       whale: whaleStats(),
     };
