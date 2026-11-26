@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "assetVersion": "2026-11-25T20-21-30Z-supporters-5dd805af5252",
+  "whaleVersion": "1",
+  "meshVersion": "4",
+  "map": {
+    "kind": "supporters",
+    "id": 205,
+    "stamp": "2026-11-25T20-21-30Z",
+    "w": 1989,
+    "h": 2271,
+    "ox": 0,
+    "oy": 0,
+    "rasterSha256": "96152f8479a686b1fbce43c0e6761546a507cf4eead630227289b64eb704a050"
+  },
+  "pipelineStamp": "5dd805af5252",
+  "distMax": 600,
+  "alongScale": 1.01,
+  "heightLo": 0.3242,
+  "heightHi": 1.0,
+  "auxScale": 2,
+  "flowCell": 16,
+  "speedCell": 4,
+  "pad": 20,
+  "bakeW": 2029,
+  "bakeH": 2311
+}
