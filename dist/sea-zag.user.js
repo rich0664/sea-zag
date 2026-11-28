@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         sea-zag
 // @namespace    sea-zag
-// @version      0.7.0-pre.79
+// @version      0.7.0-pre.80
 // @description  Draws a bathymetric sea between the zig-zag.fm archipelagos: depth = distance from land, terrain = layered noise, rendered tile-aligned behind the map.
 // @match        https://www.zig-zag.fm/*
 // @grant        none
@@ -11,7 +11,7 @@
 // ==/UserScript==
 
 (() => {
-const seaConsts = {"version":"0.7.0-pre.79","assetVersion":"2026-11-17a","whaleVersion":"2","assetBase":"https://raw.githubusercontent.com/rich0664/sea-zag/pre-release/dist","map":{"id":64,"stamp":"2026-11-01T22-21-31Z","w":7749,"h":5254},"pipelineStamp":"3b44c3bac8cb","distMax":600,"alongScale":1.03,"heightLo":0.1606,"heightHi":1,"auxScale":2,"soilScale":4,"palette":{"stops":[0.001,0.03,0.07,0.12,0.2,0.32,0.46,0.66,1],"cols":[[74,126,156],[58,104,134],[45,86,116],[35,70,98],[28,57,82],[22,46,67],[17,36,53],[12,25,37],[7,13,18]]},"coast":{"levels":5,"strength":0.15,"r":138,"g":199,"b":234},"flowCell":16,"speedCell":4,"pad":0,"backingCap":2560,"baseline":{"shore":16,"shelf":26,"flow":3.7,"wave":2.5,"spec":0.035,"specPow":14.5,"specMode":2,"specSize":0.76,"specInvert":0.02,"specFloor":0.3,"grain":0.04,"foam":0.25,"deep":0.6,"swell":0.008,"adir":254,"aspeed":1.42,"ascale":0.156,"bdir":45,"bspeed":1.16,"bscale":0.046,"par":0.78,"pom":5,"dslow":0.91,"win":0.58,"wout":0.82,"cycle":7,"warp":2.1,"wbias":1,"deflect":1,"deflectReach":50},"curves":{"pc":[0,0.187,0.339,0.578,1],"sc":[0,0.057,0.274,0.492,0.926],"wc":[0,0.187,0.426,0.594,1]},"presets":{"default":{"label":"default","dayNight":true,"S":{"tileBright":42,"surfStrength":118,"chopAmp":112,"crossAmp":122,"swellAmp":0,"macroAmp":29,"bandLimit":0,"swellDir":251,"macroAlign":0,"choppy":1,"painterly":75,"ridgeMix":100,"macroZoom":1.15,"chopScale":9.5,"crossScale":10,"swellScale":212,"macroScale":30,"warp":10,"wbias":1,"dslow":0.86,"grain":0.015,"adir":254,"bdir":45,"waveSpd":100,"flowSpd":100,"depthGamma":0.65,"depthContrast":1.8,"waterClarity":1.27,"bedVis":100,"kR":2.9,"kG":2.2,"kB":1.8,"soilMix":0,"soilLumLock":100,"soilDark":150,"soilSat":46,"murkGain":67,"murkAbsorb":129,"murkScatter":40,"murkDepthFade":0,"reliefFade":1.8,"deepVeil":13,"veilStart":0.52,"coastStrength":0.135,"coastLevels":14,"hue":7,"sat":95,"bright":135,"hour":88.29160000007323,"sunAzOff":-7,"sunMaxEl":85,"sunAz":191,"sunEl":41,"relief":31,"biolum":31,"shadowStr":49,"shadowLen":200,"shadowH":80,"shadowSoft":9,"shadowMaxEl":10,"shadowStretch":3.5,"whaleDepth":-1,"whaleSpeed":100,"whaleRadius":75,"specGain":29,"specOpacity":50,"roughTight":0.08,"roughBroad":0.33,"viewTilt":1.2,"peakBias":55,"specTilt":0.64,"specCut":14,"specDrift":0,"specStretch":1,"specSpread":1.5,"specRadius":0.98,"skyGain":69,"skyOpacity":49,"fresnelF0":0.075,"fresnelPow":2,"clouds":52,"skyNormal":15,"skyCel":11,"skyDir":0,"sunBloom":150,"shore":15.6,"shelf":65,"wave":1.95,"foam":0.39,"win":0.58,"wout":0.82,"fetchW":0,"shoalG":43,"flow":3.7,"cycle":7,"deflect":1,"deflectReach":50,"par":0.608,"pom":6,"spec":0.035,"specPow":14.5,"specSize":0.76,"specInvert":0.02,"specFloor":0.3,"murkCol":"#40776e"},"TOG":{"snap":1,"flowMode":1,"clamp":0,"pirate":0,"tiles":1,"specMode":2,"soilRes":"1x","timeMode":"custom","debugMode":0,"pomFloor":1,"surfMode":1,"skyOn":1,"specModel":0,"surfPattern":4,"macroZoomMode":1,"hemi":"S","whaleOn":1,"whalePause":0,"texelFbo":1,"specGizmo":0,"skyBlend":0,"specBlend":0},"defines":{"HAS_PARALLAX":1,"HAS_WARP":1,"NOISE_LAYERS":2,"FLOW_LOD":1,"HAS_LIGHTING":1,"HAS_SHADOWS":1,"SHADOW_STEPS":14,"HAS_SOIL":0,"HAS_MURK":1,"HAS_SKY_MATCAP":1,"HAS_GGX":2,"HAS_SURF_OCT":4,"HAS_SHOAL_BREAKERS":1,"HAS_BIOLUM":1,"HAS_WHALE":1,"USE_NOISE_LUT":0,"USE_HALF_SHADOW":1,"USE_POM_FAST":1},"KF":{"dawn":{"key":"#f52314","amb":"#e1a166","skyZ":"#415f90","skyH":"#ff5447","skyD":"#1c2a48","lightI":1,"skyI":1,"specI":1},"day":{"key":"#ffffff","amb":"#6e8ba8","skyZ":"#2d649e","skyH":"#9ec6e0","skyD":"#4c7ba3","lightI":1.15,"skyI":1,"specI":1.2},"dusk":{"key":"#ff8438","amb":"#666c9c","skyZ":"#341a5b","skyH":"#d35c3c","skyD":"#161e37","lightI":1,"skyI":1.3,"specI":3},"night":{"key":"#b8d3ff","amb":"#243452","skyZ":"#08111f","skyH":"#1b2d47","skyD":"#060c18","lightI":0.6,"skyI":0.55,"specI":2.4}},"curves":{"pc":[0,0.187,0.339,0.578,1],"sc":[0,0.057,0.274,0.492,0.926],"wc":[0,0.187,0.426,0.594,1]}},"classic":{"label":"classic","dayNight":false,"S":{"tileBright":42,"surfStrength":100,"chopAmp":100,"crossAmp":100,"swellAmp":0,"macroAmp":0,"bandLimit":60,"swellDir":250,"macroAlign":0,"choppy":2.5,"painterly":0,"ridgeMix":0,"macroZoom":0.95,"chopScale":8,"crossScale":22,"swellScale":55,"macroScale":110,"warp":2.1,"wbias":1,"dslow":0.91,"grain":0.04,"adir":254,"bdir":45,"waveSpd":100,"flowSpd":100,"depthGamma":1,"depthContrast":1,"waterClarity":1,"bedVis":0,"kR":0,"kG":0,"kB":0,"soilMix":0,"soilLumLock":100,"soilDark":100,"soilSat":100,"murkGain":0,"murkAbsorb":65,"murkScatter":55,"murkDepthFade":1,"reliefFade":1.8,"deepVeil":0,"veilStart":0.25,"coastStrength":0,"coastLevels":5,"hue":0,"sat":100,"bright":110,"hour":52,"sunAzOff":0,"sunMaxEl":58,"sunAz":245,"sunEl":22,"relief":0,"biolum":0,"shadowStr":0,"shadowLen":80,"shadowH":28,"shadowSoft":6,"shadowMaxEl":28,"shadowStretch":1.35,"whaleDepth":-1,"whaleSpeed":100,"whaleRadius":75,"specGain":0,"specOpacity":100,"roughTight":0.09,"roughBroad":0.38,"viewTilt":0.45,"peakBias":0,"specTilt":0,"specCut":25,"specDrift":0,"specStretch":1,"specSpread":1,"specRadius":1.5,"skyGain":0,"skyOpacity":0,"fresnelF0":0.02,"fresnelPow":4,"clouds":0,"skyNormal":100,"skyCel":0,"skyDir":0,"sunBloom":0,"shore":16,"shelf":26,"wave":2.5,"foam":0.25,"win":0.58,"wout":0.82,"fetchW":0,"shoalG":0,"flow":3.7,"cycle":7,"deflect":1,"deflectReach":50,"par":0.78,"pom":5,"spec":0.035,"specPow":14.5,"specSize":0.76,"specInvert":0.02,"specFloor":0.3,"murkCol":"#5f8791"},"TOG":{"snap":1,"flowMode":1,"clamp":0,"pirate":0,"tiles":1,"specMode":2,"soilRes":"off","timeMode":"off","debugMode":0,"pomFloor":1,"surfMode":0,"skyOn":0,"specModel":1,"surfPattern":0,"macroZoomMode":1,"hemi":"S","whaleOn":1,"whalePause":0,"texelFbo":1,"specGizmo":0,"skyBlend":0,"specBlend":0},"defines":{"HAS_PARALLAX":1,"HAS_WARP":1,"NOISE_LAYERS":2,"FLOW_LOD":1,"HAS_LIGHTING":0,"HAS_SHADOWS":0,"SHADOW_STEPS":14,"HAS_SOIL":0,"HAS_MURK":0,"HAS_SKY_MATCAP":0,"HAS_GGX":0,"HAS_SURF_OCT":1,"HAS_SHOAL_BREAKERS":0,"HAS_BIOLUM":0,"HAS_WHALE":1,"USE_NOISE_LUT":0,"USE_HALF_SHADOW":0,"USE_POM_FAST":0},"KF":{"dawn":{"key":"#f52314","amb":"#e1a166","skyZ":"#415f90","skyH":"#ff5447","skyD":"#1c2a48","lightI":1,"skyI":1,"specI":1},"day":{"key":"#ffffff","amb":"#6e8ba8","skyZ":"#2d649e","skyH":"#9ec6e0","skyD":"#4c7ba3","lightI":1.15,"skyI":1,"specI":1.2},"dusk":{"key":"#ff8438","amb":"#666c9c","skyZ":"#341a5b","skyH":"#d35c3c","skyD":"#161e37","lightI":1,"skyI":1.3,"specI":3},"night":{"key":"#b8d3ff","amb":"#243452","skyZ":"#08111f","skyH":"#1b2d47","skyD":"#060c18","lightI":0.6,"skyI":0.55,"specI":2.4}},"curves":{"pc":[0,0.187,0.339,0.578,1],"sc":[0,0.057,0.274,0.492,0.926],"wc":[0,0.187,0.426,0.594,1]}}},"meshVersion":"4"};
+const seaConsts = {"version":"0.7.0-pre.80","assetVersion":"2026-11-17a","whaleVersion":"2","assetBase":"https://raw.githubusercontent.com/rich0664/sea-zag/pre-release/dist","map":{"id":64,"stamp":"2026-11-01T22-21-31Z","w":7749,"h":5254},"pipelineStamp":"a5d89e90fc2c","distMax":600,"alongScale":1.03,"heightLo":0.1606,"heightHi":1,"auxScale":2,"soilScale":4,"palette":{"stops":[0.001,0.03,0.07,0.12,0.2,0.32,0.46,0.66,1],"cols":[[74,126,156],[58,104,134],[45,86,116],[35,70,98],[28,57,82],[22,46,67],[17,36,53],[12,25,37],[7,13,18]]},"coast":{"levels":5,"strength":0.15,"r":138,"g":199,"b":234},"flowCell":16,"speedCell":4,"pad":0,"backingCap":2560,"baseline":{"shore":16,"shelf":26,"flow":3.7,"wave":2.5,"spec":0.035,"specPow":14.5,"specMode":2,"specSize":0.76,"specInvert":0.02,"specFloor":0.3,"grain":0.04,"foam":0.25,"deep":0.6,"swell":0.008,"adir":254,"aspeed":1.42,"ascale":0.156,"bdir":45,"bspeed":1.16,"bscale":0.046,"par":0.78,"pom":5,"dslow":0.91,"win":0.58,"wout":0.82,"cycle":7,"warp":2.1,"wbias":1,"deflect":1,"deflectReach":50},"curves":{"pc":[0,0.187,0.339,0.578,1],"sc":[0,0.057,0.274,0.492,0.926],"wc":[0,0.187,0.426,0.594,1]},"presets":{"default":{"label":"default","dayNight":true,"S":{"tileBright":42,"surfStrength":118,"chopAmp":112,"crossAmp":122,"swellAmp":0,"macroAmp":29,"bandLimit":0,"swellDir":251,"macroAlign":0,"choppy":1,"painterly":75,"ridgeMix":100,"macroZoom":1.15,"chopScale":9.5,"crossScale":10,"swellScale":212,"macroScale":30,"warp":10,"wbias":1,"dslow":0.86,"grain":0.015,"adir":254,"bdir":45,"waveSpd":100,"flowSpd":100,"depthGamma":0.65,"depthContrast":1.8,"waterClarity":1.27,"bedVis":100,"kR":2.9,"kG":2.2,"kB":1.8,"soilMix":0,"soilLumLock":100,"soilDark":150,"soilSat":46,"murkGain":67,"murkAbsorb":129,"murkScatter":40,"murkDepthFade":0,"reliefFade":1.8,"deepVeil":13,"veilStart":0.52,"coastStrength":0.135,"coastLevels":14,"hue":7,"sat":95,"bright":135,"hour":88.29160000007323,"sunAzOff":-7,"sunMaxEl":85,"sunAz":191,"sunEl":41,"relief":31,"biolum":31,"shadowStr":49,"shadowLen":200,"shadowH":80,"shadowSoft":9,"shadowMaxEl":10,"shadowStretch":3.5,"whaleDepth":-1,"whaleSpeed":100,"whaleRadius":75,"specGain":29,"specOpacity":50,"roughTight":0.08,"roughBroad":0.33,"viewTilt":1.2,"peakBias":55,"specTilt":0.64,"specCut":14,"specDrift":0,"specStretch":1,"specSpread":1.5,"specRadius":0.98,"skyGain":69,"skyOpacity":49,"fresnelF0":0.075,"fresnelPow":2,"clouds":52,"skyNormal":15,"skyCel":11,"skyDir":0,"sunBloom":150,"shore":15.6,"shelf":65,"wave":1.95,"foam":0.39,"win":0.58,"wout":0.82,"fetchW":0,"shoalG":43,"flow":3.7,"cycle":7,"deflect":1,"deflectReach":50,"par":0.608,"pom":6,"spec":0.035,"specPow":14.5,"specSize":0.76,"specInvert":0.02,"specFloor":0.3,"murkCol":"#40776e"},"TOG":{"snap":1,"flowMode":1,"clamp":0,"pirate":0,"tiles":1,"specMode":2,"soilRes":"1x","timeMode":"custom","debugMode":0,"pomFloor":1,"surfMode":1,"skyOn":1,"specModel":0,"surfPattern":4,"macroZoomMode":1,"hemi":"S","whaleOn":1,"whalePause":0,"texelFbo":1,"specGizmo":0,"skyBlend":0,"specBlend":0},"defines":{"HAS_PARALLAX":1,"HAS_WARP":1,"NOISE_LAYERS":2,"FLOW_LOD":1,"HAS_LIGHTING":1,"HAS_SHADOWS":1,"SHADOW_STEPS":14,"HAS_SOIL":0,"HAS_MURK":1,"HAS_SKY_MATCAP":1,"HAS_GGX":2,"HAS_SURF_OCT":4,"HAS_SHOAL_BREAKERS":1,"HAS_BIOLUM":1,"HAS_WHALE":1,"USE_NOISE_LUT":0,"USE_HALF_SHADOW":1,"USE_POM_FAST":1},"KF":{"dawn":{"key":"#f52314","amb":"#e1a166","skyZ":"#415f90","skyH":"#ff5447","skyD":"#1c2a48","lightI":1,"skyI":1,"specI":1},"day":{"key":"#ffffff","amb":"#6e8ba8","skyZ":"#2d649e","skyH":"#9ec6e0","skyD":"#4c7ba3","lightI":1.15,"skyI":1,"specI":1.2},"dusk":{"key":"#ff8438","amb":"#666c9c","skyZ":"#341a5b","skyH":"#d35c3c","skyD":"#161e37","lightI":1,"skyI":1.3,"specI":3},"night":{"key":"#b8d3ff","amb":"#243452","skyZ":"#08111f","skyH":"#1b2d47","skyD":"#060c18","lightI":0.6,"skyI":0.55,"specI":2.4}},"curves":{"pc":[0,0.187,0.339,0.578,1],"sc":[0,0.057,0.274,0.492,0.926],"wc":[0,0.187,0.426,0.594,1]}},"classic":{"label":"classic","dayNight":false,"S":{"tileBright":42,"surfStrength":100,"chopAmp":100,"crossAmp":100,"swellAmp":0,"macroAmp":0,"bandLimit":60,"swellDir":250,"macroAlign":0,"choppy":2.5,"painterly":0,"ridgeMix":0,"macroZoom":0.95,"chopScale":8,"crossScale":22,"swellScale":55,"macroScale":110,"warp":2.1,"wbias":1,"dslow":0.91,"grain":0.04,"adir":254,"bdir":45,"waveSpd":100,"flowSpd":100,"depthGamma":1,"depthContrast":1,"waterClarity":1,"bedVis":0,"kR":0,"kG":0,"kB":0,"soilMix":0,"soilLumLock":100,"soilDark":100,"soilSat":100,"murkGain":0,"murkAbsorb":65,"murkScatter":55,"murkDepthFade":1,"reliefFade":1.8,"deepVeil":0,"veilStart":0.25,"coastStrength":0,"coastLevels":5,"hue":0,"sat":100,"bright":110,"hour":52,"sunAzOff":0,"sunMaxEl":58,"sunAz":245,"sunEl":22,"relief":0,"biolum":0,"shadowStr":0,"shadowLen":80,"shadowH":28,"shadowSoft":6,"shadowMaxEl":28,"shadowStretch":1.35,"whaleDepth":-1,"whaleSpeed":100,"whaleRadius":75,"specGain":0,"specOpacity":100,"roughTight":0.09,"roughBroad":0.38,"viewTilt":0.45,"peakBias":0,"specTilt":0,"specCut":25,"specDrift":0,"specStretch":1,"specSpread":1,"specRadius":1.5,"skyGain":0,"skyOpacity":0,"fresnelF0":0.02,"fresnelPow":4,"clouds":0,"skyNormal":100,"skyCel":0,"skyDir":0,"sunBloom":0,"shore":16,"shelf":26,"wave":2.5,"foam":0.25,"win":0.58,"wout":0.82,"fetchW":0,"shoalG":0,"flow":3.7,"cycle":7,"deflect":1,"deflectReach":50,"par":0.78,"pom":5,"spec":0.035,"specPow":14.5,"specSize":0.76,"specInvert":0.02,"specFloor":0.3,"murkCol":"#5f8791"},"TOG":{"snap":1,"flowMode":1,"clamp":0,"pirate":0,"tiles":1,"specMode":2,"soilRes":"off","timeMode":"off","debugMode":0,"pomFloor":1,"surfMode":0,"skyOn":0,"specModel":1,"surfPattern":0,"macroZoomMode":1,"hemi":"S","whaleOn":1,"whalePause":0,"texelFbo":1,"specGizmo":0,"skyBlend":0,"specBlend":0},"defines":{"HAS_PARALLAX":1,"HAS_WARP":1,"NOISE_LAYERS":2,"FLOW_LOD":1,"HAS_LIGHTING":0,"HAS_SHADOWS":0,"SHADOW_STEPS":14,"HAS_SOIL":0,"HAS_MURK":0,"HAS_SKY_MATCAP":0,"HAS_GGX":0,"HAS_SURF_OCT":1,"HAS_SHOAL_BREAKERS":0,"HAS_BIOLUM":0,"HAS_WHALE":1,"USE_NOISE_LUT":0,"USE_HALF_SHADOW":0,"USE_POM_FAST":0},"KF":{"dawn":{"key":"#f52314","amb":"#e1a166","skyZ":"#415f90","skyH":"#ff5447","skyD":"#1c2a48","lightI":1,"skyI":1,"specI":1},"day":{"key":"#ffffff","amb":"#6e8ba8","skyZ":"#2d649e","skyH":"#9ec6e0","skyD":"#4c7ba3","lightI":1.15,"skyI":1,"specI":1.2},"dusk":{"key":"#ff8438","amb":"#666c9c","skyZ":"#341a5b","skyH":"#d35c3c","skyD":"#161e37","lightI":1,"skyI":1.3,"specI":3},"night":{"key":"#b8d3ff","amb":"#243452","skyZ":"#08111f","skyH":"#1b2d47","skyD":"#060c18","lightI":0.6,"skyI":0.55,"specI":2.4}},"curves":{"pc":[0,0.187,0.339,0.578,1],"sc":[0,0.057,0.274,0.492,0.926],"wc":[0,0.187,0.426,0.594,1]}}},"meshVersion":"4"};
 
 /* ---- sea-core.js ---- */
 const MODE_IDS = ['baseline', 'medium', 'low', 'extra-low', 'static'];
@@ -2073,6 +2073,14 @@ void main() {
   vec4 aux0 = texture(uAux, p / uAuxSpan);
   float depth01 = aux0.r;
   float wet = step(0.0001, d);
+  // Inner lakes are d == 0 yet carry a real height bake: water, but no ocean
+  // distance. Their surface calms with size, so a pond stays glass still and a
+  // big lake only gets a hint of ripple.
+  float hSurf = texture(uHeight, p / uSize).r;
+  float isWater = max(wet, step(0.0005, hSurf));
+  float isLake = isWater * (1.0 - wet);
+  float lakeWave = smoothstep(0.035, 0.13, hSurf * hSurf) * 0.30;
+  float waveMask = mix(1.0, lakeWave, isLake) * isWater;
 
   // Flow + speed + fetch + murk
   vec4 fcoarse = texture(uFlow, p / (uFlowCell * uFlowSize));
@@ -2122,6 +2130,8 @@ void main() {
   float shallow = 1.0 - depth01;
   float slow = mix(uDeepSlow, 1.0, shallow);
   float travel = cycleTravel * slow;
+  // A lake has no through-flow: let its ripples lap in place.
+  travel *= mix(1.0, 0.25, isLake);
   // Surface noise is evaluated on the texel-snapped p: every primitive and
   // expWave carry a continuous derivative, so each map tile becomes one crisp
   // facet with a real slope and reflection, never a sub-pixel blur.
@@ -2236,6 +2246,8 @@ void main() {
     float zoomGain = clamp(sqrt(max(fullW, 0.01) / max(activeW, 0.12)), 1.0, 2.2);
     surfGrad *= zoomGain;
     surfH *= zoomGain;
+    surfGrad *= waveMask;
+    surfH *= waveMask;
     Nsurf = normalize(vec3(-surfGrad * (uSurfStrength * 0.55), 1.0));
     n = surfH * 0.9;
   } else {
@@ -2252,6 +2264,9 @@ void main() {
     crossH = nB;
     surfH = n;
     surfGrad = vec2(nA, nB) * 0.35;
+    n *= waveMask;
+    surfH *= waveMask;
+    surfGrad *= waveMask;
     Nsurf = normalize(vec3(-surfGrad * uSurfStrength, 1.0));
   }
   // Positive on raised wave peaks/crests, negative in flat troughs: the
@@ -2285,7 +2300,7 @@ void main() {
   bool doPom = N > 1;
   if (doPom) {
     vec2 maxPar = parShift(base, 1.0);
-    if (wet < 0.5 || dot(maxPar, maxPar) < 0.25) doPom = false;
+    if (isWater < 0.5 || dot(maxPar, maxPar) < 0.25) doPom = false;
   }
 #else
   bool doPom = N > 1;
@@ -2529,13 +2544,12 @@ void main() {
   }
 #endif
 
-  // Dry land is not a seabed: keep it a dark, neutral base so the map overlay
-  // (or the palette edge) owns the islands. Without this the warm key light
-  // multiplies the shallow palette through the water column and paints dry
-  // land with lit seabed relief.
-  vec3 landCol = vec3(0.034, 0.042, 0.048);
-  if (uDayNightOn > 0.5) landCol *= mix(uAmbientCol * 0.60, uLightCol, 0.22);
-  col = mix(landCol, col, wet);
+  // Dry land sits under the map layer: keep it the top shallow height colour
+  // (day-night tinted when active, pure pal0 in classic) with no seabed relief
+  // or cast shadows. isWater (not wet) leaves inner lakes with their real
+  // rendered seabed/water colour.
+  vec3 landCol = pal0 * colLight;
+  col = mix(landCol, col, isWater);
 
   // Live coast rim: lighten-only like editor n_coast, uCoastLevels tiles wide.
   float rimW = max(1.0, uCoastLevels);
@@ -2575,7 +2589,7 @@ void main() {
 #endif
 
   // ---- Surface grain: scalar modulation on top of the N_surf optics ----
-  float onWater = wet * (1.0 - shore * 0.85);
+  float onWater = wet * (1.0 - shore * 0.85) + isLake * lakeWave;
   float grainFade = mix(1.0, 0.62, macroWt);
   float grainN = fbm(p * 0.1 + 7.0) - 0.5;
   float dither = hash(floor(p)) - 0.5;
@@ -2762,7 +2776,7 @@ void main() {
   // reflection into depth contours.
   float Fsky = clamp(uFresnelF0 + (1.0 - uFresnelF0) * pow(1.0 - ndotvSky, uFresnelPow), 0.0, 1.0);
   // Surface reflection is never occluded by underwater seabed cast shadows.
-  float reflMix = clamp(Fsky * uSkyGain * wet, 0.0, 1.0);
+  float reflMix = clamp(Fsky * uSkyGain * isWater, 0.0, 1.0);
   // The dry back of a breaching whale keeps its own body colour: the water's
   // sky mirror paints over submerged body and open water, never over it.
   reflMix *= (1.0 - whaleDry);
@@ -2799,6 +2813,9 @@ void main() {
   // ---- 4. Directional dual-lobe GGX sun/moon glitter ----
   float specAmt = 0.0;
   vec3 specAdd = vec3(0.0);
+  // A still pond would mirror a flat normal into one solid white sun blob;
+  // gate glitter up with the lake's own ripple strength instead.
+  float specWater = isWater * mix(1.0, smoothstep(0.02, 0.20, lakeWave), isLake);
 #if HAS_GGX > 0
   vec3 L = normalize(uSunDir);
   // ---- Screen-anchored drifting specular pool -----------------------------
@@ -2844,7 +2861,7 @@ void main() {
   // The Option A handoff owns the glitter: 0 at 19:45 / 05:15, so the warm
   // sun glint and the silver moon glint switch with no visible pop.
   float effSpecGain = uSpecGain * max(uSpecInt, 0.0);
-  specAmt = specRaw * effSpecGain * wet * clamp(uKeyVis, 0.0, 1.0);
+  specAmt = specRaw * effSpecGain * specWater * clamp(uKeyVis, 0.0, 1.0);
   // Water glitter belongs to water, not to the dry back above it.
   specAmt *= (1.0 - whaleDry);
   if (uPainterly > 0.001) {
@@ -2874,7 +2891,7 @@ void main() {
   float specMask = mix(disc, 1.0 - disc, clamp(uSpecInvert, 0.0, 1.0));
   float crest = smoothstep(0.10, 0.70, n);
   float specShape = mix(pow(max(crest, 0.0), max(uSpecPow, 1.0)), crest, 0.35);
-  float sDisc = uSpec * specShape * specMask * wet * (1.0 - whaleDry)
+  float sDisc = uSpec * specShape * specMask * specWater * (1.0 - whaleDry)
               * clamp(uSpecOpacity, 0.0, 1.0) * max(uSpecInt, 0.0);
   vec3 glintTintDisc = uDayNightOn > 0.5 ? mix(uLightCol, vec3(0.78, 0.88, 1.0), uNightMix * 0.5)
                                         : vec3(0.74, 0.87, 1.0);
