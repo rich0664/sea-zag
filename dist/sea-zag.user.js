@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         sea-zag
 // @namespace    sea-zag
-// @version      0.7.0-pre.75
+// @version      0.7.0-pre.79
 // @description  Draws a bathymetric sea between the zig-zag.fm archipelagos: depth = distance from land, terrain = layered noise, rendered tile-aligned behind the map.
 // @match        https://www.zig-zag.fm/*
 // @grant        none
@@ -11,10 +11,16 @@
 // ==/UserScript==
 
 (() => {
-const seaConsts = {"version":"0.7.0-pre.75","assetVersion":"2026-11-17a","whaleVersion":"1","assetBase":"https://raw.githubusercontent.com/rich0664/sea-zag/pre-release/dist","map":{"id":64,"stamp":"2026-11-01T22-21-31Z","w":7749,"h":5254},"pipelineStamp":"5dd805af5252","distMax":600,"alongScale":1.03,"heightLo":0.1606,"heightHi":1,"auxScale":2,"flowCell":16,"speedCell":4,"pad":0,"backingCap":2560,"baseline":{"shore":16,"shelf":26,"flow":3.7,"wave":2.5,"spec":0.035,"specPow":14.5,"specMode":2,"specSize":0.76,"specInvert":0.02,"specFloor":0.3,"grain":0.04,"foam":0.25,"deep":0.6,"swell":0.008,"adir":254,"aspeed":1.42,"ascale":0.156,"bdir":45,"bspeed":1.16,"bscale":0.046,"par":0.78,"pom":5,"dslow":0.91,"win":0.58,"wout":0.82,"cycle":7,"warp":2.1,"wbias":1,"deflect":1,"deflectReach":50},"curves":{"pc":[0,0.187,0.339,0.578,1],"sc":[0,0.057,0.274,0.492,0.926],"wc":[0,0.187,0.426,0.594,1]},"meshVersion":"4"};
+const seaConsts = {"version":"0.7.0-pre.79","assetVersion":"2026-11-17a","whaleVersion":"2","assetBase":"https://raw.githubusercontent.com/rich0664/sea-zag/pre-release/dist","map":{"id":64,"stamp":"2026-11-01T22-21-31Z","w":7749,"h":5254},"pipelineStamp":"3b44c3bac8cb","distMax":600,"alongScale":1.03,"heightLo":0.1606,"heightHi":1,"auxScale":2,"soilScale":4,"palette":{"stops":[0.001,0.03,0.07,0.12,0.2,0.32,0.46,0.66,1],"cols":[[74,126,156],[58,104,134],[45,86,116],[35,70,98],[28,57,82],[22,46,67],[17,36,53],[12,25,37],[7,13,18]]},"coast":{"levels":5,"strength":0.15,"r":138,"g":199,"b":234},"flowCell":16,"speedCell":4,"pad":0,"backingCap":2560,"baseline":{"shore":16,"shelf":26,"flow":3.7,"wave":2.5,"spec":0.035,"specPow":14.5,"specMode":2,"specSize":0.76,"specInvert":0.02,"specFloor":0.3,"grain":0.04,"foam":0.25,"deep":0.6,"swell":0.008,"adir":254,"aspeed":1.42,"ascale":0.156,"bdir":45,"bspeed":1.16,"bscale":0.046,"par":0.78,"pom":5,"dslow":0.91,"win":0.58,"wout":0.82,"cycle":7,"warp":2.1,"wbias":1,"deflect":1,"deflectReach":50},"curves":{"pc":[0,0.187,0.339,0.578,1],"sc":[0,0.057,0.274,0.492,0.926],"wc":[0,0.187,0.426,0.594,1]},"presets":{"default":{"label":"default","dayNight":true,"S":{"tileBright":42,"surfStrength":118,"chopAmp":112,"crossAmp":122,"swellAmp":0,"macroAmp":29,"bandLimit":0,"swellDir":251,"macroAlign":0,"choppy":1,"painterly":75,"ridgeMix":100,"macroZoom":1.15,"chopScale":9.5,"crossScale":10,"swellScale":212,"macroScale":30,"warp":10,"wbias":1,"dslow":0.86,"grain":0.015,"adir":254,"bdir":45,"waveSpd":100,"flowSpd":100,"depthGamma":0.65,"depthContrast":1.8,"waterClarity":1.27,"bedVis":100,"kR":2.9,"kG":2.2,"kB":1.8,"soilMix":0,"soilLumLock":100,"soilDark":150,"soilSat":46,"murkGain":67,"murkAbsorb":129,"murkScatter":40,"murkDepthFade":0,"reliefFade":1.8,"deepVeil":13,"veilStart":0.52,"coastStrength":0.135,"coastLevels":14,"hue":7,"sat":95,"bright":135,"hour":88.29160000007323,"sunAzOff":-7,"sunMaxEl":85,"sunAz":191,"sunEl":41,"relief":31,"biolum":31,"shadowStr":49,"shadowLen":200,"shadowH":80,"shadowSoft":9,"shadowMaxEl":10,"shadowStretch":3.5,"whaleDepth":-1,"whaleSpeed":100,"whaleRadius":75,"specGain":29,"specOpacity":50,"roughTight":0.08,"roughBroad":0.33,"viewTilt":1.2,"peakBias":55,"specTilt":0.64,"specCut":14,"specDrift":0,"specStretch":1,"specSpread":1.5,"specRadius":0.98,"skyGain":69,"skyOpacity":49,"fresnelF0":0.075,"fresnelPow":2,"clouds":52,"skyNormal":15,"skyCel":11,"skyDir":0,"sunBloom":150,"shore":15.6,"shelf":65,"wave":1.95,"foam":0.39,"win":0.58,"wout":0.82,"fetchW":0,"shoalG":43,"flow":3.7,"cycle":7,"deflect":1,"deflectReach":50,"par":0.608,"pom":6,"spec":0.035,"specPow":14.5,"specSize":0.76,"specInvert":0.02,"specFloor":0.3,"murkCol":"#40776e"},"TOG":{"snap":1,"flowMode":1,"clamp":0,"pirate":0,"tiles":1,"specMode":2,"soilRes":"1x","timeMode":"custom","debugMode":0,"pomFloor":1,"surfMode":1,"skyOn":1,"specModel":0,"surfPattern":4,"macroZoomMode":1,"hemi":"S","whaleOn":1,"whalePause":0,"texelFbo":1,"specGizmo":0,"skyBlend":0,"specBlend":0},"defines":{"HAS_PARALLAX":1,"HAS_WARP":1,"NOISE_LAYERS":2,"FLOW_LOD":1,"HAS_LIGHTING":1,"HAS_SHADOWS":1,"SHADOW_STEPS":14,"HAS_SOIL":0,"HAS_MURK":1,"HAS_SKY_MATCAP":1,"HAS_GGX":2,"HAS_SURF_OCT":4,"HAS_SHOAL_BREAKERS":1,"HAS_BIOLUM":1,"HAS_WHALE":1,"USE_NOISE_LUT":0,"USE_HALF_SHADOW":1,"USE_POM_FAST":1},"KF":{"dawn":{"key":"#f52314","amb":"#e1a166","skyZ":"#415f90","skyH":"#ff5447","skyD":"#1c2a48","lightI":1,"skyI":1,"specI":1},"day":{"key":"#ffffff","amb":"#6e8ba8","skyZ":"#2d649e","skyH":"#9ec6e0","skyD":"#4c7ba3","lightI":1.15,"skyI":1,"specI":1.2},"dusk":{"key":"#ff8438","amb":"#666c9c","skyZ":"#341a5b","skyH":"#d35c3c","skyD":"#161e37","lightI":1,"skyI":1.3,"specI":3},"night":{"key":"#b8d3ff","amb":"#243452","skyZ":"#08111f","skyH":"#1b2d47","skyD":"#060c18","lightI":0.6,"skyI":0.55,"specI":2.4}},"curves":{"pc":[0,0.187,0.339,0.578,1],"sc":[0,0.057,0.274,0.492,0.926],"wc":[0,0.187,0.426,0.594,1]}},"classic":{"label":"classic","dayNight":false,"S":{"tileBright":42,"surfStrength":100,"chopAmp":100,"crossAmp":100,"swellAmp":0,"macroAmp":0,"bandLimit":60,"swellDir":250,"macroAlign":0,"choppy":2.5,"painterly":0,"ridgeMix":0,"macroZoom":0.95,"chopScale":8,"crossScale":22,"swellScale":55,"macroScale":110,"warp":2.1,"wbias":1,"dslow":0.91,"grain":0.04,"adir":254,"bdir":45,"waveSpd":100,"flowSpd":100,"depthGamma":1,"depthContrast":1,"waterClarity":1,"bedVis":0,"kR":0,"kG":0,"kB":0,"soilMix":0,"soilLumLock":100,"soilDark":100,"soilSat":100,"murkGain":0,"murkAbsorb":65,"murkScatter":55,"murkDepthFade":1,"reliefFade":1.8,"deepVeil":0,"veilStart":0.25,"coastStrength":0,"coastLevels":5,"hue":0,"sat":100,"bright":110,"hour":52,"sunAzOff":0,"sunMaxEl":58,"sunAz":245,"sunEl":22,"relief":0,"biolum":0,"shadowStr":0,"shadowLen":80,"shadowH":28,"shadowSoft":6,"shadowMaxEl":28,"shadowStretch":1.35,"whaleDepth":-1,"whaleSpeed":100,"whaleRadius":75,"specGain":0,"specOpacity":100,"roughTight":0.09,"roughBroad":0.38,"viewTilt":0.45,"peakBias":0,"specTilt":0,"specCut":25,"specDrift":0,"specStretch":1,"specSpread":1,"specRadius":1.5,"skyGain":0,"skyOpacity":0,"fresnelF0":0.02,"fresnelPow":4,"clouds":0,"skyNormal":100,"skyCel":0,"skyDir":0,"sunBloom":0,"shore":16,"shelf":26,"wave":2.5,"foam":0.25,"win":0.58,"wout":0.82,"fetchW":0,"shoalG":0,"flow":3.7,"cycle":7,"deflect":1,"deflectReach":50,"par":0.78,"pom":5,"spec":0.035,"specPow":14.5,"specSize":0.76,"specInvert":0.02,"specFloor":0.3,"murkCol":"#5f8791"},"TOG":{"snap":1,"flowMode":1,"clamp":0,"pirate":0,"tiles":1,"specMode":2,"soilRes":"off","timeMode":"off","debugMode":0,"pomFloor":1,"surfMode":0,"skyOn":0,"specModel":1,"surfPattern":0,"macroZoomMode":1,"hemi":"S","whaleOn":1,"whalePause":0,"texelFbo":1,"specGizmo":0,"skyBlend":0,"specBlend":0},"defines":{"HAS_PARALLAX":1,"HAS_WARP":1,"NOISE_LAYERS":2,"FLOW_LOD":1,"HAS_LIGHTING":0,"HAS_SHADOWS":0,"SHADOW_STEPS":14,"HAS_SOIL":0,"HAS_MURK":0,"HAS_SKY_MATCAP":0,"HAS_GGX":0,"HAS_SURF_OCT":1,"HAS_SHOAL_BREAKERS":0,"HAS_BIOLUM":0,"HAS_WHALE":1,"USE_NOISE_LUT":0,"USE_HALF_SHADOW":0,"USE_POM_FAST":0},"KF":{"dawn":{"key":"#f52314","amb":"#e1a166","skyZ":"#415f90","skyH":"#ff5447","skyD":"#1c2a48","lightI":1,"skyI":1,"specI":1},"day":{"key":"#ffffff","amb":"#6e8ba8","skyZ":"#2d649e","skyH":"#9ec6e0","skyD":"#4c7ba3","lightI":1.15,"skyI":1,"specI":1.2},"dusk":{"key":"#ff8438","amb":"#666c9c","skyZ":"#341a5b","skyH":"#d35c3c","skyD":"#161e37","lightI":1,"skyI":1.3,"specI":3},"night":{"key":"#b8d3ff","amb":"#243452","skyZ":"#08111f","skyH":"#1b2d47","skyD":"#060c18","lightI":0.6,"skyI":0.55,"specI":2.4}},"curves":{"pc":[0,0.187,0.339,0.578,1],"sc":[0,0.057,0.274,0.492,0.926],"wc":[0,0.187,0.426,0.594,1]}}},"meshVersion":"4"};
 
 /* ---- sea-core.js ---- */
 const MODE_IDS = ['baseline', 'medium', 'low', 'extra-low', 'static'];
+
+
+
+const PRESET_IDS = Object.keys(seaConsts.presets || { default: {} });
+const RES_SCALES = [1, 0.75, 0.5];
+const TIME_MODES = ['auto', 'day', 'night', 'custom', 'off'];
 
 
 
@@ -180,45 +186,86 @@ function num(raw, fallback) {
 
 
 
+const TIER_DEFINES = {
+  medium: { HAS_PARALLAX: 0, SHADOW_STEPS: 8, HAS_GGX: 1, HAS_SURF_OCT: 3 },
+  low: {
+    HAS_PARALLAX: 0, HAS_WARP: 0, FLOW_LOD: 0, NOISE_LAYERS: 1,
+    HAS_LIGHTING: 0, HAS_SHADOWS: 0, HAS_SOIL: 0, HAS_MURK: 0,
+    HAS_SKY_MATCAP: 0, HAS_GGX: 1, HAS_SURF_OCT: 1,
+    HAS_SHOAL_BREAKERS: 0, HAS_BIOLUM: 0,
+  },
+  'extra-low': {
+    HAS_PARALLAX: 0, HAS_WARP: 0, FLOW_LOD: 0, NOISE_LAYERS: 1,
+    HAS_LIGHTING: 0, HAS_SHADOWS: 0, HAS_SOIL: 0, HAS_MURK: 0,
+    HAS_SKY_MATCAP: 0, HAS_GGX: 0, HAS_SURF_OCT: 1,
+    HAS_SHOAL_BREAKERS: 0, HAS_BIOLUM: 0,
+  },
+};
 
-function modeSettings(id) {
+
+function intersectDefines(base, tier) {
+  const out = { ...(base || {}) };
+  for (const [k, v] of Object.entries(tier || {})) {
+    const have = Number(out[k]);
+    const want = Number(v);
+    out[k] = isFinite(have) ? Math.min(have, want) : want;
+  }
+  return out;
+}
+
+
+
+
+
+function modeSettings(id, presetId = 'default', resScale = 1) {
   if (!MODE_IDS.includes(id)) throw new Error(`unknown sea mode: ${id}`);
+  const presets = seaConsts.presets || {};
+  const key = presets[presetId] ? presetId : 'default';
+  const preset = presets[key] || null;
+  const scale = RES_SCALES.includes(Number(resScale)) ? Number(resScale) : 1;
   if (id === 'static') {
-    return { shader: false, renderScale: 1, uniforms: null, defines: null };
+    return {
+      shader: false, renderScale: 1, uniforms: null, defines: null,
+      preset: key, kf: preset ? preset.KF || null : null,
+      dayNight: !!(preset && preset.dayNight),
+      curves: (preset && preset.curves) || seaConsts.curves,
+    };
   }
+  if (!preset) throw new Error(`unknown sea preset: ${presetId}`);
 
+  const tog = preset.TOG || {};
+  
+  
+  
+  const defines = intersectDefines(preset.defines || {}, TIER_DEFINES[id] || {});
+  defines.USE_NOISE_LUT = 0;
   const uniforms = {
-    ...seaConsts.baseline,
-    flowMode: 1,        
-    noiseLayers: 2,
+    ...(preset.S || seaConsts.baseline),
+    flowMode: tog.flowMode === undefined ? 1 : (tog.flowMode ? 1 : 0),
+    noiseLayers: (preset.defines && preset.defines.NOISE_LAYERS) || 2,
     travelMax: 0,
-    snap: 1,
+    snap: tog.snap === undefined ? 1 : (tog.snap ? 1 : 0),
   };
-  const defines = {};   
-  if (id !== 'baseline') {
-    uniforms.par = 0;
-    uniforms.pom = 1;
-    defines.HAS_PARALLAX = 0;   
-  }
-  if (id === 'low' || id === 'extra-low') {
-    uniforms.warp = 0;
-    uniforms.flowMode = 0;
-    uniforms.noiseLayers = 1;
-    
-    
-    defines.HAS_WARP = 0;       
-    defines.NOISE_LAYERS = 1;
-    defines.FLOW_LOD = 0;       
-  }
   return {
-    shader: true, renderScale: id === 'extra-low' ? 0.5 : 1, uniforms, defines,
+    shader: true,
+    renderScale: scale,
+    uniforms,
+    defines,
+    preset: key,
+    kf: preset.KF || null,
+    dayNight: !!preset.dayNight,
+    curves: preset.curves || seaConsts.curves,
   };
 }
 
 
 
 
-const TEX_BYTES = { colour: 4, dist: 1, aux: 3, flow: 3, speed: 1 };
+const TEX_BYTES = {
+  colour: 4, dist: 1, aux: 3, flow: 3, speed: 3,
+  height: 1, normal: 3, soil: 4, palette: 3, sky: 4,
+  shadow: 1, texel: 4,
+};
 const CURVE_BYTES = 3 * 128 * 4;
 
 
@@ -244,6 +291,32 @@ function pickMode(saved, env) {
     : 'static';
 }
 
+
+
+
+function resolveResetMode(env, capable = true) {
+  return capable ? pickMode('', env || {}) : 'static';
+}
+
+
+
+
+const RESET_PERF = {
+  mode: '', resScale: 1, fps30: true, frameCap: 0, staticWhenHidden: true,
+};
+const RESET_COLOUR = { opacity: 1, brightness: 1.1, hue: 0, sat: 100 };
+const RESET_MOTION = { waveSpeed: 1, flowSpeed: 1 };
+const RESET_STYLE = { preset: 'default', timeMode: 'auto', customHour: 13 };
+
+
+
+function parseResScale(raw) {
+  const n = num(raw, 1);
+  if (RES_SCALES.includes(n)) return n;
+  if (RES_SCALES.includes(n / 100)) return n / 100;
+  return 1;
+}
+
 function parseState(raw) {
   const r = raw || {};
   return {
@@ -256,6 +329,9 @@ function parseState(raw) {
     hue: clamp(num(r.hue, 0), -180, 180),
     sat: clamp(num(r.sat, 100), 0, 120),
     
+    waveSpeed: clamp(num(r.waveSpeed, 100) / 100, 0, 2),
+    flowSpeed: clamp(num(r.flowSpeed, 100) / 100, 0, 2),
+    
     fps30: !(r.fps30 === false || r.fps30 === '0' || r.fps30 === 'false'),
     
     frameCap: FRAME_CAPS.includes(Number(r.frameCap)) ? Number(r.frameCap) : 0,
@@ -263,6 +339,11 @@ function parseState(raw) {
     staticWhenHidden:
       !(r.staticWhenHidden === false || r.staticWhenHidden === '0' ||
         r.staticWhenHidden === 'false'),
+    resScale: parseResScale(r.resScale),
+    preset: PRESET_IDS.includes(r.preset) ? r.preset : 'default',
+    timeMode: TIME_MODES.includes(r.timeMode) ? r.timeMode : 'auto',
+    
+    customHour: clamp(num(r.customHour, 13), 0, 24),
   };
 }
 
@@ -377,6 +458,15 @@ function backgroundDue(awaySince, now, threshold = BACKGROUND_MS) {
 
 
 
+function advancePhase(phase, dtSec, speed, maxDt = 0.25) {
+  const dt = clamp(Number(dtSec) || 0, 0, maxDt);
+  return (Number(phase) || 0) + dt * Math.max(0, Number(speed) || 0);
+}
+
+
+
+
+
 
 const INTRO_REVEAL_MS = 3600;
 const INTRO_WAVE_AT = 0.95;        
@@ -395,6 +485,206 @@ function introRampsAt(elapsedMs) {
     grain: clamp(t / INTRO_TOTAL_MS, 0, 1),
     flow: clamp(t / INTRO_TOTAL_MS, 0, 1),
   };
+}
+
+
+
+
+
+
+const KF_FIELDS = ['key', 'amb', 'skyZ', 'skyH', 'skyD'];
+const KF_INT_FIELDS = ['lightI', 'skyI', 'specI'];
+const KEY_ORDER = [['night', 1.0], ['dawn', 6.25], ['day', 12.5], ['dusk', 19.0]];
+
+
+
+
+const KF_LIST = [['dusk', -5.0], ...KEY_ORDER, ['night', 25.0]];
+const SUNRISE = 6.0;
+const SUNSET = 19.0;
+const MOONRISE = 19.5;
+const MOONSET = 5.5;
+const MAX_MOON_EL = 52;
+const MIN_KEY_EL = 0.0175;
+
+const clamp01 = v => Math.max(0, Math.min(1, Number(v) || 0));
+const smoothstep01 = (a, b, x) => {
+  const t = clamp01((x - a) / (b - a));
+  return t * t * (3 - 2 * t);
+};
+const smoothMix = t => t * t * (3 - 2 * t);
+const lerp3 = (a, b, t) => [0, 1, 2].map(i => a[i] + (b[i] - a[i]) * t);
+const NEUTRAL_RGB = [1, 1, 1];
+
+function hex01(hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || ''));
+  if (!m) return NEUTRAL_RGB;
+  const n = parseInt(m[1], 16);
+  return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
+}
+
+function kfSwatch(kf, name) {
+  const src = (kf && kf[name]) || (kf && kf.night) || {};
+  const out = {};
+  for (const f of KF_FIELDS) out[f] = hex01(src[f]);
+  for (const f of KF_INT_FIELDS) out[f] = num(src[f], 1);
+  return out;
+}
+
+
+function kfAt(hour24, kf) {
+  const h = ((Number(hour24) % 24) + 24) % 24;
+  let a = KF_LIST[0];
+  let b = KF_LIST[1];
+  for (let i = 0; i < KF_LIST.length - 1; i++) {
+    if (h >= KF_LIST[i][1] && h <= KF_LIST[i + 1][1]) {
+      a = KF_LIST[i];
+      b = KF_LIST[i + 1];
+      break;
+    }
+  }
+  let t = (h - a[1]) / Math.max(1e-6, b[1] - a[1]);
+  t = t * t * (3 - 2 * t);
+  const ca = kfSwatch(kf, a[0]);
+  const cb = kfSwatch(kf, b[0]);
+  const out = {};
+  for (const f of KF_FIELDS) out[f] = lerp3(ca[f], cb[f], t);
+  for (const f of KF_INT_FIELDS) out[f] = ca[f] + (cb[f] - ca[f]) * t;
+  return out;
+}
+
+function nightAmount(h) {
+  return clamp01(
+    h < 5.0 || h > 20.5 ? 1
+      : h < 7.0 ? 1 - (h - 5.0) / 2.0
+        : h > 18.5 ? (h - 18.5) / 2.0 : 0,
+  );
+}
+
+const horizonXY = d => {
+  const len = Math.hypot(d[0], d[1]) || 1;
+  return [d[0] / len, d[1] / len];
+};
+
+
+
+function bodyArc(hour, rise, set, maxEl, sign) {
+  const span = set > rise ? set - rise : set + 24 - rise;
+  let frac;
+  if (set > rise) {
+    if (hour >= rise && hour <= set) frac = (hour - rise) / span;
+    else frac = 1 + ((((hour - set) % 24) + 24) % 24) / (24 - span);
+  } else if (hour >= rise || hour <= set) {
+    frac = ((((hour - rise) % 24) + 24) % 24) / span;
+  } else {
+    frac = 1 + (hour - set) / (24 - span);
+  }
+  const arc = sign * frac * Math.PI;
+  const el = Math.sin(frac * Math.PI) * maxEl * Math.PI / 180;
+  const ce = Math.cos(el);
+  return {
+    frac, arc, el,
+    dir: [ce * Math.cos(arc), ce * Math.sin(arc), Math.sin(el)],
+  };
+}
+
+function liftAboveHorizon(dir, minZ) {
+  const [x, y, z] = dir;
+  if (z >= minZ) return dir;
+  const xyLen = Math.hypot(x, y) || 1;
+  const ce = Math.sqrt(Math.max(0, 1 - minZ * minZ));
+  return [x / xyLen * ce, y / xyLen * ce, minZ];
+}
+
+function rotateAz(dir, deg) {
+  if (!deg) return dir;
+  const a = deg * Math.PI / 180;
+  const c = Math.cos(a);
+  const s = Math.sin(a);
+  return [dir[0] * c - dir[1] * s, dir[0] * s + dir[1] * c, dir[2]];
+}
+
+
+
+function solarState(hour24, opts = {}) {
+  const h = ((Number(hour24) % 24) + 24) % 24;
+  const sign = opts.hemi === 'N' ? -1 : 1;
+  const maxEl = Math.max(1, num(opts.sunMaxEl, 85));
+  const azOff = num(opts.sunAzOff, 0);
+  const sunArc = bodyArc(h, SUNRISE, SUNSET, maxEl, sign);
+  const moonArc = bodyArc(h, MOONRISE, MOONSET, MAX_MOON_EL, sign);
+  const sunDir = liftAboveHorizon(rotateAz(sunArc.dir, azOff), MIN_KEY_EL);
+  const moonDir = liftAboveHorizon(rotateAz(moonArc.dir, azOff), MIN_KEY_EL);
+
+  
+  const sunSkyVis = smoothstep01(4.4, 6.4, h) * smoothstep01(20.6, 18.6, h);
+  const sunKeyVis = smoothstep01(5.25, 6.4, h) * (1 - smoothstep01(18.6, 19.75, h));
+  const moonSkyVis = h >= 12 ? smoothstep01(19.0, 21.0, h) : 1 - smoothstep01(4.0, 6.0, h);
+  const moonKeyVis = h >= 12 ? smoothstep01(19.75, 21.0, h) : 1 - smoothstep01(4.0, 5.25, h);
+
+  let isMoon = moonKeyVis > sunKeyVis;
+  let keyDir = isMoon ? moonDir : sunDir;
+  let keyVis = isMoon ? moonKeyVis : sunKeyVis;
+  let sunVis = sunSkyVis;
+  let moonVis = moonSkyVis;
+
+  if (opts.timeMode === 'off') {
+    keyDir = sunDir;
+    sunVis = 1.0;
+    moonVis = 0.0;
+    keyVis = 1.0;
+    isMoon = false;
+  }
+
+  const keyXY = horizonXY(keyDir);
+  const lowSun = 1 - clamp01(keyDir[2]);
+  const drift = num(opts.specDrift, 0);
+  const anchor = [
+    keyXY[0] * (drift * (0.20 + 0.80 * lowSun)),
+    keyXY[1] * (drift * (0.20 + 0.80 * lowSun)),
+  ];
+  return {
+    hour: h, sunDir, moonDir, keyDir, keyVis, isMoon,
+    sunKeyVis, moonKeyVis, sunSkyVis: sunVis, moonSkyVis: moonVis,
+    sunXY: horizonXY(sunDir), moonXY: horizonXY(moonDir), keyXY,
+    lowSun, anchor,
+  };
+}
+
+
+
+function dayNightState(hour24, kf, opts = {}) {
+  const k = kfAt(hour24, kf);
+  const solar = solarState(hour24, opts);
+  const moonMix = solar.isMoon ? smoothMix(clamp01(solar.keyVis)) : 0;
+  const night = kfSwatch(kf, 'night');
+  const h = solar.hour;
+  return {
+    ...solar,
+    lightCol: k.key.map(v => v * k.lightI),
+    ambCol: k.amb.map(v => v * k.lightI),
+    skyZ: k.skyZ,
+    skyH: k.skyH,
+    skyD: k.skyD,
+    specTint: lerp3(k.key, night.key, moonMix),
+    nightMix: nightAmount(h),
+    lightI: k.lightI,
+    skyI: k.skyI,
+    specI: k.specI,
+    
+    nightKey: night.key,
+    nightSkyH: night.skyH,
+  };
+}
+
+
+
+function waveSetEnvelope(unixSec) {
+  const s = Number(unixSec);
+  if (!isFinite(s)) return 1;
+  return 1
+    + 0.20 * Math.sin(2 * Math.PI * s / 270)
+    + 0.08 * Math.sin(2 * Math.PI * s / 2280);
 }
 
 function assetUrl(name, base = seaConsts.assetBase,
@@ -615,6 +905,59 @@ function intOr(raw, fallback = 0) {
 
 
 
+function parsePalette(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  if (!Array.isArray(raw.stops) || !Array.isArray(raw.cols)) return null;
+  if (raw.stops.length < 2 || raw.stops.length !== raw.cols.length) return null;
+  const stops = raw.stops.map(Number);
+  if (!stops.every(v => isFinite(v) && v >= 0 && v <= 1)) return null;
+  for (let i = 1; i < stops.length; i++) {
+    if (!(stops[i] > stops[i - 1])) return null;
+  }
+  const cols = [];
+  for (const c of raw.cols) {
+    if (!Array.isArray(c) || c.length < 3) return null;
+    const rgb = c.slice(0, 3).map(Number);
+    if (!rgb.every(v => isFinite(v) && v >= 0 && v <= 255)) return null;
+    cols.push(rgb);
+  }
+  return { stops, cols };
+}
+
+function parseCoast(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const levels = kindPositive(raw.levels);
+  const strength = kindFinite(raw.strength);
+  const r = kindFinite(raw.r);
+  const g = kindFinite(raw.g);
+  const b = kindFinite(raw.b);
+  if ([levels, strength, r, g, b].some(v => v === null)) return null;
+  if (![r, g, b].every(v => v >= 0 && v <= 255)) return null;
+  return { levels, strength, r, g, b };
+}
+
+
+
+function parseBakes(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const height = pointerText(raw.height, '');
+  const normal = pointerText(raw.normal, '');
+  const soil = pointerText(raw.soil, '');
+  if (!height || !normal || !soil) return null;
+  return {
+    height,
+    heightEncoding: pointerText(raw.heightEncoding, 'sqrt-depth'),
+    normal,
+    soil,
+    soilScale: positive(raw.soilScale, seaConsts.soilScale ?? 4),
+    speedChannels: pointerText(raw.speedChannels, 'speed-fetch-murk'),
+  };
+}
+
+
+
+
+
 function parsePointer(raw, fallback = seaConsts) {
   const hasRaw = !!(raw && typeof raw === 'object');
   const p = hasRaw ? raw : {};
@@ -658,6 +1001,13 @@ function parsePointer(raw, fallback = seaConsts) {
     auxScale: positive(p.auxScale, fb.auxScale),
     flowCell: positive(p.flowCell, fb.flowCell),
     speedCell: positive(p.speedCell, fb.speedCell),
+    palette: parsePalette(p.palette) || parsePalette(fb.palette) || null,
+    coast: parseCoast(p.coast) || parseCoast(fb.coast) || null,
+    
+    
+    
+    
+    bakes: hasRaw ? parseBakes(p.bakes) : parseBakes(fb.bakes),
   };
 }
 
@@ -756,6 +1106,9 @@ function parseKindPointer(raw, expectedKind) {
     auxScale,
     flowCell,
     speedCell,
+    palette: parsePalette(raw.palette),
+    coast: parseCoast(raw.coast),
+    bakes: parseBakes(raw.bakes),
   };
 }
 
@@ -1223,9 +1576,6 @@ void main() {
 }`;
 
 const FRAG = `#version 300 es
-// Quality variants. sea-core's modeSettings #defines these per tier, so a tier
-// that does not use a feature does not pay to execute it. The defaults are the
-// full baseline, so the sandbox and any plain caller keep everything.
 #ifndef HAS_PARALLAX
 #define HAS_PARALLAX 1
 #endif
@@ -1238,39 +1588,180 @@ const FRAG = `#version 300 es
 #ifndef FLOW_LOD
 #define FLOW_LOD 1
 #endif
+#ifndef HAS_LIGHTING
+#define HAS_LIGHTING 1
+#endif
+#ifndef HAS_BIOLUM
+#define HAS_BIOLUM 1
+#endif
+#ifndef HAS_SURF_OCT
+#define HAS_SURF_OCT 4
+#endif
+#ifndef HAS_SKY_MATCAP
+#define HAS_SKY_MATCAP 1
+#endif
+#ifndef HAS_GGX
+#define HAS_GGX 2
+#endif
+#ifndef HAS_SHOAL_BREAKERS
+#define HAS_SHOAL_BREAKERS 1
+#endif
+#ifndef HAS_WHALE
+#define HAS_WHALE 1
+#endif
+#ifndef HAS_SHADOWS
+#define HAS_SHADOWS 1
+#endif
+#ifndef SHADOW_STEPS
+#define SHADOW_STEPS 14
+#endif
+// ---- compile-time paths (1 = optimized path, 0 = the reference path) -------
+#ifndef USE_NOISE_LUT
+#define USE_NOISE_LUT 1
+#endif
+#ifndef USE_HALF_SHADOW
+#define USE_HALF_SHADOW 1
+#endif
+#ifndef USE_POM_FAST
+#define USE_POM_FAST 1
+#endif
+#ifndef NOISE_LUT_UNPACK_G
+// gradient channel unpack scale: 0.5 + 0.5 * gx * gScale / gMax
+#define NOISE_LUT_UNPACK_G 7.3000
+#endif
+#ifndef HAS_SOIL
+#define HAS_SOIL 1
+#endif
+#ifndef HAS_MURK
+#define HAS_MURK 1
+#endif
 precision highp float;
 precision highp sampler2D;
 out vec4 outColor;
 
-uniform sampler2D uColour, uAux, uDist, uFlow, uSpeedTex, uCurve, uSliceCurve, uWarpCurve;
+uniform sampler2D uHeight, uAux, uDist, uFlow, uSpeedTex, uNormal, uSoilTex, uPalette;
+uniform sampler2D uCurve, uSliceCurve, uWarpCurve;
+#if HAS_SKY_MATCAP
+uniform sampler2D uSkyMatcap;
+#endif
 uniform vec2 uTarget, uSize, uFlowSize, uSpeedSize, uAuxSpan, uCenter;
-uniform float uFlowCell;   // map tiles per coarse flow texel
-uniform float uBleed;      // tiles of water past the rect: 0 padded, 6 legacy
-uniform float uZoom, uTime, uDistMax;
-uniform float uShoreW, uShelf, uFlowSpeed, uGrain, uFoam, uDeep, uSwell, uSnap, uWaveSpeed, uFlowMode, uZoomCss;
-uniform float uCycle;   // seconds for one advection cycle
-uniform float uDeflect, uDeflectReach;   // the bake's coastal bend (bake.py)
-uniform float uTravelMax;                // cap on one cycle's advection (0 = none)
-uniform float uWarp, uWarpBias;          // surface distortion: amount, depth bias
-uniform float uSpec, uSpecPow, uSpecSize, uSpecInvert;  // surface highlight
-uniform float uSpecMode;   // 0 add, 1 screen, 2 water-coloured, 3 multiply
+#if USE_NOISE_LUT
+// Seamless 256×256 RGBA8 noise + analytic-gradient table (see NOISE_LUT).
+uniform sampler2D uNoiseLut;
+#endif
+#if HAS_SHADOWS && USE_HALF_SHADOW
+uniform sampler2D uShadowTex;   // half-res cast-shadow target (R)
+uniform vec2 uViewSize;         // full backing size the shadow target maps onto
+#endif
+// Exact map-texel pass: 0 = normal screen render, 1 = shade one map texel per
+// fragment into the tile FBO (uTileOrigin + gl_FragCoord).
+uniform vec2 uTileOrigin;
+uniform float uTexelPass;
+uniform float uFlowCell, uZoom, uZoomCss, uTime, uWaveTime, uFlowTime, uDistMax;
+uniform float uShoreW, uShelf, uFlowSpeed, uGrain, uFoam, uSnap, uWaveSpeed, uFlowMode;
+uniform float uCycle, uDeflect, uDeflectReach, uTravelMax, uWarp, uWarpBias;
 uniform vec2 uDirA, uDirB;
 uniform float uSpeedA, uSpeedB, uScaleA, uScaleB;
-uniform float uParallax, uDeepSlow, uWaveIn, uWaveOut, uPomLayers;
-uniform float uDepthScale;      // un-stretches the bake's per-map depth span
-uniform float uAlongScale, uBrightness, uNoiseLayers;
-uniform float uHue, uSat;       // colour controls: degrees, percent
-uniform float uSpecFloor;       // extra highlight on water too dark to catch it
+uniform float uParallax, uDepthScale, uDeepSlow, uWaveIn, uWaveOut, uPomLayers, uAlongScale;
+uniform float uBrightness, uHue, uSat;
+uniform float uHeightSpan;      // heightHi - heightLo, the physical height range the depth map spans
+uniform float uPomDepthFloor;   // 1 = never shade above the POM ray's own depth (kills bright trench lips)
+uniform float uBleed;           // tiles of water past uSize: 0 padded, 6 legacy
 uniform float uReveal;          // 0..1 depth-masked intro (deep water first)
+
+// Unified surface normal field
+uniform float uSurfMode;        // 1 = unified N_surf, 0 = classic scalar grain (A/B)
+uniform float uSurfStrength;    // overall normal/slope strength
+uniform float uChopAmp;         // octave 0: capillary chop
+uniform float uCrossAmp;        // octave 1: wind cross-sea
+uniform float uSwellAmp;        // octave 2: exp-sine swell trains
+uniform float uMacroAmp;        // octave 3: current-aligned lanes
+uniform float uBandLimit;       // 0 = no zoom band-pass, 1 = full band-pass
+uniform float uSwellDir;        // prevailing swell direction, degrees
+uniform float uMacroAlign;      // 0 = isotropic lanes, 1 = fully flow-aligned slopes
+
+// Painterly water surface primitives (uniform-driven, so A/B needs no recompile)
+uniform float uSurfPattern;     // 0 = seascape, 1 = voronoi, 2 = ridged, 3 = simplex
+uniform float uChoppy;          // crest sharpness vs calm glassy troughs
+uniform float uPainterly;       // 0 = smooth physical BRDF, 1 = bold painted facets
+// Per-layer wavelengths in map tiles (one unit of the pattern's wave-space)
+uniform float uChopScale;       // octave 0 capillary chop
+uniform float uCrossScale;      // octave 1 wind cross-sea
+uniform float uSwellScale;      // octave 2 flow-advected swell
+uniform float uMacroScale;      // octave 3 current-aligned macro lanes
+uniform float uRidgeMix;        // pattern 4: 0 = soft simplex, 1 = crisp ridged crests
+uniform float uMacroZoom;       // CSS zoom at which zoom-gated macro lanes fade out
+uniform float uMacroZoomMode;   // 1 = macro lanes fade with zoom, 0 = always on
+uniform float uPeakBias;        // shifts GGX specular glints onto raised crests
+uniform float uSpecTilt;        // tilts the specular angle toward the sun
+
+// Beer-Lambert underwater stack
+uniform float uDepthGamma, uDepthContrast, uWaterClarity, uBedVis, uSoilLumLock;
+uniform float uSoilDark, uSoilSat;   // live soil darkening / desaturation
+uniform float uReliefFade, uDeepVeil, uVeilStart;  // deep-ocean relief + watercolor veil
+uniform vec3 uAbsorbK;          // optical water absorption (kR > kG > kB)
+uniform float uSoilMix, uIsPirate, uMurkGain;
+uniform vec3 uMurkCol;          // suspended-silt colour
+uniform float uMurkAbsorb, uMurkScatter, uMurkDepthFade;
+uniform vec3 uCoastCol;
+uniform float uCoastLevels, uCoastStrength;
+
+// Day-night lighting
+uniform float uDayNightOn;      // 0 = off (flat), 1 = active
+uniform vec3 uSunDir, uLightCol, uAmbientCol;
+uniform float uNightMix, uReliefStrength, uBiolumGain;
+uniform float uKeyVis;          // 0..1 Option A sun/moon key handoff (0 at blue hour)
+uniform float uShadowStrength;  // 0..1.5, blends the cast shadow into the key light
+uniform float uShadowLen;       // max horizontal march distance, tiles
+uniform float uShadowHeight;    // vertical scale of h in [0,1], tiles
+uniform float uShadowSoft;      // penumbra sharpness, higher = crisper
+uniform float uShadowMaxEl;     // curated cap on the shadow-casting elevation, degrees
+uniform float uShadowStretch;   // artistic elongation of the cast shadow
+
+// Sky matcap + GGX specular
+uniform vec3 uSkyZenith, uSkyHorizon;
+uniform float uSkyOn, uSkyGain, uFresnelF0, uFresnelPow;
+uniform float uSkyOpacity, uSkyInt;  // post-threshold blend + per-keyframe HDR gain
+uniform float uSkyNormal;       // sky-only normal softening (1 = surface normal)
+uniform float uSkyCel;          // sky-only cel banding, decoupled from painterly
+uniform float uSkyBlend;        // 0 = mix, 1 = screen, 2 = add, 3 = soft light
+uniform float uSpecModel;       // 0 = GGX, 1 = classic radial disc (A/B)
+uniform float uSpecGain, uRoughTight, uRoughBroad, uViewTilt, uSpecCut;
+uniform float uSpecOpacity, uSpecInt;  // post-threshold blend + per-keyframe gain
+uniform float uSpecBlend;       // 0 = add, 1 = screen, 2 = glow, 3 = colour dodge
+uniform float uSpec, uSpecPow, uSpecSize, uSpecFloor, uSpecInvert, uSpecMode;
+uniform vec3 uSpecTint;         // warm sun glint -> cool silver moon glint
+uniform float uSpecDrift;       // how far the pool glides away from screen centre
+uniform float uSpecStretch;     // sun-path elongation of the pool (1 = circular)
+uniform float uSpecSpread;      // curated shimmer pool width, decoupled from view tilt
+uniform float uSpecRadius;      // outer radius of the pool in half-screen-heights
+
+// Fetch waves, shoal breakers, wave sets
+uniform float uFetchWeight, uShoalGain, uWaveSet;
+
+// Whale body: a baked 3D mesh posed and rasterised by the page into a live
+// colour + height target, then sampled in the whale's local frame.
 uniform vec4 uWhalePose;        // x, y, heading (rad), depth (tiles below water)
 uniform vec4 uWhaleShape;       // half length, half width, surface fade, enabled
+                                // (x/y keep the production ABI; the body's
+                                // actual extents are uWhaleHalf)
 uniform vec4 uWhaleWake;        // x, y, strength, radius: the ring left behind
-uniform sampler2D uWhaleTex;     // 16x8 body target: RGB colour, A height
+uniform sampler2D uWhaleTex;     // body target: RGB colour, A height
 uniform vec2 uWhaleHalf;         // body half extents in tiles (x, y)
 uniform float uWhaleHeight;      // body height in tiles (A = 0..1 of this)
 
-// ---- map border -------------------------------------------------------------
-// Everything here is in map texels (one texel per cell), so the trim scales
+// ---- whale constants (exact production values, src/sea-glsl.js) -----------
+const float WHALE_MAX_DEPTH = 14.0;
+const float WHALE_SEABED_GAP = 1.0;
+const float WHALE_SHORE_W = 3.5;
+const float WHALE_WAKE_SHELF = 2.5;
+const float WHALE_TINT = 0.4;
+const float WHALE_TINT_FLOOR = 0.22;
+const float WHALE_SHADOW_WASH = 0.45;
+// v2's darker water needs a gentler body fog or a dive reads as a black hole.
+const float WHALE_FOG_SCALE = 0.65;
+// ---- map border (production) -----------------------------------------------
+// Everything here is in map texels (one texel per tile), so the trim scales
 // with zoom like the rest of the sea: the water bleeds uBleed past the
 // rectangle (0 for a padded bake, whose ring is real water already; 6 for a
 // legacy unpadded bake), then a 9-texel band: black, line, black, 3-texel
@@ -1284,70 +1775,38 @@ const float BORDER_BLACK2 = 1.0;
 const float BORDER_LINE2 = 1.0;
 const float BORDER_BLACK_OUT = 1.0;
 
-// Deepest baked route depth (maxDepth = 222/16 = 13.875 tiles), rounded up.
-// Only normalises the whale's surface coupling; the shader never sees maxDepth.
-const float WHALE_MAX_DEPTH = 14.0;
 
-// How much of the water's own colour tints the body: 0 = natural, 1 = the sea
-// exactly. The owner asked for roughly 70-80%, not a complete recolour.
-const float WHALE_TINT = 0.4;
-
-// The least the water tints a submerged body, reached within 0.6 tiles of the
-// surface. The exponential fog alone was invisible there.
-const float WHALE_TINT_FLOOR = 0.22;
-
-// How far the body's baked shadows wash out toward the water once submerged.
-// Under water a near-black rim reads as a hole in the sea rather than a shadow,
-// so the dark end of the shading picks up the water colour; the lit side keeps
-// its own.
-const float WHALE_SHADOW_WASH = 0.45;
-
-// The hue rotation every browser's CSS hue-rotate() uses, so the 2D fallback and
-// the shader land on the same colours. Rotates about the grey axis; luminance
-// survives.
 vec3 hueRotate(vec3 c, float degrees) {
   float a = radians(degrees);
-  float s = sin(a);
-  float k = cos(a);
+  float s = sin(a), k = cos(a);
   mat3 m = mat3(
-    0.213 + k * 0.787 - s * 0.213,
-    0.213 - k * 0.213 + s * 0.143,
-    0.213 - k * 0.213 - s * 0.787,
-    0.715 - k * 0.715 - s * 0.715,
-    0.715 + k * 0.285 + s * 0.140,
-    0.715 - k * 0.715 + s * 0.715,
-    0.072 - k * 0.072 + s * 0.928,
-    0.072 - k * 0.072 - s * 0.283,
-    0.072 + k * 0.928 + s * 0.072
+    0.213 + k * 0.787 - s * 0.213, 0.213 - k * 0.213 + s * 0.143, 0.213 - k * 0.213 - s * 0.787,
+    0.715 - k * 0.715 - s * 0.715, 0.715 + k * 0.285 + s * 0.140, 0.715 - k * 0.715 + s * 0.715,
+    0.072 - k * 0.072 + s * 0.928, 0.072 - k * 0.072 - s * 0.283, 0.072 + k * 0.928 + s * 0.072
   );
   return max(m * c, vec3(0.0));
 }
-
-// A whale never rests on the seabed: the deepest it may sink is this fraction of
-// the local water depth, so shallow water makes it surface instead of going
-// black under the (absolute) pose depth. 0.85 leaves a little clearance below.
-// Ground depth is measured in the same tiles as the whale: depth01 * this. The
-// body is then held WHALE_SEABED_GAP above the ground, so "ground 10 tiles"
-// means the deepest the whale can be there is 9.
-const float WHALE_SEABED_GAP = 1.0;
-
-
-// Whale ring shore width, in tiles. The ring uses the coast's own wave
-// frequencies and noise (never a uShoreW / WHALE_SHORE_W ratio: 6.4x would put
-// the wavelength below one texel and alias on the 1-tile grid), so its band
-// shows about one crest line instead of the coast's several. The shelf width is
-// derived from the same ratio, so widening this widens the whole ring.
-// Easy to tune.
-const float WHALE_SHORE_W = 3.5;
-
-// The wake's shelf width, in tiles: the soft glow just inside its circle.
-const float WHALE_WAKE_SHELF = 2.5;
 
 float hash(vec2 p) {
   p = fract(p * vec2(123.34, 456.21));
   p += dot(p, p + 45.32);
   return fract(p.x * p.y);
 }
+#if USE_NOISE_LUT
+// One L1-cached hardware fetch each, instead of 4 hashes (vnoise) or the whole
+// simplex kernel (snoise / snoiseD). Same lattice size and calibrated to the
+// procedural height range and gradient RMS, so the A/B keeps the wave energy.
+float vnoise(vec2 p) {
+  return texture(uNoiseLut, p * (1.0 / 32.0)).a;
+}
+vec3 snoiseD(vec2 v) {
+  vec4 t = texture(uNoiseLut, v * (1.0 / 32.0));
+  return vec3(t.r * 2.0 - 1.0, (t.gb * 2.0 - 1.0) * NOISE_LUT_UNPACK_G);
+}
+float snoise(vec2 v) {
+  return texture(uNoiseLut, v * (1.0 / 32.0)).r * 2.0 - 1.0;
+}
+#else
 float vnoise(vec2 p) {
   vec2 i = floor(p), f = fract(p);
   f = f * f * (3.0 - 2.0 * f);
@@ -1355,25 +1814,18 @@ float vnoise(vec2 p) {
   float c = hash(i + vec2(0, 1)), d = hash(i + vec2(1, 1));
   return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
 }
-float fbm(vec2 p) {
-  return 0.58 * vnoise(p) + 0.30 * vnoise(p * 2.03 + 11.1)
-       + 0.12 * vnoise(p * 4.01 + 23.7);
-}
-// Ashima / Gustavson 2D simplex noise, roughly -1..1
 vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
 vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
 vec3 permute(vec3 x) { return mod289(((x * 34.0) + 1.0) * x); }
 float snoise(vec2 v) {
-  const vec4 C = vec4(0.211324865405187, 0.366025403784439,
-                      -0.577350269189626, 0.024390243902439);
+  const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
   vec2 i  = floor(v + dot(v, C.yy));
   vec2 x0 = v - i + dot(i, C.xx);
   vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
   vec4 x12 = x0.xyxy + C.xxzz;
   x12.xy -= i1;
   i = mod289(i);
-  vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0))
-                 + i.x + vec3(0.0, i1.x, 1.0));
+  vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0));
   vec3 m = max(0.5 - vec3(dot(x0, x0), dot(x12.xy, x12.xy), dot(x12.zw, x12.zw)), 0.0);
   m = m * m; m = m * m;
   vec3 x = 2.0 * fract(p * C.www) - 1.0;
@@ -1386,40 +1838,187 @@ float snoise(vec2 v) {
   g.yz = a0.yz * x12.xz + h.yz * x12.yw;
   return 130.0 * dot(m, g);
 }
-float parCurve(float d) {
-  return texture(uCurve, vec2(clamp(d, 0.0, 1.0), 0.5)).r;
+
+// Exact value + analytic gradient of the same simplex kernel. dFdx/dFdy
+// collapse inside texel-snapped cells and finite differences cost 3x the
+// noise, while this costs ~12 multiply-adds on top of one snoise call.
+// Returns vec3(height in ~[-1,1], dh/dx, dh/dy).
+vec3 snoiseD(vec2 v) {
+  const vec4 C = vec4(0.211324865405187, 0.366025403784439,
+                     -0.577350269189626, 0.024390243902439);
+  vec2 i  = floor(v + dot(v, C.yy));
+  vec2 x0 = v - i + dot(i, C.xx);
+  vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+  vec2 x1 = x0 - i1 + C.xx;
+  vec2 x2 = x0 + C.zz;
+  i = mod289(i);
+  vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0))
+                         + i.x + vec3(0.0, i1.x, 1.0));
+  vec3 m  = max(0.5 - vec3(dot(x0, x0), dot(x1, x1), dot(x2, x2)), 0.0);
+  vec3 m2 = m * m;
+  vec3 m3 = m2 * m;
+  vec3 m4 = m2 * m2;
+  vec3 x  = 2.0 * fract(p * C.www) - 1.0;
+  vec3 h  = abs(x) - 0.5;
+  vec3 a0 = x - floor(x + 0.5);
+  vec3 norm = 1.79284291400159 - 0.85373472095314 * (a0 * a0 + h * h);
+  vec2 g0 = vec2(a0.x, h.x) * norm.x;
+  vec2 g1 = vec2(a0.y, h.y) * norm.y;
+  vec2 g2 = vec2(a0.z, h.z) * norm.z;
+  vec3 gv = vec3(dot(g0, x0), dot(g1, x1), dot(g2, x2));
+  vec3 t  = -8.0 * m3 * gv;
+  vec2 grad = m4.x * g0 + m4.y * g1 + m4.z * g2
+            + t.x  * x0 + t.y  * x1 + t.z  * x2;
+  return 130.0 * vec3(dot(m4, gv), grad);
 }
-// where the i-th POM slice samples, as a depth fraction 0..1. Linear = even
-// spacing; flattening the curve bunches the slices together there, steepening
-// it spreads them out.
-float sliceCurveAt(float t) {
-  return texture(uSliceCurve, vec2(clamp(t, 0.0, 1.0), 0.5)).r;
+#endif
+
+float fbm(vec2 p) {
+  return 0.58 * vnoise(p) + 0.30 * vnoise(p * 2.03 + 11.1) + 0.12 * vnoise(p * 4.01 + 23.7);
 }
-// how much of the distortion a pixel at this depth gets
-float warpCurveAt(float t) {
-  return texture(uWarpCurve, vec2(clamp(t, 0.0, 1.0), 0.5)).r;
+
+// ---- Painterly water surface primitives --------------------------------
+// Every primitive returns vec3(signed height, dh/dq.x, dh/dq.y) where q is
+// wave-space (one unit = one wavelength), evaluated only at texel-snapped q.
+// The height is in ~[-1,1]; the analytic (or tight 2-tap) gradient is scaled
+// toward a shared slope energy so one slope weight serves all four.
+const mat2 ROT1 = mat2(0.8, 0.6, -0.6, 0.8);   // ~36.9 deg, irrational-ish twist
+
+// TDM Seascape: wide, quiet concave troughs meeting at crisp diamond crests.
+float seaOctaveH(vec2 uv, float choppy) {
+  uv += snoise(uv * 0.55) * 0.85;
+  vec2 wv  = 1.0 - abs(sin(uv));
+  vec2 swv = abs(cos(uv));
+  wv = mix(wv, swv, wv);
+  return pow(1.0 - pow(max(wv.x * wv.y, 1e-5), 0.65), choppy);
 }
-// parallax is a scale about the view centre: a point at depth d is sampled at
-// (target + (w-target)*(1-par)). Linear in w, so there is no singularity or
-// shear at the centre -- it is the flat-map equivalent of a layer further away.
+vec3 seaOctaveD(vec2 q, float choppy) {
+  // |sin| repeats every PI radians, so PI * q gives one wave per q-unit.
+  const float e = 0.03;
+  vec2 uv = q * 3.14159;
+  float h  = seaOctaveH(uv, choppy);
+  float hx = seaOctaveH(uv + vec2(e, 0.0), choppy);
+  float hy = seaOctaveH(uv + vec2(0.0, e), choppy);
+  // back into per-q units, tuned toward snoiseD's slope energy
+  return vec3(h * 2.0 - 1.0, (vec2(hx - h, hy - h) / e) * (3.14159 * 3.0));
+}
+
+// Painterly cellular facets: wide concave bowls inside cells, crisp polygonal
+// ridges along the cell seams. grad(F1) is exact and costs zero extra taps.
+vec3 voronoiD(vec2 q, float choppy) {
+  vec2 f = floor(q);
+  vec2 r = q - f;
+  float best = 9.0;
+  vec2 v1 = vec2(0.0);
+  float tt = uWaveTime * 0.65;
+  for (int y = -1; y <= 1; y++) {
+    for (int x = -1; x <= 1; x++) {
+      vec2 g = vec2(float(x), float(y));
+      float rnd = hash(f + g);
+      vec2 jit = 0.5 + 0.36 * vec2(
+        sin(tt + 6.2831 * rnd),
+        sin(tt + 6.2831 * fract(rnd * 7.137) + 1.7));
+      vec2 v = g + jit - r;
+      float dd = dot(v, v);
+      if (dd < best) { best = dd; v1 = v; }
+    }
+  }
+  float F1 = sqrt(best);
+  float pwr = max(1.0, choppy * 0.65);
+  float h = pow(clamp(F1, 0.0, 1.25), pwr);
+  vec2 grad = pwr * pow(max(F1, 0.05), pwr - 1.0) * (-v1 / max(F1, 0.05));
+  return vec3(h * 2.0 - 1.0, grad * 15.0);
+}
+
+// Sharp ridged brushstrokes: analytic chain rule on snoiseD, zero extra noise.
+vec3 ridgedD(vec2 q, float choppy) {
+  vec3 d = snoiseD(q);
+  float r = 1.0 - abs(d.x);
+  float pwr = max(1.0, choppy * 0.85);
+  float h = pow(max(r, 1e-4), pwr);
+  float sgn = d.x / sqrt(d.x * d.x + 0.015);   // smooth bevel at the apex
+  vec2 grad = d.yz * (-sgn * pwr * pow(max(r, 1e-4), pwr - 1.0));
+  return vec3(h * 2.0 - 1.0, grad);
+}
+
+// Continuous simplex <-> ridged blend on the SAME snoiseD sample: the ridged
+// height and its analytic gradient are derived from d, so the hybrid costs
+// zero extra noise evaluations.
+vec3 hybridD(vec2 q, float choppy, float ridgeMix) {
+  vec3 d = snoiseD(q);
+  float r = 1.0 - abs(d.x);
+  float pwr = max(1.0, choppy * 0.85);
+  float rh = pow(max(r, 1e-4), pwr) * 2.0 - 1.0;
+  float sgn = d.x / sqrt(d.x * d.x + 0.015);
+  vec2 rg = d.yz * (-sgn * pwr * pow(max(r, 1e-4), pwr - 1.0));
+  return vec3(mix(d.x, rh, ridgeMix), mix(d.yz, rg, ridgeMix));
+}
+
+vec3 surfPat(vec2 q, float choppy, int pat) {
+  if (pat == 0) return seaOctaveD(q, choppy);
+  if (pat == 1) return voronoiD(q, choppy);
+  if (pat == 2) return ridgedD(q, choppy);
+  if (pat == 4) return hybridD(q, choppy, uRidgeMix);
+  return snoiseD(q);
+}
+
+// Octave 1 is twisted so seascape/voronoi interfere into organic diamond
+// facets instead of an axis-aligned grid; the gradient follows the rotation.
+vec3 surfPatRot(vec2 q, float choppy, int pat) {
+  if (pat == 0 || pat == 1) {
+    vec3 d = surfPat(ROT1 * q, choppy, pat);
+    return vec3(d.x, transpose(ROT1) * d.yz);
+  }
+  return surfPat(q, choppy, pat);
+}
+
+// Continuous log2-zoom band-pass: a lambda-tile wave spans
+// lambda * zoomCss CSS pixels per cycle, so fading on log2(px) hands every
+// octave over smoothly per wheel notch with no Nyquist shimmer.
+float bandW(float lambdaTiles, float zoomCss, float pxMin, float pxMax) {
+  float logPx = log2(max(lambdaTiles * max(zoomCss, 0.02), 0.25));
+  float lo = smoothstep(log2(pxMin), log2(pxMin * 2.4), logPx);
+  float hi = pxMax > 9000.0 ? 1.0
+           : 1.0 - smoothstep(log2(pxMax), log2(pxMax * 2.4), logPx);
+  return lo * hi;
+}
+
+// Sharp-crested ocean swell with exact analytic slope (zero noise calls).
+// phi is wobbled by the cross-sea height so crests break organically.
+vec3 expWave(vec2 p, vec2 dir, float k, float speed, float time, float sharp, float wobble) {
+  float phi = dot(p, dir) * k - time * speed + wobble;
+  float e = exp(sharp * (sin(phi) - 1.0));     // [exp(-2*sharp), 1.0]
+  float dphi = sharp * cos(phi) * e;
+  return vec3(e * 2.0 - 1.0, dir * dphi);      // (signed height, normalized slope)
+}
+
+// Painterly quantisation: push mid-tones into flat paint dabs with soft
+// bevels at low amt, tightening to a razor-crisp cel edge at amt = 1.
+// amt = 0 returns x unchanged.
+float paintStep(float x, float levels, float amt) {
+  if (amt <= 0.001) return x;
+  float s = x * levels;
+  float i = floor(s);
+  float f = fract(s);
+  // Soft gouache bevel at low amt -> razor-crisp cel edge at amt = 1.0
+  float edge = mix(0.24, 0.03, clamp(amt, 0.0, 1.0));
+  float stepped = (i + smoothstep(0.5 - edge, 0.5 + edge, f)) / levels;
+  return mix(x, stepped, amt);
+}
+
+float parCurve(float d) { return texture(uCurve, vec2(clamp(d, 0.0, 1.0), 0.5)).r; }
+float sliceCurveAt(float t) { return texture(uSliceCurve, vec2(clamp(t, 0.0, 1.0), 0.5)).r; }
+float warpCurveAt(float t) { return texture(uWarpCurve, vec2(clamp(t, 0.0, 1.0), 0.5)).r; }
+
 vec2 parShift(vec2 w, float depth) {
 #if HAS_PARALLAX
-  // depth is a map-space quantity: scale the parallax with zoom so the same
-  // number of map tiles shifts at every zoom (3.2 is the reference zoom).
-  // The bake stretches each map's own height range onto 0..1; uDepthScale puts
-  // that back onto exploration's span, so equal physical depths shift equally.
-  // An unset uniform reads 0.0 in WebGL2, which would kill parallax entirely.
-  float depthScale = uDepthScale > 0.0 ? uDepthScale : 1.0;
-  float k = uParallax * parCurve(depth * depthScale) * (uZoomCss / 3.2);
+  float ds = uDepthScale > 0.0 ? uDepthScale : 1.0;
+  float k = uParallax * parCurve(depth * ds) * (uZoomCss / 3.2);
   return (uTarget - w) * k;
 #else
   return vec2(0.0);
 #endif
 }
-// world position to sample the base colour at, for parallax depth dep
-// (0 = surface, 1 = deepest). The shift is a per-texel quantity, so snapping
-// the result to a texel centre moves a whole texel rigidly instead of
-// resampling the seabed smoothly at screen resolution.
 vec2 parPos(vec2 p, float dep) {
 #if HAS_PARALLAX
   vec2 w = p + parShift(p, dep);
@@ -1429,212 +2028,274 @@ vec2 parPos(vec2 p, float dep) {
 #endif
 }
 
-// The map's depth palette (tools/sea_editor.py, preset interesting_v2), as a
-// colour by depth fraction. Only the whale uses it: the sea itself samples the
-// baked colour texture.
-vec3 depthRamp(float t) {
-  const float S[9] = float[9](0.001, 0.03, 0.07, 0.12, 0.20, 0.32, 0.46, 0.66, 1.0);
-  const vec3 C[9] = vec3[9](
-    vec3(0.290, 0.494, 0.612), vec3(0.227, 0.408, 0.525),
-    vec3(0.176, 0.337, 0.455), vec3(0.137, 0.275, 0.384),
-    vec3(0.110, 0.224, 0.322), vec3(0.086, 0.180, 0.263),
-    vec3(0.067, 0.141, 0.208), vec3(0.047, 0.098, 0.145),
-    vec3(0.027, 0.051, 0.071));
-  vec3 c = C[0];
-  for (int i = 1; i < 9; i++) {
-    c = mix(c, C[i], smoothstep(S[i - 1], S[i], t));
-  }
-  return c;
-}
-
-// ---- shore waves ------------------------------------------------------------
-// One model for the coast's wave/foam band and the whale ring. Both call it at
-// the coast's spatial frequencies and noise; only the shore width, shelf width,
-// distance and wet mask differ. Distances are in tiles.
-struct ShoreParams {
-  vec2 p;            // noise position (map texels)
-  vec2 flow;         // current direction
-  float travel;      // one cycle's advection distance
-  float ph1, ph2;    // the two advection phases
-  float w1, w2;      // their cross-fade weights
-  float d;           // distance to the shore/contour
-  float w;           // shore width
-  float shelfW;      // shelf glow width
-  float wetMul;      // 1 in water; the coast passes its wet mask
-  float dir;         // +1: crests run in to the coast; -1: radiate outwards
-};
-struct ShoreWaves {
-  float crest;       // inbound + outbound crest, before the shore mask
-  float shore;       // 1 at the shore, 0 at the shore width
-  float edge;        // thin wet-line mask (already wet-scaled)
-  float lap;         // wet-line breakup factor
-  float shelf;       // shelf glow modulation (already wet-scaled)
-};
-ShoreWaves shoreWaves(ShoreParams s) {
-  vec2 n1 = s.p;
-  vec2 wet1 = s.p - s.flow * (s.travel * 0.30 * s.ph1);
-  vec2 wet2 = s.p - s.flow * (s.travel * 0.30 * s.ph2);
-  vec2 sh1 = s.p - s.flow * (s.travel * 0.40 * s.ph1);
-  vec2 sh2 = s.p - s.flow * (s.travel * 0.40 * s.ph2);
-  float lap2 = fbm(wet1 * 0.90 + 17.0) * s.w1
-             + fbm(wet2 * 0.90 + 17.0) * s.w2;
-  // Wobble the isolines so crests wander.
-  float wob = (fbm(n1 * 0.14 + 31.0) - 0.5) * 2.2;
-  float breakup = smoothstep(0.05, 0.60, fbm(n1 * 0.05 + 5.0));
-  // Two trains: one runs in, one runs out, with separate wavelengths, speeds
-  // and slow phase offsets so the cycles are not in lockstep.
-  float phIn = (fbm(n1 * 0.045 + 7.0) - 0.5) * 6.2832;
-  float phOut = (fbm(n1 * 0.055 + 23.0) - 0.5) * 6.2832;
-  float wIn = sin((s.d + wob) * 1.05
-                  + uTime * uWaveSpeed + phIn);
-  float wOut = sin((s.d + wob * 1.3) * 0.74
-                   - uTime * uWaveSpeed * 0.63 + phOut);
+struct ShoreWaves { float crest, shore, edge, lap, shelf; };
+ShoreWaves shoreWaves(vec2 p, vec2 flow, float travel, float ph1, float ph2, float w1, float w2,
+                      float d, float w, float shelfW, float wetMul, float dir) {
+  vec2 wet1 = p - flow * (travel * 0.30 * ph1);
+  vec2 wet2 = p - flow * (travel * 0.30 * ph2);
+  vec2 sh1 = p - flow * (travel * 0.40 * ph1);
+  vec2 sh2 = p - flow * (travel * 0.40 * ph2);
+  float lap2 = fbm(wet1 * 0.90 + 17.0) * w1 + fbm(wet2 * 0.90 + 17.0) * w2;
+  float wob = (fbm(p * 0.14 + 31.0) - 0.5) * 2.2;
+  float breakup = smoothstep(0.05, 0.60, fbm(p * 0.05 + 5.0));
+  float phIn = (fbm(p * 0.045 + 7.0) - 0.5) * 6.2832;
+  float phOut = (fbm(p * 0.055 + 23.0) - 0.5) * 6.2832;
+  float wIn = sin((d + wob) * 1.05 + uWaveTime * uWaveSpeed * dir + phIn);
+  float wOut = sin((d + wob * 1.3) * 0.74 - uWaveTime * uWaveSpeed * 0.63 * dir + phOut);
   float cIn = pow(max(wIn, 0.0), 3.0);
   float cOut = smoothstep(0.10, 0.90, wOut) * 0.55;
   float crest = (cIn * uWaveIn + cOut * uWaveOut) * breakup;
-  float edge = (1.0 - smoothstep(0.0, 0.85, s.d)) * s.wetMul;
+  float edge = (1.0 - smoothstep(0.0, 0.85, d)) * wetMul;
   float lap = 0.30 + 0.95 * smoothstep(0.34, 0.80, lap2);
-  float shore = 1.0 - smoothstep(0.0, s.w, s.d);
-  float shelfMask = 1.0 - smoothstep(0.0, s.shelfW, s.d);
-  float shelfN = fbm(sh1 * 0.12 + 3.0) * s.w1
-               + fbm(sh2 * 0.12 + 3.0) * s.w2 - 0.5;
-  return ShoreWaves(crest, shore, edge, lap, shelfN * (shelfMask * s.wetMul));
+  float shore = 1.0 - smoothstep(0.0, w, d);
+  float shelfMask = 1.0 - smoothstep(0.0, shelfW, d);
+  float shelfN = fbm(sh1 * 0.12 + 3.0) * w1 + fbm(sh2 * 0.12 + 3.0) * w2 - 0.5;
+  return ShoreWaves(crest, shore, edge, lap, shelfN * (shelfMask * wetMul));
 }
 
 void main() {
-  // y is bottom-origin, like gl_FragCoord: the sea's texture rows run south at
-  // row 0 to north at the last row, so world y grows upward on screen. (The
-  // prototype's y-down world was mirrored against the real map; R17.)
-  vec2 world = uTarget + vec2(gl_FragCoord.x - uCenter.x,
-                              gl_FragCoord.y - uCenter.y) / uZoom;
-  // effects live on the texture's own pixel grid (1 texel = 1 tile), not on
-  // the screen grid, so the grain matches the map's grain at every zoom
-  vec2 p = mix(world, floor(world) + 0.5, uSnap);
+  // The texel pass shades exactly one map texel per fragment (uTileOrigin +
+  // gl_FragCoord), so a zoomed-in frame does the work once per map texel
+  // instead of once per screen pixel. Everything downstream still sees the
+  // real camera (uTarget/uZoom/uCenter), so the result is bit-identical to the
+  // full-res screen render.
+  vec2 world = uTexelPass > 0.5
+    ? (uTileOrigin + floor(gl_FragCoord.xy) + 0.5)
+    : (uTarget + (gl_FragCoord.xy - uCenter) / uZoom);
+  vec2 p = uTexelPass > 0.5 ? world : mix(world, floor(world) + 0.5, uSnap);
+  // fragP is the texel-snapped position in screen pixels: the same value the
+  // full-res path computes, so the shadow lookup, the virtual perspective and
+  // the classic disc all land exactly where they would without the FBO.
+  vec2 fragP = (p - uTarget) * uZoom;
+
   float d = texture(uDist, p / uSize).r;
-  d = d * d * uDistMax;                     // back to tiles
+  d = d * d * uDistMax;
   vec4 aux0 = texture(uAux, p / uAuxSpan);
-  float depth01 = aux0.r;                   // 0 shallow .. 1 deep, from the height map
-  // coarse 16-tile field, the 1:1 bake, or an LOD that uses the coarse field
-  // and rebuilds the coastal detail from the distance field (no extra bytes)
+  float depth01 = aux0.r;
+  float wet = step(0.0001, d);
+
+  // Flow + speed + fetch + murk
   vec4 fcoarse = texture(uFlow, p / (uFlowCell * uFlowSize));
   vec2 cdir = fcoarse.rg * 2.0 - 1.0;
   float cspd = fcoarse.b;
   vec2 flow;
   float fspeed;
+  float fetchVal = 0.5;
+  float murkVal = 0.0;
 #if FLOW_LOD
+  vec3 sfm = texture(uSpeedTex, p / (4.0 * uSpeedSize)).rgb;
+  fetchVal = sfm.g;
+  murkVal = sfm.b;
   if (uFlowMode > 0.5) {
-    // LOD: the raw 16-tile gyre, bent toward the along-coast direction that the
-    // bake stores in aux.GB (rotate90 of the blurred distance gradient, faded
-    // to zero where that gradient is ill-defined). Same inputs the 1:1 bake
-    // uses, so the two agree instead of the shader re-deriving it per pixel.
-    vec2 along = (texture(uAux, p / uAuxSpan).gb * 2.0 - 1.0) * uAlongScale;
-    // blend the *raw* interpolated gyre, not its direction: where two cells
-    // disagree its length is < 1, and the generator weighs the bend against
-    // that length. Normalising first over-rotates exactly where currents meet.
-    vec2 cm = cdir;
-    float near = uDeflect * exp(-d / max(1.0, uDeflectReach));
-    vec2 bl = mix(cm, along, near);
+    // LOD: project the gyre onto the baked along-coast tangent. The tangent is
+    // a fixed rotational sense, so aiming the gyre at it forces a U-turn on the
+    // opposing flank; projecting drops the into/out-of-land part instead.
+    vec2 along = (aux0.gb * 2.0 - 1.0) * uAlongScale;
+    float aLen = length(along);
+    vec2 tHat = aLen > 1e-4 ? along / aLen : vec2(0.0);
+    vec2 guided = tHat * dot(cdir, tHat);
+    float near = uDeflect * exp(-d / max(1.0, uDeflectReach)) * clamp(aLen, 0.0, 1.0);
+    vec2 bl = mix(cdir, guided, near);
     float bls = length(bl);
-    flow = bls > 1e-4 ? bl / bls : cm;
-    // speed: the baked field itself, 4 tiles/texel over the full map.
-    fspeed = texture(uSpeedTex, p / (4.0 * uSpeedSize)).r;
+    flow = bls > 1e-4 ? bl / bls : (length(cdir) > 1e-4 ? normalize(cdir) : vec2(0.0));
+    fspeed = sfm.r;
   } else {
-    // coarse only: no along blend, the gyre's own speed
     float m = length(cdir);
     flow = m > 1e-4 ? cdir / m : vec2(0.0);
     fspeed = cspd;
   }
 #else
-  {
-    // coarse only: no along blend, the gyre's own speed
-    float m = length(cdir);
-    flow = m > 1e-4 ? cdir / m : vec2(0.0);
-    fspeed = cspd;
-  }
+  float m = length(cdir);
+  flow = m > 1e-4 ? cdir / m : vec2(0.0);
+  fspeed = cspd;
 #endif
-  float wet = step(0.0001, d);
 
-  // ---- advection cycle (shared by the shore lap, the shelf and open water) ----
-  // The current pushes the pattern, but only for one cycle's worth of travel;
-  // a second copy starts half a cycle behind and the two are cross-faded, so a
-  // copy always resets while its weight is zero and the displacement stays
-  // bounded. Without this the offset grows forever and steady currents smear
-  // the noise into long streaks.
-  float ph1 = fract(uTime / uCycle);
-  float ph2 = fract(uTime / uCycle + 0.5);
+  // Advection cycle driven by uFlowTime (zero creasing at 200%, zero jump)
+  float ph1 = fract(uFlowTime / uCycle);
+  float ph2 = fract(uFlowTime / uCycle + 0.5);
   float w1 = 1.0 - abs(2.0 * ph1 - 1.0);
   float w2 = 1.0 - w1;
-  // one cycle's travel is capped: at large flow x cycle the displacement gets
-  // long enough that the folds around a pole cross several texels and crease
   float cycleTravel = min(fspeed * uFlowSpeed * uCycle,
                           uTravelMax > 0.0 ? uTravelMax : 1e6);
 
-  // ---- open water: two noise layers crossing, then sliding with the current ----
-  // (never the depth gradient: only the shore waves use distance)
   float deep = smoothstep(0.06, 0.75, d / uDistMax);
   float shallow = 1.0 - depth01;
-  vec2 q = p;                                // the noise is not parallaxed
   float slow = mix(uDeepSlow, 1.0, shallow);
-  // two-phase advection: the current moves the combined noise for one cycle's
-  // travel only, and the second copy half a cycle behind is cross-faded in as
-  // the first fades out - so it reads as endless without ever stretching
   float travel = cycleTravel * slow;
-  vec2 s1 = q - flow * (travel * ph1);
-  vec2 s2 = q - flow * (travel * ph2);
-  // each layer also scrolls on its own fixed heading at its own speed and
-  // scale (no rotation, no stretch)
-  vec2 scrollA = uDirA * (uTime * uSpeedA);
-  vec2 scrollB = uDirB * (uTime * uSpeedB);
-  float nA = snoise((s1 - scrollA) * uScaleA) * w1 + snoise((s2 - scrollA) * uScaleA) * w2;
-  // cross-fading two copies halves the contrast at the crossover; undo it so
-  // the grain does not pulse once per cycle
+  // Surface noise is evaluated on the texel-snapped p: every primitive and
+  // expWave carry a continuous derivative, so each map tile becomes one crisp
+  // facet with a real slope and reflection, never a sub-pixel blur.
+  vec2 s1 = p - flow * (travel * ph1);
+  vec2 s2 = p - flow * (travel * ph2);
+  vec2 scrollA = uDirA * (uFlowTime * uSpeedA);
+  vec2 scrollB = uDirB * (uFlowTime * uSpeedB);
   float amp = inversesqrt(w1 * w1 + w2 * w2);
-#if NOISE_LAYERS > 1
-  // the tier keeps the second layer in the build; the uniform can still turn it
-  // off (the sandbox's layer control), so both remain live
-  float nB = 0.0;
-  float n = nA * amp;
-  if (uNoiseLayers > 1.5) {
-    nB = snoise((s1 - scrollB) * uScaleB) * w1
-       + snoise((s2 - scrollB) * uScaleB) * w2;
-    n = (nA + nB) * 0.5 * amp;
-  }
-#else
-  float nB = 0.0;                            // one layer: A alone, no B sample
-  float n = nA * amp;
-#endif
 
-  // surface distortion: the two noise layers warp where the seabed is sampled,
-  // so the bed swims under the water. The depth bias is what keeps the shallow
-  // end still: weight 0 at the surface, 1 in the deep, via the warp curve.
+  // ---- 1. Unified multi-scale surface normal field ----
+  float nA = 0.0, nB = 0.0, n = 0.0;
+  float chopH = 0.0, crossH = 0.0, swellH = 0.0, macroH = 0.0, macroWt = 0.0;
+  vec2 surfGrad = vec2(0.0);
+  float surfH = 0.0;
+  vec3 Nsurf = vec3(0.0, 0.0, 1.0);
+  // Zoom-gated macro lanes: fade out for close-ups, fade in for overviews.
+  float macroZoomGate = uMacroZoomMode > 0.5
+    ? (1.0 - smoothstep(uMacroZoom * 0.55, uMacroZoom * 1.45, uZoomCss))
+    : 1.0;
+  if (uSurfMode > 0.5) {
+    int pat = int(uSurfPattern + 0.5);
+    // Octave 0 — capillary chop, two-phase flow-advected.
+    float chopL = max(uChopScale, 1.0);
+    float bw0 = mix(1.0, bandW(chopL, uZoomCss, 3.0, 12000.0), uBandLimit);
+    float fullW = uChopAmp;
+    float activeW = uChopAmp * bw0;
+    vec3 d0 = (surfPat((s1 - scrollA) / chopL, uChoppy, pat) * w1
+             + surfPat((s2 - scrollA) / chopL, uChoppy, pat) * w2) * amp;
+    chopH = d0.x;
+    surfGrad += d0.yz * (0.045 * uChopAmp * bw0);
+    surfH += d0.x * 0.45 * uChopAmp * bw0;
+#if HAS_SURF_OCT > 1
+    // Octave 1 — wind cross-sea, bridge octave. Twisted per primitive.
+    float crossL = max(uCrossScale, 1.0);
+    float bw1 = mix(1.0, bandW(crossL, uZoomCss, 3.5, 12000.0), uBandLimit);
+    fullW += uCrossAmp;
+    activeW += uCrossAmp * bw1;
+    vec3 d1 = (surfPatRot((s1 - scrollB) / crossL, uChoppy, pat) * w1
+             + surfPatRot((s2 - scrollB) / crossL, uChoppy, pat) * w2) * amp;
+    crossH = d1.x;
+    surfGrad += d1.yz * (0.060 * uCrossAmp * bw1);
+    surfH += d1.x * 0.55 * uCrossAmp * bw1;
+#endif
+#if HAS_SURF_OCT > 2
+    // Octave 2 — directional exp-sine swell trains, both phases advected by
+    // the same flow map as chop and cross-sea so the swell bends with them.
+    float swellL = max(uSwellScale, 4.0);
+    float bw2 = mix(1.0, bandW(swellL, uZoomCss, 4.0, 420.0), uBandLimit);
+    fullW += uSwellAmp;
+    activeW += uSwellAmp * bw2;
+    float sa = radians(uSwellDir);
+    vec2 sd = vec2(cos(sa), sin(sa));
+    vec2 sd2 = normalize(vec2(-sd.y * 0.85 + sd.x * 0.35, sd.x * 0.85 + sd.y * 0.35));
+    vec3 sw1 = (expWave(s1, sd, 6.2832 / swellL, 0.45, uWaveTime, 1.15, crossH * 1.6) * w1
+              + expWave(s2, sd, 6.2832 / swellL, 0.45, uWaveTime, 1.15, crossH * 1.6) * w2) * amp;
+    vec3 sw2 = (expWave(s1, sd2, 6.2832 / (swellL * 0.63), 0.30, uWaveTime * 1.08, 1.0, crossH * 1.2) * w1
+              + expWave(s2, sd2, 6.2832 / (swellL * 0.63), 0.30, uWaveTime * 1.08, 1.0, crossH * 1.2) * w2) * amp;
+    swellH = sw1.x * 0.6 + sw2.x * 0.4;
+    surfGrad += (sw1.yz * 0.55 + sw2.yz * 0.35) * (0.15 * uSwellAmp * bw2);
+    surfH += swellH * 0.9 * uSwellAmp * bw2;
+
+    // Octave 3 — current-aligned macro lanes. Two-phase flow advection plus a
+    // local 2-tap tangent average: the average is a short local step in noise
+    // space, never a p*grad(dir) lever arm, so the lanes cannot spin around
+    // the origin where the current curves.
+    float macroL = max(uMacroScale, 1.0);
+    // macroZoomGate owns the upper zoom handoff; bandW only drops lanes once
+    // they shrink under a few pixels (no hidden 240px magic number).
+    macroWt = uMacroAmp * macroZoomGate
+            * mix(1.0, bandW(macroL, uZoomCss, 3.0, 12000.0), uBandLimit);
+    fullW += uMacroAmp * macroZoomGate;
+    activeW += macroWt;
+    if (macroWt > 0.005) {
+      float mCyc = max(uCycle, 1.0);
+      float mph1 = ph1;
+      float mph2 = ph2;
+      float mw1 = w1;
+      float mw2 = w2;
+      float mTravel = min(max(fspeed, 0.30) * uFlowSpeed * mCyc, 220.0);
+      vec2 ms1 = p - flow * (mTravel * mph1);
+      vec2 ms2 = p - flow * (mTravel * mph2);
+      vec2 flN = length(flow) > 1e-4 ? normalize(flow) : vec2(1.0, 0.0);
+      vec2 flPerp = vec2(-flN.y, flN.x);
+      float mAmp = inversesqrt(mw1 * mw1 + mw2 * mw2);
+      vec2 nStep = flN * 0.28;
+      // Same crisp liquid language as chop/cross-sea, just gentler: the macro
+      // field must not turn back into soft clouds when zoomed out.
+      float macroChoppy = mix(1.0, uChoppy, 0.4);
+#if HAS_SURF_OCT > 3
+      vec3 la = surfPat(ms1 / macroL + nStep, macroChoppy, pat)
+              + surfPat(ms1 / macroL - nStep, macroChoppy, pat);
+      vec3 lb = surfPat(ms2 / macroL + nStep, macroChoppy, pat)
+              + surfPat(ms2 / macroL - nStep, macroChoppy, pat);
+      vec3 lanes = (la * mw1 + lb * mw2) * (0.5 * mAmp);
+#else
+      vec3 la = surfPat(ms1 / macroL, macroChoppy, pat);
+      vec3 lb = surfPat(ms2 / macroL, macroChoppy, pat);
+      vec3 lanes = (la * mw1 + lb * mw2) * mAmp;
+#endif
+      // Cross-flow slope anisotropy orients reflective facets along the shear
+      // lanes while keeping the field the same noise language as octaves 0-1.
+      vec2 lg = lanes.yz;
+      vec2 gAniso = flPerp * dot(lg, flPerp) * (1.0 + uMacroAlign)
+                  + flN * dot(lg, flN) * (1.0 - 0.55 * uMacroAlign);
+      macroH = lanes.x;
+      surfGrad += gAniso * (0.12 * macroWt);
+      surfH += lanes.x * 1.2 * macroWt;
+    }
+#endif
+    // Energy-preserving zoom compensation: when fine octaves fade out at low
+    // zoom, lift the surviving slope/height so reflections and crests stay alive.
+    float zoomGain = clamp(sqrt(max(fullW, 0.01) / max(activeW, 0.12)), 1.0, 2.2);
+    surfGrad *= zoomGain;
+    surfH *= zoomGain;
+    Nsurf = normalize(vec3(-surfGrad * (uSurfStrength * 0.55), 1.0));
+    n = surfH * 0.9;
+  } else {
+    // Classic scalar grain path, kept for a clean A/B against the unified field.
+    nA = snoise((s1 - scrollA) * uScaleA) * w1 + snoise((s2 - scrollA) * uScaleA) * w2;
+#if NOISE_LAYERS > 1
+    nB = snoise((s1 - scrollB) * uScaleB) * w1 + snoise((s2 - scrollB) * uScaleB) * w2;
+    n = (nA + nB) * 0.5 * amp;
+#else
+    nB = 0.0;
+    n = nA * amp;
+#endif
+    chopH = nA;
+    crossH = nB;
+    surfH = n;
+    surfGrad = vec2(nA, nB) * 0.35;
+    Nsurf = normalize(vec3(-surfGrad * uSurfStrength, 1.0));
+  }
+  // Positive on raised wave peaks/crests, negative in flat troughs: the
+  // gate for peak-biased specular glints.
+  float crestMask = smoothstep(-0.15, 0.55, surfH);
+  float peakGate = mix(1.0, crestMask * crestMask, uPeakBias);
+
 #if HAS_WARP
   float wdep = mix(1.0, warpCurveAt(depth01), uWarpBias);
-  vec2 warp = vec2(nA, nB) * (uWarp * wdep);
+  // Snell refraction bends the seabed perpendicular to wave crests. A mild
+  // zoom compensation keeps macro slopes visibly refracting at overview zoom.
+  float zoomRefr = mix(1.0, clamp(1.0 / sqrt(max(uZoomCss, 0.15)), 1.0, 2.6), 0.55);
+  vec2 warp = uSurfMode > 0.5
+    ? -Nsurf.xy * (uWarp * wdep * zoomRefr) / max(Nsurf.z, 0.35)
+    : vec2(nA, nB) * (uWarp * wdep);
 #else
-  vec2 warp = vec2(0.0);                  // the whale's refraction reads it too
+  vec2 warp = vec2(0.0);
 #endif
-  // everything parallax-related is computed from this displaced position
   vec2 base = p + warp;
 
-  // parallax the base colour map, anchored to the view centre: deep water is
-  // pulled slightly toward the centre (smaller features), so it reads as
-  // further away; the screen centre itself never moves
+  // ---- Parallax / POM -> hitPos ----
+  float rayDep01 = depth01;
+  float pomSlice = 0.0;
+  float floorOn = 0.0;
+  vec2 hitPos = parPos(base, depth01);
 #if HAS_PARALLAX
   int N = int(uPomLayers + 0.5);
-  vec3 col = texture(uColour, parPos(base, depth01) / uSize).rgb;
-  if (N > 1) {
-    // POM: ray from the top of the height range down; the first slice below
-    // the terrain is the hit, and the two slices bracketing it are mixed by
-    // the crossing fraction (soft edge, still occluded)
+#if USE_POM_FAST
+  // Dry land never has a seabed to march to, and a parallax shift that rounds
+  // away is not worth 12 dependent uAux fetches: skip both.
+  bool doPom = N > 1;
+  if (doPom) {
+    vec2 maxPar = parShift(base, 1.0);
+    if (wet < 0.5 || dot(maxPar, maxPar) < 0.25) doPom = false;
+  }
+#else
+  bool doPom = N > 1;
+#endif
+  if (doPom) {
+    floorOn = uPomDepthFloor;
     float hPrev = 1.0;
-    vec2 uvPrev = parPos(base, 0.0);
-    float terPrev = 1.0 - texture(uAux, uvPrev / uAuxSpan).r;
     bool hit = false;
     for (int i = 0; i < 12; i++) {
       if (i >= N) break;
-      // the slice curve decides where this step samples along the depth
-      // range: where it is flat the slices crowd together, where it is steep
-      // they are sparse
       float dep = sliceCurveAt((float(i) + 1.0) / float(N));
       float hRay = 1.0 - dep;
       vec2 sp = parPos(base, dep);
@@ -1647,306 +2308,659 @@ void main() {
           float tm = 1.0 - texture(uAux, uvm / uAuxSpan).r;
           if (hm <= tm) b = hm; else a = hm;
         }
-        vec2 uvHit = parPos(base, 1.0 - b);
-        float above = hPrev - terPrev;
-        float below = hRay - hTer;
-        float frac = clamp(above / max(above - below, 1e-6), 0.0, 1.0);
-        // blend the two slice positions by the crossing fraction and take one
-        // sample: continuous in frac, so no slice banding
-        vec2 hitPos = mix(uvPrev, uvHit, frac);
-        col = texture(uColour, hitPos / uSize).rgb;
+        hitPos = parPos(base, 1.0 - b);
+        rayDep01 = clamp(1.0 - b, 0.0, 1.0);
+        pomSlice = float(i + 1) / float(N);
         hit = true;
         break;
       }
       hPrev = hRay;
-      uvPrev = sp;
-      terPrev = hTer;
     }
     if (!hit) {
-      col = texture(uColour, parPos(base, 1.0) / uSize).rgb;
+      hitPos = parPos(base, 1.0);
+      rayDep01 = 1.0;
+      pomSlice = 1.0;
     }
   }
-#else
-  vec3 col = texture(uColour, parPos(base, depth01) / uSize).rgb;
 #endif
 
-  // ---- shore: wave crests travel in towards land ----
-  // distance isolines are parallel to the coast, so advancing the phase makes
-  // each crest move to a smaller d: waves breaking on the shore. The same
-  // model is used by the whale ring below.
-  ShoreWaves coast = shoreWaves(ShoreParams(
-    p, flow, cycleTravel, ph1, ph2, w1, w2,
-    d, uShoreW, uShelf, wet, 1.0));
-  float shore = coast.shore * wet;
-  col += vec3(0.58, 0.80, 0.94) * coast.crest * shore * uFoam;
+  // ---- Depth ramp shaping ----
+  // rawDepth is physical (1 - h), the same units the height bake stores.
+  float rayRawDepth = rayDep01 * (uHeightSpan > 0.0 ? uHeightSpan : 0.8394);
+  float hs = texture(uHeight, hitPos / uSize).r;
+  float sampledDepth = hs * hs;
+  float rawDepth = mix(sampledDepth, max(sampledDepth, rayRawDepth), floorOn);
+  float pomClip = max(0.0, rayRawDepth - sampledDepth);
+  float dCurve = pow(clamp(rawDepth, 0.0, 1.0), uDepthGamma);
+  float dShape = clamp(mix(dCurve, smoothstep(0.0, 1.0, dCurve),
+                           clamp((uDepthContrast - 0.5) / 1.3, 0.0, 1.0)), 0.0, 1.0);
+  vec3 palCol = texture(uPalette, vec2(dShape, 0.5)).rgb;
+  vec3 pal0 = texture(uPalette, vec2(0.0, 0.5)).rgb;
+  vec3 palDeep = texture(uPalette, vec2(1.0, 0.5)).rgb;
 
-  // thin wet line on the first texel, broken by the same noise
-  col += vec3(0.62, 0.84, 0.98) * coast.edge * coast.lap * uFoam * 0.8;
-
-  // the baked shelf glow breathes on its own, much wider than the wet line
-  col *= 1.0 + coast.shelf * uFoam * 1.1;
-
-  float grainN = fbm(q * 0.1 + 7.0) - 0.5;
-  float dither = hash(floor(q)) - 0.5;
-  float onWater = wet * (1.0 - shore * 0.85);
-  col *= 1.0 + (n * 1.2 + grainN * 0.16)
-               * uGrain * 1.2 * onWater * (1.0 - 0.45 * deep);
-  col *= 1.0 + dither * uGrain * 0.25 * onWater;
-
-  // ---- depth: darker, slightly cooler, with a huge slow swell ----
-  col *= mix(1.0, uDeep, deep * wet);
-  // a cooler, slightly richer blue with depth (no blur needed)
-  col = mix(col, col * vec3(0.82, 0.94, 1.12) + vec3(0.0, 0.004, 0.010),
-            deep * 0.55 * wet);
-  float swell = fbm(p * 0.018 + vec2(uTime * 0.015, 13.0)) - 0.5;
-  col *= 1.0 + swell * uSwell * deep * wet;
-
-  // ---- surface highlight ----
-  // Not a real specular: the crests of the open-water noise, raised to a power so
-  // only the peaks catch, masked by a feathered disc centred on the middle of the
-  // view. A vignette rather than a pattern: the light gathers under the eye and
-  // falls off toward the edges, and uSpecInvert flips it to a ring at the rim.
-  // Additive, so it can only brighten. No extra texture fetches.
-  float pxPerCssS = max(uZoom / max(uZoomCss, 1e-4), 1e-4);
-  // radius as a multiple of the view's half height, so the same number looks the
-  // same on a phone and a desktop
-  float halfH = uCenter.y / pxPerCssS;
-  float rad = max(uSpecSize, 0.02) * halfH;
-  float rr = length(gl_FragCoord.xy - uCenter) / pxPerCssS / max(rad, 1.0);
-  // a full gradient, not a plateau: 1 at the centre falling steadily to 0 at the
-  // rim, so the light reads as a vignette rather than a disc with soft edges
-  float disc = 1.0 - smoothstep(0.0, 1.0, rr);
-  float specMask = mix(disc, 1.0 - disc, clamp(uSpecInvert, 0.0, 1.0));
-  // the noise only reaches ~0.6 at its crests, so map that range to 0..1 before
-  // the power: otherwise pow() flattens everything and nothing catches
-  float crest = smoothstep(0.10, 0.70, n);
-  // the broad sheen is the crest itself; the glints are only its peaks
-  float spec = mix(pow(crest, max(uSpecPow, 1.0)), crest, 0.35);
-  float s = uSpec * spec * specMask * onWater;
-  vec3 lightTint = vec3(0.74, 0.87, 1.0);
-  int specMode = int(uSpecMode + 0.5);
-  if (specMode == 1) {
-    // screen: lifts the dark water, leaves what is already bright alone, so the
-    // highlight reads as sheen rather than a wash
-    col = 1.0 - (1.0 - col) * (1.0 - lightTint * s);
-  } else if (specMode == 2) {
-    // carries the water's own colour: the glints pick up the hue under them
-    // instead of turning everything pale white. Scaling by col alone starves
-    // the deep water, which is exactly where the glints read best, so a floor
-    // takes over as the pixel darkens.
-    float lum = dot(col, vec3(0.2126, 0.7152, 0.0722));
-    float dark = 1.0 - smoothstep(0.0, 0.22, lum);
-    col += s * (col * 2.0 + lightTint * (0.12 + uSpecFloor * dark));
-  } else if (specMode == 3) {
-    // warm: the screen lift again, on a warm tint, so the sea reads sunlit
-    // instead of moonlit against the cold water
-    col = 1.0 - (1.0 - col) * (1.0 - vec3(1.0, 0.92, 0.78) * s);
-  } else {
-    col += lightTint * s;
+  // ---- Seabed albedo: passive reflectance, luminance-locked against glow ----
+#if HAS_SOIL
+  float soilW = uSoilMix * (1.0 - uIsPirate);
+#else
+  float soilW = 0.0;
+#endif
+  vec3 bedAlbedo = pal0;
+  vec4 soil = vec4(0.0);
+  vec3 soilTone = vec3(0.0);
+  float sLum = 1.0;
+#if HAS_SOIL
+  if (soilW > 0.001) {
+    soil = texture(uSoilTex, hitPos / uSize);
+    // Live soil tone: desaturate about the soil's own luminance, then darken.
+    // Applied BEFORE the luminance lock, so a dark soil stays dark.
+    float sLum0 = max(dot(soil.rgb, vec3(0.2126, 0.7152, 0.0722)), 1e-3);
+    soilTone = max(mix(vec3(sLum0), soil.rgb, uSoilSat), vec3(0.0)) * uSoilDark;
+    sLum = max(dot(soilTone, vec3(0.2126, 0.7152, 0.0722)), 1e-3);
+    float pLum = dot(pal0, vec3(0.2126, 0.7152, 0.0722));
+    // Cap only ever caps DOWN: it can never lift darkened soil above 1.0.
+    float cap = min(1.0, pLum / sLum);
+    vec3 soilAlbedo = soilTone * mix(1.0, cap, uSoilLumLock);
+    bedAlbedo = mix(pal0, soilAlbedo, soil.a * soilW * wet);
   }
+#endif
 
-  // ---- whale ---------------------------------------------------------------
-  // The body rides its own parallax layer. The sea draws a layer at depth k by
-  // sampling from p + (target - p) * k, so a point of that layer at w appears on
-  // screen at target + (w - target) / (1 - k): magnified about the view centre.
-  // Drawing the whale there makes it part of that layer, so anything drawn above
-  // it (coast tiles, shallower water) conceals it.
-  //
-  // There is deliberately NO cap on that offset. A cap saturates the shift for
-  // anything far from the centre, which is what made the body look like it was
-  // floating instead of sitting in its layer; with the exact mapping it simply
-  // moves as far as the layer does (and may leave the view when very deep).
-  // The gate below is only a draw bound, not a limit on the shift.
-  // The sea under the *whale*, sampled once at its own position. Using the
-  // per-pixel depth01 made the body's effective depth (and so its cap, tint and
-  // fog) change as it moved around the screen.
-  float whaleSeabed01 = clamp(texture(uAux, uWhalePose.xy / uAuxSpan).r, 0.0, 1.0);
-  float whaleD01Pre = clamp(min(uWhalePose.w,
-    max(0.0, whaleSeabed01 * WHALE_MAX_DEPTH - WHALE_SEABED_GAP))
-    / WHALE_MAX_DEPTH, 0.0, 1.0);
-  float whaleK = uParallax * parCurve(whaleD01Pre) * (uZoomCss / 3.2);
-  vec2 whaleAt = uWhalePose.xy
-    + (uWhalePose.xy - uTarget) * (whaleK / max(1.0 - whaleK, 1e-3));
-  vec2 whaleBox = abs(p - whaleAt);
-  if (uWhaleShape.w > 0.5 && max(whaleBox.x, whaleBox.y) < 34.0) {
-    float whaleDepth = uWhalePose.w;
+  // ---- 3B: Day-night directional seabed lighting + cast terrain shadows ----
+  vec3 bedLight = vec3(1.0);
+  vec3 colLight = vec3(1.0);
+  vec3 foamLight = vec3(1.0);
+  float castShadow = 1.0;
+  if (uDayNightOn > 0.5) {
+    foamLight = mix(uAmbientCol + uLightCol * 0.55, vec3(1.0), 0.15);
+    // The sun direction is shared by the shadow march and the relief lighting.
+    vec3 L = normalize(uSunDir);
+    // Curated 2.5D elevation and its matching seabed light vector. Relief and
+    // cast shadows must agree on the same azimuth + compressed elevation for
+    // the whole 24h cycle, so compute them once before both branches.
+    vec2 sunXY = L.xy;
+    float xyLen = length(sunXY);
+    float rawEl = asin(clamp(L.z, 0.0, 1.0));
+    float maxEl = radians(clamp(uShadowMaxEl, 5.0, 85.0));
+    float shEl = min(maxEl, maxEl * (rawEl / max(rawEl + maxEl * 0.35, 1e-4)) * 1.35);
+    vec3 Lbed = xyLen > 1e-3
+      ? vec3((sunXY / xyLen) * cos(shEl), sin(shEl))
+      : vec3(0.0, 0.0, 1.0);
 
-    // The pose depth is absolute (tiles below the waterline), but the sea under
-    // the whale may be far shallower. Cap it to a fraction of the local baked
-    // depth so the body never sinks through the seabed: in shallow water it
-    // surfaces and shallows instead of turning pitch black. uWhalePose.w stays
-    // the raw pose depth for the debug/stats contract.
-    float whaleDepthEff = min(whaleDepth,
-      max(0.0, whaleSeabed01 * WHALE_MAX_DEPTH - WHALE_SEABED_GAP));
-
-    // The warp is depth-scaled the other way: at depth 0 the body is anchored to
-    // the surface (a breach shows no warp), while a deep body refracts with the
-    // surface waves. The parallax shift grows with depth, like the water at that
-    // depth, so the body reads as under the surface; it is clamped because
-    // unclamped it is a view-centre radial scale that leaves the gate.
-    float whaleD01 = clamp(whaleDepthEff / WHALE_MAX_DEPTH, 0.0, 1.0);
-    vec2 wq = p + clamp(warp * whaleD01, vec2(-3.0), vec2(3.0));
-
-    // Local frame from the continuous pose: +X along the heading, +Y across.
-    // The ellipse rotates with the heading; the sampling grid does not.
-    vec2 rel = wq - whaleAt;
-    float hc = cos(uWhalePose.z), hs = sin(uWhalePose.z);
-    vec2 wl = vec2(rel.x * hc + rel.y * hs, -rel.x * hs + rel.y * hc);
-
-    // The body comes from the baked 3D mesh: the page skins it and rasterises a
-    // small colour+height target (RGB = shaded body, A = height above the body
-    // base, 0 = empty). Sampling it at p keeps the pixels on the sea's texel
-    // grid; the mesh supplies the silhouette, the poses and the shading.
-    float halfLen = uWhaleHalf.x;
-    float halfWid = uWhaleHalf.y;
-    vec2 uvW = vec2(0.5) + 0.5 * wl / vec2(halfLen, halfWid);
-    // Outside the target there is no body: reject the sample instead of
-    // clamping it. Clamping to the edge stretched whatever texel sat on the
-    // border (the fins) into a line across the whale.
-    vec2 inRange = step(vec2(0.0), uvW) * step(uvW, vec2(1.0));
-    vec4 wtex = texture(uWhaleTex, clamp(uvW, 0.0, 1.0));
-    // A is the body height 0..1 of uWhaleHeight, 0 = empty; 0.5 is the body's
-    // mid-plane, which floats on the waterline at depth 0.
-    float bodyMask = step(0.5 / 255.0, wtex.a) * inRange.x * inRange.y;
-    // Terrain occludes: a body at depth d is behind any ground shallower than d,
-    // so a bank, a shelf or the coast hides it. Per pixel, because the ground
-    // varies across the body, while its own depth stays the single value above.
-    float groundHere = clamp(depth01, 0.0, 1.0) * WHALE_MAX_DEPTH;
-    bodyMask *= step(whaleDepthEff, groundHere);
-    float zTop = (wtex.a - 0.5) * uWhaleHeight - whaleDepthEff;
-    vec3 bodyCol = wtex.rgb;
-
-    // Signed distance to the body outline, for the ring only. The ellipse
-    // follows the mesh's proportions (uWhaleHalf), so the ring hugs the body.
-    float r2 = (wl.x * wl.x) / (halfLen * halfLen)
-             + (wl.y * wl.y) / (halfWid * halfWid);
-    float dWhale = (r2 - 1.0)
-      / max(2.0 * length(vec2(wl.x / (halfLen * halfLen),
-                              wl.y / (halfWid * halfWid))), 1e-4);
-
-    // Submerged: fog toward the shaded sea colour and pass the surface grain
-    // over it. Breached: the body sits above the grain. The fog and waterline
-    // weights are per texel like the shading.
-    float submerged = max(0.0, -zTop);
-    float fog = 1.0 - exp(-submerged * 0.22);
-    float breach = smoothstep(0.0, 0.30, zTop);
-    // Just under the surface the exponential is still ~0, which left the body
-    // looking dry until it was a couple of tiles down. A floor brings the
-    // water colour in as soon as the body is submerged (and only then: an
-    // aerial breach stays its own colour).
-    float under = clamp(-zTop / 0.6, 0.0, 1.0);
-    fog = max(fog, WHALE_TINT_FLOOR * under);
-    // The rim and the belly are baked dark, which is correct in the air and
-    // wrong underwater: the darker a texel is, the more of the water's own
-    // colour it takes on, so the silhouette stops being an outline of black.
-    float bodyLum = dot(bodyCol, vec3(0.2126, 0.7152, 0.0722));
-    float bodyShade = 1.0 - smoothstep(0.02, 0.30, bodyLum);
-    fog = clamp(fog + WHALE_SHADOW_WASH * bodyShade * under, 0.0, 1.0);
-    float gWhale = (1.0 + (n * 1.2 + grainN * 0.16) * uGrain * 1.2 * onWater
-                          * (1.0 - 0.45 * deep))
-                 * (1.0 + dither * uGrain * 0.25 * onWater);
-    bodyCol = mix(bodyCol, col, fog);
-    // Depth tint: the body keeps its own colour and is multiplied by the map's
-    // depth ramp at its own depth, normalised so the surface is neutral. No hue
-    // replacement — the whale stays the whale, only darker and bluer with depth.
-    float wFrac = clamp(whaleDepthEff / WHALE_MAX_DEPTH, 0.0, 1.0);
-    vec3 ramp = depthRamp(wFrac) / max(depthRamp(0.0), vec3(1e-3));
-    bodyCol *= mix(vec3(1.0), ramp, WHALE_TINT);
-    bodyCol = mix(bodyCol * gWhale, bodyCol, breach);
-    // The waterline itself: a thin wet band where the top surface crosses Z=0.
-    float wetBand = (1.0 - smoothstep(0.0, 0.75, abs(zTop))) * uWhaleShape.z;
-    bodyCol = mix(bodyCol, vec3(0.62, 0.84, 0.98), wetBand * 0.55 * uFoam);
-    col = mix(col, bodyCol, bodyMask);
-
-    // ---- surface ring -------------------------------------------------------
-    // The coast model with the same spatial frequencies and noise, only a
-    // shorter 3.5-tile shore width and its own shelf width, so about one crest
-    // line shows across the band. Scaling by uShoreW / WHALE_SHORE_W (6.4x)
-    // would alias above Nyquist on the 1-tile texel grid.
-    // The gate is a draw bound centred on the drawn position: 11.5 (half
-    // length) + 5.69 (shelf = 3.5 * 26/16) + 3.0 (warp) = 20.19, rounded up.
-    float ringR = max(dWhale, 0.0);
-    float whaleShelfW = WHALE_SHORE_W * (uShelf / uShoreW);
-    ShoreWaves ringWaves = shoreWaves(ShoreParams(
-      p, flow, cycleTravel, ph1, ph2, w1, w2,
-      ringR, WHALE_SHORE_W, whaleShelfW, 1.0, -1.0));
-    float ringOn = 1.0 - bodyMask;
-    col += vec3(0.58, 0.80, 0.94) * ringWaves.crest * ringWaves.shore
-         * ringOn * uWhaleShape.z * uFoam;
-    col += vec3(0.62, 0.84, 0.98) * ringWaves.edge * ringWaves.lap
-         * ringOn * uWhaleShape.z * uFoam * 0.8;
-    col *= 1.0 + ringWaves.shelf * ringOn * uWhaleShape.z * uFoam * 1.1;
-  }
-
-  // ---- whale wake ----------------------------------------------------------
-  // The ring above is derived from the body's *current* depth, so it vanishes
-  // the instant the whale dives. This is the circle it leaves behind: frozen at
-  // the last surface point, drifting outward and fading, drawn with the coast's
-  // own wave model so it reads as the same water. It outlives the body's gate
-  // because the whale has usually swum away from it.
-  // It hands over to the body's own ring rather than doubling it: as the body
-  // rises into the top 1.5 tiles its ring takes the water back, so the wake
-  // weight falls away with it.
-  float wakeOn = uWhaleWake.z * (1.0 - uWhaleShape.z);
-  if (uWhaleShape.w > 0.5 && wakeOn > 0.002) {
-    float wDist = length(p - uWhaleWake.xy);
-    if (wDist < uWhaleWake.w + WHALE_WAKE_SHELF + 4.0) {
-      ShoreWaves wake = shoreWaves(ShoreParams(
-        p, flow, cycleTravel, ph1, ph2, w1, w2,
-        wDist - uWhaleWake.w, WHALE_SHORE_W, WHALE_WAKE_SHELF, 1.0, -1.0));
-      col += vec3(0.58, 0.80, 0.94) * wake.crest * wake.shore
-           * wakeOn * uFoam * 0.75;
-      col += vec3(0.62, 0.84, 0.98) * wake.edge * wake.lap
-           * wakeOn * uFoam * 0.5;
-      col *= 1.0 + wake.shelf * wakeOn * uFoam * 0.7;
+    // Cast terrain shadows: march the height map toward the sun. The march
+    // slope comes from the sun's elevation, so a low sunrise/sunset streaks
+    // long shadows across the seabed and noon keeps them short and tight.
+    // This lives outside HAS_LIGHTING on purpose: a tier can buy the shadow
+    // mask without the normal-relief term, and vice versa.
+#if HAS_SHADOWS
+    float hSpan = uHeightSpan > 0.0 ? uHeightSpan : 0.8394;
+    float shadowH = uShadowHeight * (hSpan / 0.8394);
+    if (uShadowStrength > 0.001) {
+#if USE_HALF_SHADOW
+      // The half-res target was marched by FRAG_SHADOW_V2; here we only read
+      // it. fragP is texel-snapped, so texel-res stays exactly 0-variance.
+      vec2 shUv = clamp((fragP + uCenter) / max(uViewSize, vec2(1.0)), vec2(0.0), vec2(1.0));
+      castShadow = texture(uShadowTex, shUv).r;
+#else
+      if (xyLen > 0.02) {
+        vec2 rayDir = sunXY / xyLen;
+        // Curated 2.5D shadow: shEl is the shared elevation cap computed
+        // above, so the march and the relief lighting stay locked together.
+        float raySlope = (tan(max(shEl, 0.035)) / max(uShadowStretch, 0.25)) / max(shadowH, 0.5);
+        // Per-texel step jitter breaks the scalloped rings of long low-sun
+        // shadows; floor(p) is one value per map texel, so texel-res is intact.
+        float jitter = (hash(floor(p)) - 0.5) * (1.0 / float(SHADOW_STEPS));
+        float h0 = 1.0 - texture(uAux, hitPos / uAuxSpan).r + 0.004;
+        for (int k = 0; k < SHADOW_STEPS; k++) {
+          float t = clamp((float(k) + 0.5) / float(SHADOW_STEPS) + jitter, 0.01, 1.0);
+          float dist = 2.0 + uShadowLen * t * t;
+          vec2 sp = hitPos + rayDir * dist;
+          if (sp.x < 0.0 || sp.y < 0.0 || sp.x >= uAuxSpan.x || sp.y >= uAuxSpan.y) break;
+          float auxDep = texture(uAux, sp / uAuxSpan).r;
+          float hOcc = 1.0 - auxDep + 0.08 * (1.0 - smoothstep(0.0, 0.008, auxDep));
+          float hRay = h0 + dist * raySlope;
+          float pen = clamp((hOcc - hRay) * (uShadowSoft * shadowH / max(dist, 2.0)), 0.0, 1.0);
+          float endFade = 1.0 - smoothstep(0.80, 1.0, t);
+          castShadow = min(castShadow, 1.0 - pen * endFade);
+        }
+      }
+#endif
     }
+#endif
+
+    float rawCast = uShadowStrength <= 1.0
+      ? castShadow
+      : pow(max(castShadow, 1e-4), uShadowStrength);
+    // Attenuate cast shadow contrast gently with depth so shallow cliffs/shelves
+    // stay crisp while deep abyssal basins soften naturally into the water column.
+    float shadowDepthAtten = mix(1.0, exp(-rawDepth * max(uReliefFade, 0.45)), 0.70);
+    float shAmt = clamp(uShadowStrength, 0.0, 1.0) * shadowDepthAtten;
+
+#if HAS_LIGHTING
+    vec2 nxy = texture(uNormal, hitPos / uSize).rg * 2.0 - 1.0;
+    float nz = sqrt(max(0.01, 1.0 - dot(nxy, nxy)));
+    vec3 N = normalize(vec3(nxy, nz));
+    float ndotl = dot(N, Lbed);
+
+    // Relief perturbs slopes around a flat-seabed baseline, so moving the
+    // relief slider never changes flat open-ocean brightness.
+    float baseLit = clamp(Lbed.z * 0.92 + 0.18, 0.0, 1.0);
+    float depthFade = exp(-rawDepth * uReliefFade);
+    float relief = clamp(uReliefStrength, 0.0, 1.5);
+    float slopeTerm = clamp(baseLit + (ndotl - Lbed.z) * 2.6 * relief * depthFade, 0.0, 1.0);
+    // Direct-key relief follows the Option A handoff: at blue hour (keyVis 0)
+    // the bed settles onto flat ambient, then re-emerges with the next key.
+    slopeTerm = mix(0.0, slopeTerm, clamp(uKeyVis, 0.0, 1.0));
+    // Shadow is shadow: relief self-shadow and cast shadow converge on the
+    // same ambient floor, with no second ambient crush and no double-darkening.
+    float unified = min(slopeTerm, rawCast);
+    float directVis = mix(slopeTerm, unified, shAmt);
+    bedLight = mix(uAmbientCol, uLightCol, directVis);
+    // Water column receives unshadowed sky/key light (not seabed cast shadows)
+    // so deep water scatter and deepVeil sit visually OVER the shadowed seabed.
+    float colLit = clamp(baseLit * 0.9 + 0.1, 0.0, 1.0) * clamp(uKeyVis, 0.0, 1.0);
+    colLight = mix(uAmbientCol * 0.94, uLightCol, colLit);
+#else
+    vec3 flatLight = mix(uAmbientCol, uLightCol, 0.55);
+    bedLight = mix(uAmbientCol, uLightCol, mix(0.55, min(0.55, rawCast), shAmt));
+    colLight = flatLight;
+#endif
   }
 
-  // ---- colour controls -----------------------------------------------------
-  // Saturation about the pixel's own luminance, then the hue rotation, then
-  // brightness, which is the order the 2D path's CSS filters apply. Sea colour
-  // only: the map border below is drawn after them, so the map stays the map.
+  // ---- 2. Beer-Lambert underwater colour stack ----
+  // T(d) = exp(-opticalDepth * K_rgb); kR > kG > kB so red vanishes in the
+  // shallows, green across the shelf and blue only in the deepest water.
+  float dOpt = dCurve * uWaterClarity;
+  vec3 T_water = exp(-dOpt * uAbsorbK);
+
+  // Suspended murk: BOTH absorbs light reaching the seabed AND scatters
+  // incident colLight, so it darkens in shadow and at night instead of glowing.
+  float mDensity = 0.0;
+  float murkAbsorb = 1.0;
+#if HAS_MURK && FLOW_LOD
+  if (uMurkGain > 0.001) {
+    vec2 mPos1 = p - flow * (travel * 0.25 * ph1);
+    vec2 mPos2 = p - flow * (travel * 0.25 * ph2);
+    float mVal = texture(uSpeedTex, mPos1 / (4.0 * uSpeedSize)).b * w1
+               + texture(uSpeedTex, mPos2 / (4.0 * uSpeedSize)).b * w2;
+    mDensity = mVal * uMurkGain * exp(-dCurve * uMurkDepthFade) * wet;
+  }
+  murkAbsorb = exp(-mDensity * uMurkAbsorb);
+#endif
+  vec3 T_eff = T_water * murkAbsorb;
+
+  // Authored depth palette: the exact old depth look, tinted by soil only
+  // where the water lets it through. Never lifts toward pal0 — palCol already
+  // carries the depth darkening, so bright shallow cyan cannot leak deep.
+  vec3 palBase = palCol;
+#if HAS_SOIL
+  if (soilW > 0.001) {
+    float pLum = dot(palCol, vec3(0.2126, 0.7152, 0.0722));
+    float capPal = min(1.0, pLum / sLum);
+    vec3 soilPal = soilTone * mix(1.0, capPal, uSoilLumLock);
+    vec3 soilVis = clamp(T_eff * 1.35, 0.0, 1.0) * (soil.a * soilW * wet);
+    palBase = mix(palCol, soilPal, soilVis);
+  }
+#endif
+  palBase *= murkAbsorb;
+
+  // Physical optical floor: the abyssal palette end, lifting to the real
+  // seabed albedo only as far as the water lets light through.
+  // Authored palette seabed (lit by bedLight, fading toward colLight with
+  // water-column depth).
+  vec3 palLit = palBase * mix(colLight, bedLight, clamp(T_water.b * 0.75 + 0.25, 0.0, 1.0));
+  // Physical Beer-Lambert stack: deep water scatter sits OVER the shadowed seabed.
+  vec3 beerLit = mix(palDeep * colLight, bedAlbedo * bedLight, T_eff);
+  vec3 col = mix(palLit, beerLit, clamp(uBedVis, 0.0, 1.0));
+  // Deep-water veil: dissolve deep seabed height/colour contrast into one
+  // quiet, uniform watercolor wash (a constant base colour, so ridges and
+  // trenches converge instead of tracking the terrain).
+  // The veil sits OVER the seabed: lit by water-column colLight, never by the
+  // seabed's cast shadows.
+  if (uDeepVeil > 0.001) {
+    float veilT = smoothstep(uVeilStart, 1.0, dCurve);
+    vec3 veilCol = mix(texture(uPalette, vec2(0.72, 0.5)).rgb, palDeep, 0.6) * colLight;
+    col = mix(col, veilCol, veilT * uDeepVeil);
+  }
+#if HAS_MURK
+  if (mDensity > 0.001) {
+    vec3 murkAlbedo = mix(uMurkCol, bedAlbedo, 0.35 * soilW);
+    vec3 murkLit = murkAlbedo * colLight;
+    float mScat = 1.0 - exp(-mDensity * uMurkScatter);
+    col = mix(col, murkLit, clamp(mScat, 0.0, 0.75));
+  }
+#endif
+
+  // Dry land is not a seabed: keep it a dark, neutral base so the map overlay
+  // (or the palette edge) owns the islands. Without this the warm key light
+  // multiplies the shallow palette through the water column and paints dry
+  // land with lit seabed relief.
+  vec3 landCol = vec3(0.034, 0.042, 0.048);
+  if (uDayNightOn > 0.5) landCol *= mix(uAmbientCol * 0.60, uLightCol, 0.22);
+  col = mix(landCol, col, wet);
+
+  // Live coast rim: lighten-only like editor n_coast, uCoastLevels tiles wide.
+  float rimW = max(1.0, uCoastLevels);
+  float rim = clamp(1.0 - d / rimW, 0.0, 1.0) * wet;
+  col = max(col, mix(col, uCoastCol, uCoastStrength * rim));
+
+  // User hue/saturation apply to the water column ONLY (before foam, reflection, glint, night, whale!)
   float cLum = dot(col, vec3(0.2126, 0.7152, 0.0722));
   col = mix(vec3(cLum), col, uSat);
   col = hueRotate(col, uHue);
+
+  // ---- 3C: Shore waves (GATED on d - skips 24 vnoise calls in open ocean!) ----
+  float shore = 0.0;
+  float shoreCrest = 0.0;
+  float maxBand = max(uShoreW, uShelf) + 2.0;
+  if (d < maxBand && wet > 0.5) {
+    ShoreWaves coast = shoreWaves(p, flow, cycleTravel, ph1, ph2, w1, w2, d, uShoreW, uShelf, wet, 1.0);
+    float fetchGain = mix(1.0, 0.45 + 0.95 * fetchVal, uFetchWeight);
+    float waveEnv = fetchGain * uWaveSet;
+    shore = coast.shore * wet;
+    shoreCrest = coast.crest * shore * waveEnv;
+    col += vec3(0.58, 0.80, 0.94) * foamLight * shoreCrest * uFoam;
+    col += vec3(0.62, 0.84, 0.98) * foamLight * coast.edge * coast.lap * uFoam * 0.8 * waveEnv;
+    col *= 1.0 + coast.shelf * uFoam * 1.1;
+  }
+
+  // ---- 3C: Contour-band offshore shoal breakers ----
+  float shoalFoam = 0.0;
+#if HAS_SHOAL_BREAKERS && FLOW_LOD
+  if (uShoalGain > 0.001 && d > uShoreW * 0.45 && rawDepth < 0.14 && wet > 0.5) {
+    float breakD = 0.015 + 0.055 * fetchVal;
+    float band = exp(-pow((rawDepth - breakD) / 0.018, 2.0));
+    float bNoise = smoothstep(0.15, 0.65, n) * smoothstep(0.35, 0.75, fbm(p * 0.08 + 19.0));
+    shoalFoam = band * bNoise * smoothstep(0.25, 0.85, fetchVal) * uWaveSet * uShoalGain;
+    col += vec3(0.64, 0.84, 0.96) * foamLight * shoalFoam * uFoam;
+  }
+#endif
+
+  // ---- Surface grain: scalar modulation on top of the N_surf optics ----
+  float onWater = wet * (1.0 - shore * 0.85);
+  float grainFade = mix(1.0, 0.62, macroWt);
+  float grainN = fbm(p * 0.1 + 7.0) - 0.5;
+  float dither = hash(floor(p)) - 0.5;
+  // Grain belongs to the water column: apply it before the body/ring/wake so
+  // a dry back is never stamped with the sea's surface grain.
+  col *= 1.0 + (n * 1.2 + grainN * 0.16) * uGrain * 1.2 * grainFade * onWater * (1.0 - 0.45 * deep);
+  col *= 1.0 + dither * uGrain * 0.25 * grainFade * onWater;
+
+  // ---- Whale: real 3D body on its own water layer -------------------------
+  // Everything here is evaluated from p (the texel-snapped map position): no
+  // world or gl_FragCoord, so one map tile stays one crisp flat block.
+  float whaleDry = 0.0;
+  float whaleRingBio = 0.0;
+  float whaleWakeBio = 0.0;
+#if HAS_WHALE
+  {
+    // The sea under the *whale*, sampled once at its own position: the body's
+    // cap, tint and fog must not change as it moves across the screen.
+    float whaleSeabed01 = clamp(texture(uAux, uWhalePose.xy / uAuxSpan).r, 0.0, 1.0);
+    float whaleD01Pre = clamp(min(uWhalePose.w,
+      max(0.0, whaleSeabed01 * WHALE_MAX_DEPTH - WHALE_SEABED_GAP))
+      / WHALE_MAX_DEPTH, 0.0, 1.0);
+    // The body rides its own parallax layer: the sea draws a layer at depth k
+    // by sampling p + (target - p) * k, so the body's layer positions it at
+    // target + (w - target) / (1 - k). Exact mapping, no cap.
+    float whaleK = uParallax * parCurve(whaleD01Pre) * (uZoomCss / 3.2);
+    vec2 whaleAt = uWhalePose.xy
+      + (uWhalePose.xy - uTarget) * (whaleK / max(1.0 - whaleK, 1e-3));
+    vec2 whaleBox = abs(p - whaleAt);
+    if (uWhaleShape.w > 0.5 && max(whaleBox.x, whaleBox.y) < 34.0) {
+      float whaleDepth = uWhalePose.w;
+      // Absolute pose depth, capped to the local seabed so a shallow bank
+      // makes the whale surface instead of sinking through the ground.
+      float whaleDepthEff = min(whaleDepth,
+        max(0.0, whaleSeabed01 * WHALE_MAX_DEPTH - WHALE_SEABED_GAP));
+      float whaleD01 = clamp(whaleDepthEff / WHALE_MAX_DEPTH, 0.0, 1.0);
+      // A breach shows no warp; a deep body refracts with the surface waves.
+      vec2 wq = p + clamp(warp * whaleD01, vec2(-3.0), vec2(3.0));
+
+      // Local frame from the continuous pose: +X along the heading, +Y across.
+      vec2 rel = wq - whaleAt;
+      float hc = cos(uWhalePose.z), hs = sin(uWhalePose.z);
+      vec2 wl = vec2(rel.x * hc + rel.y * hs, -rel.x * hs + rel.y * hc);
+
+      // The body target is the page's rasterised 3D mesh: RGB = shaded body,
+      // A = height above the body base (0 = empty).
+      float halfLen = uWhaleHalf.x;
+      float halfWid = uWhaleHalf.y;
+      vec2 uvW = vec2(0.5) + 0.5 * wl / vec2(halfLen, halfWid);
+      vec2 inRange = step(vec2(0.0), uvW) * step(uvW, vec2(1.0));
+      vec4 wtex = texture(uWhaleTex, clamp(uvW, 0.0, 1.0));
+      float bodyMask = step(0.5 / 255.0, wtex.a) * inRange.x * inRange.y;
+      // Terrain occludes: a bank, shelf or coast shallower than the body's
+      // depth hides it. Per pixel, while the body's own depth stays single.
+      float groundHere = clamp(depth01, 0.0, 1.0) * WHALE_MAX_DEPTH;
+      bodyMask *= step(whaleDepthEff, groundHere);
+      float zTop = (wtex.a - 0.5) * uWhaleHeight - whaleDepthEff;
+      vec3 bodyCol = wtex.rgb;
+
+      // Signed distance to the body outline, for the ring only.
+      float r2 = (wl.x * wl.x) / (halfLen * halfLen)
+               + (wl.y * wl.y) / (halfWid * halfWid);
+      float dWhale = (r2 - 1.0)
+        / max(2.0 * length(vec2(wl.x / (halfLen * halfLen),
+                                wl.y / (halfWid * halfWid))), 1e-4);
+
+      // Underwater fog, tint floor and shadow wash, per texel like the rest
+      // of the sea (the surface grain ran before the body).
+      float submerged = max(0.0, -zTop);
+      float fog = 1.0 - exp(-submerged * 0.22);
+      float breach = smoothstep(0.0, 0.30, zTop);
+      float under = clamp(-zTop / 0.6, 0.0, 1.0);
+      fog = max(fog, WHALE_TINT_FLOOR * under);
+      float bodyLum = dot(bodyCol, vec3(0.2126, 0.7152, 0.0722));
+      float bodyShade = 1.0 - smoothstep(0.02, 0.30, bodyLum);
+      fog = clamp(fog + WHALE_SHADOW_WASH * bodyShade * under, 0.0, 1.0);
+      float gWhale = (1.0 + (n * 1.2 + grainN * 0.16) * uGrain * 1.2 * onWater
+                            * (1.0 - 0.45 * deep))
+                   * (1.0 + dither * uGrain * 0.25 * onWater);
+      // Depth tint: the body keeps its own colour and is multiplied by the
+      // map's depth ramp at its own depth, normalised neutral at the surface.
+      float wFrac = clamp(whaleDepthEff / WHALE_MAX_DEPTH, 0.0, 1.0);
+      vec3 ramp = texture(uPalette, vec2(wFrac, 0.5)).rgb
+                / max(texture(uPalette, vec2(0.0, 0.5)).rgb, vec3(1e-3));
+      bodyCol *= mix(vec3(1.0), ramp, WHALE_TINT);
+
+      // Day-night body lighting: the same key/ambient mix as the seabed, so
+      // the whale is lit by the current sun or moon instead of glowing.
+      vec3 wSunL = normalize(uSunDir);
+      vec3 whaleBodyLight = uDayNightOn > 0.5
+        ? mix(uAmbientCol * 0.85, uLightCol,
+              clamp(wSunL.z * 0.85 + 0.25, 0.0, 1.0))
+        : vec3(1.0);
+      bodyCol *= whaleBodyLight;
+
+      // Beer-Lambert underwater attenuation: red is eaten first, then green.
+      // Multiplying by the transmission normalised to its blue channel keeps
+      // the body's blue shape cue.
+      vec3 wT = exp(-(submerged / WHALE_MAX_DEPTH) * uWaterClarity * uAbsorbK);
+      vec3 wTint = wT / max(wT.b, 1e-3);
+      bodyCol *= mix(vec3(1.0), wTint, under);
+      // The fog last: the lit/tinted body dissolves toward the water colour
+      // instead of being darkened twice and reading as a hole in the sea. v2's
+      // darker water needs a gentler blend at dive depths or the body vanishes
+      // entirely; the deep-veil stack still takes over as it sinks further.
+      bodyCol = mix(bodyCol, col, fog * WHALE_FOG_SCALE);
+
+      bodyCol = mix(bodyCol * gWhale, bodyCol, breach);
+      // The waterline itself: a thin wet band where the top crosses Z=0.
+      float wetBand = (1.0 - smoothstep(0.0, 0.75, abs(zTop))) * uWhaleShape.z;
+      bodyCol = mix(bodyCol, vec3(0.62, 0.84, 0.98) * foamLight,
+                    wetBand * 0.55 * uFoam);
+      col = mix(col, bodyCol, bodyMask);
+      // Dry back: sky reflection and glitter must never paint over a breach.
+      whaleDry = bodyMask * breach;
+
+      // ---- surface ring ----
+      // The coast model with a shorter 3.5-tile shore width and its own shelf,
+      // so about one crest line shows across the band. dir = -1 radiates the
+      // crests outward from the body instead of in toward a coast.
+      float ringR = max(dWhale, 0.0);
+      float whaleShelfW = WHALE_SHORE_W * (uShelf / max(uShoreW, 1e-3));
+      ShoreWaves ringWaves = shoreWaves(
+        p, flow, cycleTravel, ph1, ph2, w1, w2,
+        ringR, WHALE_SHORE_W, whaleShelfW, 1.0, -1.0);
+      float ringOn = 1.0 - bodyMask;
+      float ringSurf = uWhaleShape.z;
+      col += vec3(0.58, 0.80, 0.94) * foamLight * ringWaves.crest
+           * ringWaves.shore * ringOn * ringSurf * uFoam;
+      col += vec3(0.62, 0.84, 0.98) * foamLight * ringWaves.edge
+           * ringWaves.lap * ringOn * ringSurf * uFoam * 0.8;
+      col *= 1.0 + ringWaves.shelf * ringOn * ringSurf * uFoam * 1.1;
+      whaleRingBio = (ringWaves.crest * ringWaves.shore
+                    + ringWaves.edge * ringWaves.lap * 0.8)
+                   * ringOn * ringSurf;
+    }
+
+    // ---- trailing wake ----
+    // The body's ring exists only while it is near the surface, so the wake is
+    // the circle it leaves behind: frozen at the last surface point, spreading
+    // outward and fading. It hands over to the body's own ring as the whale
+    // rises (1 - surfFade), never doubling it.
+    float wakeOn = uWhaleWake.z * (1.0 - uWhaleShape.z);
+    if (uWhaleShape.w > 0.5 && wakeOn > 0.002) {
+      float wDist = length(p - uWhaleWake.xy);
+      if (wDist < uWhaleWake.w + WHALE_WAKE_SHELF + 4.0) {
+        ShoreWaves wake = shoreWaves(
+          p, flow, cycleTravel, ph1, ph2, w1, w2,
+          wDist - uWhaleWake.w, WHALE_SHORE_W, WHALE_WAKE_SHELF, 1.0, -1.0);
+        col += vec3(0.58, 0.80, 0.94) * foamLight * wake.crest
+             * wake.shore * wakeOn * uFoam * 0.75;
+        col += vec3(0.62, 0.84, 0.98) * foamLight * wake.edge
+             * wake.lap * wakeOn * uFoam * 0.5;
+        col *= 1.0 + wake.shelf * wakeOn * uFoam * 0.7;
+        whaleWakeBio = (wake.crest * wake.shore * 0.75
+                      + wake.edge * wake.lap * 0.5) * wakeOn;
+      }
+    }
+  }
+#endif
+
+  // ---- 3. Virtual-perspective sky matcap reflection + Schlick Fresnel ----
+  // fragP follows the texel-snapped p, so a whole map tile shares one view
+  // direction, one Fresnel term and one reflection — crisp pixel-art facets.
+  vec2 screenOff = fragP / max(uCenter.y, 1.0);
+  vec3 V = normalize(vec3(-screenOff * uViewTilt, 1.0));
+  // Sky reflection gets its own softened normal: the surface normal stays
+  // crisp for GGX specular, so silky sky and sharp glints are independent.
+  vec3 Nsky = normalize(vec3(Nsurf.xy * max(uSkyNormal, 0.0), Nsurf.z));
+  float ndotvSky = clamp(dot(Nsky, V), 0.0, 1.0);
+  vec3 R = reflect(-V, Nsky);
+  float rz = max(R.z, 0.0);
+  vec3 skyCol;
+#if HAS_SKY_MATCAP
+  vec2 skyUv = (R.xy / (1.0 + rz)) * 0.5 + 0.5;
+  skyCol = texture(uSkyMatcap, skyUv).rgb;
+#else
+  skyCol = mix(uSkyHorizon, uSkyZenith, clamp(rz, 0.0, 1.0));
+#endif
+  skyCol *= max(uSkyInt, 0.0);
+  // A matcap sample is hemisphere radiance, so the Fresnel term is used
+  // straight: no hidden gain, the slider owns the taste. Fsky acts purely on
+  // the water surface: there is no depth bias, so F0 can never terrace the
+  // reflection into depth contours.
+  float Fsky = clamp(uFresnelF0 + (1.0 - uFresnelF0) * pow(1.0 - ndotvSky, uFresnelPow), 0.0, 1.0);
+  // Surface reflection is never occluded by underwater seabed cast shadows.
+  float reflMix = clamp(Fsky * uSkyGain * wet, 0.0, 1.0);
+  // The dry back of a breaching whale keeps its own body colour: the water's
+  // sky mirror paints over submerged body and open water, never over it.
+  reflMix *= (1.0 - whaleDry);
+  reflMix = clamp(reflMix, 0.0, 1.0);
+  // Sky cel is independent of painterly: smooth silky reflections can live
+  // right beside crisp painted glints (raise it for banded sky strokes).
+  if (uSkyCel > 0.001) {
+    float skyBands = mix(5.0, 3.0, uSkyCel);
+    reflMix = paintStep(reflMix, skyBands, uSkyCel);
+  }
+  if (uSkyOn < 0.5) reflMix = 0.0;
+  // Post-threshold opacity: the crisp cel/Fresnel shape is already chosen, so
+  // this only fades the final blend without eroding its edges.
+  reflMix *= clamp(uSkyOpacity, 0.0, 1.0);
+  vec3 skyTerm = skyCol * reflMix;
+  int sb = int(uSkyBlend + 0.5);
+  if (sb == 1) {
+    // screen: builds soft luminosity without darkening water
+    col = 1.0 - (1.0 - clamp(col, 0.0, 1.0)) * (1.0 - clamp(skyTerm, 0.0, 1.0));
+  } else if (sb == 2) {
+    // add: pure light-on-light luminosity buildup
+    col = col + skyTerm;
+  } else if (sb == 3) {
+    // soft light (Pegtop): contrast-preserving sky sheen
+    vec3 c0 = clamp(col, 0.0, 1.0);
+    vec3 s0 = clamp(skyCol, 0.0, 1.0);
+    vec3 soft = (1.0 - 2.0 * s0) * c0 * c0 + 2.0 * s0 * c0;
+    col = mix(col, soft, reflMix);
+  } else {
+    // mix: classic Fresnel mirror replacement
+    col = mix(col, skyCol, reflMix);
+  }
+
+  // ---- 4. Directional dual-lobe GGX sun/moon glitter ----
+  float specAmt = 0.0;
+  vec3 specAdd = vec3(0.0);
+#if HAS_GGX > 0
+  vec3 L = normalize(uSunDir);
+  // ---- Screen-anchored drifting specular pool -----------------------------
+  // The pool centre glides away from screen centre along the sun/moon compass
+  // as the key light drops toward the horizon, then the offset is stretched
+  // along that same axis into a classic sun-path streak.
+  vec2 sunXY = length(L.xy) > 1e-3 ? normalize(L.xy) : vec2(0.0, 1.0);
+  float lowSun = 1.0 - clamp(L.z, 0.0, 1.0);
+  vec2 specAnchor = sunXY * (uSpecDrift * mix(0.20, 1.0, lowSun));
+  vec2 relSpec = screenOff - specAnchor;
+  vec2 specPerp = vec2(-sunXY.y, sunXY.x);
+  float along = dot(relSpec, sunXY) / max(uSpecStretch, 1.0);
+  float perp = dot(relSpec, specPerp);
+  vec2 relShaped = sunXY * along + specPerp * perp;
+  // Elliptical pool envelope from the PoC: stretch along the sun path but keep
+  // the covered area in check, so the curated pool stays a pool instead of a
+  // field of stray facets across the whole screen.
+  float poolR = length(vec2(along, perp)) * sqrt(max(uSpecStretch, 1.0));
+  float poolRad = max(uSpecRadius, 0.05);
+  float poolMask = smoothstep(poolRad, poolRad * 0.10, poolR);
+  // Curated view and half vector centred on the anchor: at the anchor and
+  // specTilt 0 this is exactly H = (0,0,1), so the glitter peaks dead-on.
+  vec3 Vspec = normalize(vec3(-relShaped * uSpecSpread, 1.0));
+  vec3 Lspec = normalize(vec3(sunXY * (uSpecTilt * 0.85),
+                              max(1.0 - 0.45 * uSpecTilt, 0.25)));
+  vec3 H = normalize(Lspec + Vspec);
+  float ndoth = clamp(dot(Nsurf, H), 0.0, 1.0);
+  float ndotl = clamp(dot(Nsurf, L), 0.0, 1.0);
+  float a1 = clamp(uRoughTight, 0.04, 0.65);
+  float a2 = clamp(uRoughBroad, 0.18, 0.90);
+  float d1 = ndoth * ndoth * (a1 * a1 - 1.0) + 1.0;
+  float ggxTight = (a1 * a1) / max(3.14159 * d1 * d1, 1e-4);
+#if HAS_GGX > 1
+  float d2 = ndoth * ndoth * (a2 * a2 - 1.0) + 1.0;
+  float ggxBroad = (a2 * a2) / max(3.14159 * d2 * d2, 1e-4);
+  float specRaw = (ggxTight * 0.012 + ggxBroad * 0.09) * smoothstep(0.0, 0.15, ndotl);
+#else
+  float specRaw = ggxTight * 0.55 * smoothstep(0.0, 0.15, ndotl);
+#endif
+  // Crest height gate: highlights on raised wave peaks, not flat troughs.
+  specRaw *= peakGate * poolMask;
+  // Surface sun/moon glitter is never occluded by underwater seabed shadows.
+  // The Option A handoff owns the glitter: 0 at 19:45 / 05:15, so the warm
+  // sun glint and the silver moon glint switch with no visible pop.
+  float effSpecGain = uSpecGain * max(uSpecInt, 0.0);
+  specAmt = specRaw * effSpecGain * wet * clamp(uKeyVis, 0.0, 1.0);
+  // Water glitter belongs to water, not to the dry back above it.
+  specAmt *= (1.0 - whaleDry);
+  if (uPainterly > 0.001) {
+    // Crop the dim halo and quantise the survivor into two crisp cel tiers:
+    // a bright main stroke plus the hot peak core.
+    float cut = 0.04 + uSpecCut * 0.45;
+    float wEdge = mix(0.22, 0.025, uPainterly);
+    float band1 = smoothstep(cut - wEdge, cut + wEdge, specAmt);
+    float band2 = smoothstep(cut * 2.1 - wEdge, cut * 2.1 + wEdge, specAmt);
+    float celSpec = band1 * 0.42 + band2 * 0.58;
+    // Keep the gain slider meaningful for the cel look too.
+    float celScale = clamp(0.45 + 0.55 * min(effSpecGain, 3.0), 0.0, 2.8) * step(0.001, effSpecGain);
+    specAmt = mix(specAmt, celSpec * celScale, uPainterly);
+  }
+  vec3 glintTint = uDayNightOn > 0.5
+    ? mix(vec3(1.0), uSpecTint, 0.76)
+    : vec3(0.74, 0.87, 1.0);
+  specAdd = glintTint * (specAmt / (1.0 + specAmt * 0.35)) * 0.65 * clamp(uSpecOpacity, 0.0, 1.0);
+#endif
+
+  // Classic static radial disc, kept for direct A/B against the GGX lobes.
+  float pxPerCssS = max(uZoom / max(uZoomCss, 1e-4), 1e-4);
+  float halfH = uCenter.y / pxPerCssS;
+  float rad = max(uSpecSize, 0.02) * halfH;
+  float rr = length(fragP) / pxPerCssS / max(rad, 1.0);
+  float disc = 1.0 - smoothstep(0.0, 1.0, rr);
+  float specMask = mix(disc, 1.0 - disc, clamp(uSpecInvert, 0.0, 1.0));
+  float crest = smoothstep(0.10, 0.70, n);
+  float specShape = mix(pow(max(crest, 0.0), max(uSpecPow, 1.0)), crest, 0.35);
+  float sDisc = uSpec * specShape * specMask * wet * (1.0 - whaleDry)
+              * clamp(uSpecOpacity, 0.0, 1.0) * max(uSpecInt, 0.0);
+  vec3 glintTintDisc = uDayNightOn > 0.5 ? mix(uLightCol, vec3(0.78, 0.88, 1.0), uNightMix * 0.5)
+                                        : vec3(0.74, 0.87, 1.0);
+  if (uSpecModel > 0.5) {
+    int specMode = int(uSpecMode + 0.5);
+    if (specMode == 1) {
+      // screen: lifts the dark water, leaves what is already bright alone
+      col = 1.0 - (1.0 - col) * (1.0 - glintTintDisc * sDisc);
+    } else if (specMode == 2) {
+      // water-coloured: glints pick up the hue under them; a floor takes over
+      // as the pixel darkens, which is where the glints read best
+      float lum = dot(col, vec3(0.2126, 0.7152, 0.0722));
+      float dark = 1.0 - smoothstep(0.0, 0.22, lum);
+      col += sDisc * (col * 2.0 + glintTintDisc * (0.12 + uSpecFloor * dark));
+    } else if (specMode == 3) {
+      vec3 warmTint = vec3(1.0, 0.92, 0.78) * mix(vec3(1.0), glintTintDisc,
+                                                  uDayNightOn > 0.5 ? 0.75 : 0.0);
+      col = 1.0 - (1.0 - col) * (1.0 - warmTint * sDisc);
+    } else {
+      col += glintTintDisc * sDisc;
+    }
+  } else {
+    int spb = int(uSpecBlend + 0.5);
+    if (spb == 1) {
+      // screen: luminous buildup without chalky white clipping
+      col = 1.0 - (1.0 - clamp(col, 0.0, 1.0)) * (1.0 - clamp(specAdd, 0.0, 1.0));
+    } else if (spb == 2) {
+      // glow (water-lit): builds luminosity through the water's own hue
+      col += specAdd * (0.42 + clamp(col, 0.0, 1.0) * 1.85);
+    } else if (spb == 3) {
+      // colour dodge: vibrant sunlit highlight buildup
+      vec3 c0 = clamp(col, 0.0, 1.0);
+      vec3 dodged = min(vec3(1.0), c0 / max(vec3(0.08), 1.0 - clamp(specAdd * 0.85, 0.0, 0.92)));
+      float spW = clamp(max(specAdd.r, max(specAdd.g, specAdd.b)), 0.0, 1.0);
+      col = mix(col, dodged, spW) + specAdd * 0.20;
+    } else {
+      // add: pure additive sun/moon sparkle
+      col += specAdd;
+    }
+  }
+
+  // ---- 3B: Rare night bioluminescence (whale wake hero + sparse surf pockets) ----
+#if HAS_BIOLUM
+  if (uDayNightOn > 0.5 && uNightMix > 0.01 && uBiolumGain > 0.001) {
+    float pocket = smoothstep(0.60, 0.84, fbm(p * 0.018 + vec2(3.1, 7.7)));
+    float sparkle = 0.6 + 0.4 * smoothstep(0.3, 0.8, fbm(p * 0.35 + uTime * 0.8));
+    vec3 bioCol = vec3(0.48, 0.90, 1.0);
+    float surfBio = (shoreCrest + shoalFoam * 1.3) * pocket * 0.75;
+    // The breaching whale's own ring is the centerpiece, not a pocket: it is
+    // not gated by the sparse surf noise.
+    float whaleBio = whaleRingBio * 1.6;
+    float wakeBio = whaleWakeBio * 1.8;   // uWhaleWake ring + demo click wakes
+    col += bioCol * (surfBio + whaleBio + wakeBio) * sparkle * uNightMix * uBiolumGain;
+  }
+#endif
+
   col *= uBrightness;
 
-  // ---- map border ----
-  // The border lives on the texel grid: p is snapped to texel centres, so every
-  // cell below is exactly one map texel wide and the edges stay crisp at any
-  // zoom. The sea runs uBleed past the rectangle (the bakes clamp), then
-  // the 9-texel band starts; outside it the page shows through. The band is an
-  // opaque black backing with white rules on it, drawn after the sea, so it
-  // takes no brightness, parallax or warp.
-  // the sea content is clipped in by depth: quantise to the depth texel's 8-bit
-  // code, then a hard step, so the reveal is a contour rather than a soft blend
-  // — deep water first, the shore last. The trim below is not clipped.
+
+  // ---- intro: depth-ordered reveal + loading grain (production) -----------
+  // The sea content is clipped in by depth: quantise to the depth texel's
+  // 8-bit code, then a hard step, so the reveal is a contour rather than a
+  // soft blend - deep water first, the shore last. The trim below is not
+  // clipped.
+  float seaA = 1.0;
   float dq = floor(depth01 * 255.0 + 0.5) / 255.0;
   float thr = 1.25 - 1.55 * uReveal;
-  float seaA = step(thr, dq);
-  // The loading grain, here rather than in a second canvas: until the reveal
-  // reaches a pixel, the sea is the same dark pixel grain the pre-texture
-  // placeholder drew. It is 8 CSS px cells re-randomised at ~9 fps in screen
-  // space, so it lines up with the placeholder, and the reveal eats it away per
-  // pixel at the depth texture's own resolution. The border band below writes
-  // col/seaA unconditionally, so it is untouched.
+  seaA = step(thr, dq);
+  // Until the reveal reaches a pixel, the sea is the same dark pixel grain the
+  // pre-texture placeholder drew: 8 CSS px cells re-randomised at ~9 fps in
+  // screen space, so it lines up with the placeholder.
   if (uReveal < 1.0) {
     float pxPerCss = max(uZoom / max(uZoomCss, 1e-4), 1e-4);
     vec2 cell = floor((gl_FragCoord.xy - uCenter) / (8.0 * pxPerCss));
     float tick = floor(uTime * 9.0);
     float g = hash(cell + vec2(tick * 17.3, tick * 31.7));
-    // 1..10 of 255: as dark as it can be while still reading as grain
-    // clip, not blend: a pixel is either still grain or already sea
     col = seaA >= 0.5 ? col : vec3((1.0 + floor(g * 10.0)) / 255.0);
     seaA = 1.0;
   }
+
+  // ---- map border ----------------------------------------------------------
   vec2 overTiles = max(vec2(0.0), max(-p, p - uSize));  // tiles out, >= 0
-  // Chebyshev: the nearest side wins, so the band corners are square. Interior
-  // water has maxOver = 0, the same reading as "outside at texel 0". The guard
-  // keeps it out of the band: with uBleed = 0.0 a padded bake's band starts at
-  // the first texel outside, and an unguarded 0.0 >= 0.0 would paint the whole
-  // sea black.
   float maxOver = max(overTiles.x, overTiles.y);
+  // The maxOver guard keeps interior water out of the band: with uBleed = 0 a
+  // padded bake's band starts at the first texel outside, and an unguarded
+  // 0.0 >= 0.0 would paint the whole sea black.
   if (maxOver > 0.0) {
     float outT = floor(maxOver);           // 0-based texel index outside
     if (outT >= uBleed) {
@@ -1964,9 +2978,6 @@ void main() {
       if (outT >= b1 && outT < b2) {       // inner white line
         col = vec3(1.0);
       } else if (outT >= b3 && outT < b4) { // 3-texel zigzag
-        // along the nearest side: vertical position for left/right, horizontal
-        // for top/bottom. The painted column steps 0,1,2,1 every 4 texels, so
-        // the chain reads as a diagonal staircase.
         float along = floor(overTiles.x >= overTiles.y ? p.y : p.x);
         float across = outT - b3;          // 0..2 within the sub-band
         float k = mod(along, 4.0);
@@ -1981,6 +2992,94 @@ void main() {
   }
 
   outColor = vec4(col, seaA);
+}`;
+
+const FRAG_SHADOW = `#version 300 es
+#ifndef SHADOW_STEPS
+#define SHADOW_STEPS 14
+#endif
+precision highp float;
+precision highp sampler2D;
+out vec4 outColor;
+
+uniform sampler2D uAux, uCurve;
+uniform vec2 uTarget, uAuxSpan, uCenter, uShadowScale;
+uniform float uZoom, uZoomCss, uSnap, uParallax, uDepthScale, uHeightSpan;
+uniform vec3 uSunDir;
+uniform float uShadowStrength, uShadowLen, uShadowHeight, uShadowSoft;
+uniform float uShadowMaxEl, uShadowStretch;
+
+float hash(vec2 p) {
+  p = fract(p * vec2(123.34, 456.21));
+  p += dot(p, p + 45.32);
+  return fract(p.x * p.y);
+}
+
+float parCurve(float d) { return texture(uCurve, vec2(clamp(d, 0.0, 1.0), 0.5)).r; }
+vec2 parShift(vec2 w, float depth) {
+  float ds = uDepthScale > 0.0 ? uDepthScale : 1.0;
+  float k = uParallax * parCurve(depth * ds) * (uZoomCss / 3.2);
+  return (uTarget - w) * k;
+}
+vec2 parPos(vec2 p, float dep) {
+  vec2 w = p + parShift(p, dep);
+  return mix(w, floor(w) + 0.5, uSnap);
+}
+
+void main() {
+  // Map this half-res fragment onto the exact full-res screen coordinate it
+  // stands for, then reconstruct the same texel-snapped p the sea pass uses.
+  vec2 world = uTarget + (gl_FragCoord.xy * uShadowScale - uCenter) / uZoom;
+  vec2 p = mix(world, floor(world) + 0.5, uSnap);
+  float depth01 = clamp(texture(uAux, p / uAuxSpan).r, 0.0, 1.0);
+  // Soft shadows do not need the POM march: the surface hit is enough, and it
+  // keeps this pass to one uAux fetch plus the SHADOW_STEPS march.
+  vec2 hitPos = parPos(p, depth01);
+
+  float castShadow = 1.0;
+  vec3 L = normalize(uSunDir);
+  float hSpan = uHeightSpan > 0.0 ? uHeightSpan : 0.8394;
+  float shadowH = uShadowHeight * (hSpan / 0.8394);
+  vec2 sunXY = L.xy;
+  float xyLen = length(sunXY);
+  if (uShadowStrength > 0.001 && xyLen > 0.02) {
+    vec2 rayDir = sunXY / xyLen;
+    // Same curated elevation compression + stretch as the inline path, so the
+    // half-res mask and the crisp pass agree on the shadow shape.
+    float rawEl = asin(clamp(L.z, 0.0, 1.0));
+    float maxEl = radians(clamp(uShadowMaxEl, 5.0, 85.0));
+    float shEl = maxEl * (rawEl / max(rawEl + maxEl * 0.35, 1e-4)) * 1.35;
+    shEl = min(shEl, maxEl);
+    float raySlope = (tan(max(shEl, 0.035)) / max(uShadowStretch, 0.25)) / max(shadowH, 0.5);
+    float jitter = (hash(floor(p)) - 0.5) / float(SHADOW_STEPS);
+    float h0 = 1.0 - texture(uAux, hitPos / uAuxSpan).r + 0.004;
+    for (int k = 0; k < SHADOW_STEPS; k++) {
+      float t = clamp((float(k) + 0.5) / float(SHADOW_STEPS) + jitter, 0.01, 1.0);
+      float dist = 2.0 + uShadowLen * t * t;
+      vec2 sp = hitPos + rayDir * dist;
+      if (sp.x < 0.0 || sp.y < 0.0 || sp.x >= uAuxSpan.x || sp.y >= uAuxSpan.y) break;
+      float auxDep = texture(uAux, sp / uAuxSpan).r;
+      float hOcc = 1.0 - auxDep + 0.08 * (1.0 - smoothstep(0.0, 0.008, auxDep));
+      float hRay = h0 + dist * raySlope;
+      float pen = clamp((hOcc - hRay) * (uShadowSoft * shadowH / max(dist, 2.0)), 0.0, 1.0);
+      float endFade = 1.0 - smoothstep(0.80, 1.0, t);
+      castShadow = min(castShadow, 1.0 - pen * endFade);
+    }
+  }
+  outColor = vec4(castShadow, 0.0, 0.0, 1.0);
+}`;
+
+const FRAG_BLIT = `#version 300 es
+precision highp float;
+precision highp sampler2D;
+out vec4 outColor;
+uniform sampler2D uTexelFbo;
+uniform vec2 uTarget, uCenter, uTileOrigin, uTileSpan;
+uniform float uZoom;
+void main() {
+  vec2 world = uTarget + (gl_FragCoord.xy - uCenter) / uZoom;
+  vec2 uv = (floor(world) + 0.5 - uTileOrigin) / uTileSpan;
+  outColor = texture(uTexelFbo, uv);
 }`;
 
 /* ---- sea-ui.js ---- */
@@ -2004,6 +3103,25 @@ const SEA_UI_MODE_LABELS = {
 
 
 const SEA_UI_CAP_LABELS = { 0: 'off', 60: '60', 30: '30' };
+
+
+const SEA_UI_RES_LABELS = { 1: '100%', 0.75: '75%', 0.5: '50%' };
+
+
+
+const SEA_UI_TIME_LABELS = {
+  auto: 'auto', day: 'day', night: 'night', custom: 'custom', off: 'off',
+};
+
+
+
+function formatHour24(hours) {
+  const h = Number(hours);
+  const total = Math.round((Number.isFinite(h) ? h : 0) * 60);
+  const hh = Math.floor(total / 60);
+  const mm = total % 60;
+  return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+}
 
 
 
@@ -2088,6 +3206,15 @@ function seaUiCss() {
     '#zz-sea-menu input[type="radio"]:checked { background-size: 8px 8px; }',
     '#zz-sea-menu input[type="checkbox"]:disabled,',
     '#zz-sea-menu input[type="radio"]:disabled { opacity: .35; cursor: default; }',
+    '#zz-sea-menu input[type="range"]:disabled { opacity: .35; cursor: default; }',
+    '#zz-sea-menu select {',
+    '  appearance: none; -webkit-appearance: none;',
+    '  width: 100%; box-sizing: border-box; margin: 0;',
+    '  border: 2px solid #3a4a55; background: #121a21; color: inherit;',
+    '  font: inherit; font-family: inherit; padding: 3px 6px;',
+    '  border-radius: 0; cursor: pointer;',
+    '}',
+    '#zz-sea-menu select:disabled { opacity: .35; cursor: default; }',
     '#zz-sea-menu input[type="range"] {',
     '  appearance: none; -webkit-appearance: none; height: 12px;',
     '  background: transparent;',
@@ -2332,7 +3459,7 @@ function mountSeaUi(opts) {
     
     
     const menu = seaUiEl('div', [
-      'position:fixed', 'width:190px', 'box-sizing:border-box',
+      'position:fixed', 'width:204px', 'box-sizing:border-box',
       'background:#0a1016', 'border:2px solid ' + SEA_UI_RULE,
       'border-radius:0', 'padding:12px', 'overflow-y:auto',
       'pointer-events:auto', 'z-index:19',
@@ -2372,13 +3499,37 @@ function mountSeaUi(opts) {
     note.hidden = true;
     quality.append(note);
 
-    function rangeRow(text, min, max) {
+    
+    
+    const resolution = seaUiEl('fieldset', groupCss);
+    const resolutionTitle = seaUiEl('legend', titleCss);
+    resolutionTitle.textContent = 'resolution';
+    resolution.append(resolutionTitle);
+    const resGrid = seaUiEl('div',
+      'display:grid;grid-template-columns:repeat(3,1fr);gap:4px');
+    const resRadios = [];
+    for (const scale of RES_SCALES) {
+      const input = document.createElement('input');
+      input.type = 'radio';
+      input.name = 'zz-sea-res';
+      input.value = String(scale);
+      input.style.margin = '0';
+      input.style.fontFamily = 'inherit';
+      const cell = row(input, SEA_UI_RES_LABELS[scale] || String(scale));
+      cell.style.margin = '0';
+      resGrid.append(cell);
+      resRadios.push(input);
+    }
+    resolution.append(resGrid);
+
+    function rangeRow(text, min, max, id, outWidth = '34px') {
       const el = seaUiEl('label', rowCss);
       el.style.fontFamily = 'inherit';
       const name = seaUiEl('span', 'flex:0 0 auto');
       name.textContent = text;
       const input = document.createElement('input');
       input.type = 'range';
+      if (id) input.id = id;
       input.min = String(min);
       input.max = String(max);
       input.step = '1';
@@ -2387,13 +3538,17 @@ function mountSeaUi(opts) {
       input.style.margin = '0';
       input.style.fontFamily = 'inherit';
       const out = seaUiEl('span',
-        'flex:0 0 34px;text-align:right;opacity:.7;font-variant-numeric:tabular-nums');
+        `flex:0 0 ${outWidth};text-align:right;opacity:.7;` +
+        'font-variant-numeric:tabular-nums');
       el.append(name, input, out);
       
       
       
       
       input.addEventListener('wheel', e => {
+        
+        
+        if (input.disabled) return;
         if (!e.deltaY) return;
         e.preventDefault();
         const step = e.shiftKey ? 5 : 1;
@@ -2412,19 +3567,78 @@ function mountSeaUi(opts) {
     const brightness = rangeRow('brightness', 50, 150);
     const hue = rangeRow('hue', -180, 180);
     const sat = rangeRow('saturation', 0, 120);
+    const waves = rangeRow('waves', 0, 200, 'zz-sea-waves');
+    const flow = rangeRow('flow', 0, 200, 'zz-sea-flow');
+
+    
+    
+    function resetButton(id, title) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.id = id;
+      btn.textContent = 'reset';
+      btn.title = title;
+      btn.style.cssText = 'margin:0;padding:2px 6px;' +
+        'background:#121a21;border:2px solid #3a4a55;border-radius:0;' +
+        'color:inherit;font:inherit;font-family:inherit;font-size:10px;' +
+        'cursor:pointer;display:block;margin-left:auto';
+      return btn;
+    }
+    const perfResetBtn = resetButton('zz-sea-reset-perf',
+      'quality default, resolution 100%, adaptive fps on, frame cap off, ' +
+      'static when tabbed out on');
+    const colourResetBtn = resetButton('zz-sea-reset-colour',
+      'brightness 110, hue 0, saturation 100, opacity 100');
+    const motionResetBtn = resetButton('zz-sea-reset-motion',
+      'waves 100, flow 100');
+    const styleResetBtn = resetButton('zz-sea-reset-style',
+      'preset default, time of day auto');
 
     
     
     
-    const resetBtn = document.createElement('button');
-    resetBtn.type = 'button';
-    resetBtn.id = 'zz-sea-reset';
-    resetBtn.textContent = 'reset';
-    resetBtn.title = 'brightness 110, hue 0, saturation 100, opacity 100';
-    resetBtn.style.cssText = 'margin:0;padding:2px 6px;' +
-      'background:#121a21;border:2px solid #3a4a55;border-radius:0;' +
-      'color:inherit;font:inherit;font-family:inherit;font-size:10px;' +
-      'cursor:pointer;display:block;margin-left:auto';
+    const style = seaUiEl('fieldset', groupCss);
+    const styleTitle = seaUiEl('legend', titleCss);
+    styleTitle.textContent = 'preset';
+    const presetSelect = document.createElement('select');
+    presetSelect.id = 'zz-sea-preset';
+    presetSelect.style.fontFamily = 'inherit';
+    for (const id of PRESET_IDS) {
+      const opt = document.createElement('option');
+      opt.value = id;
+      const preset = typeof seaConsts !== 'undefined' && seaConsts.presets
+        ? seaConsts.presets[id] : null;
+      opt.textContent = (preset && preset.label) || id;
+      presetSelect.append(opt);
+    }
+    style.append(styleTitle, presetSelect);
+
+    const time = seaUiEl('fieldset', groupCss);
+    time.id = 'zz-sea-time';
+    const timeTitle = seaUiEl('legend', titleCss);
+    timeTitle.textContent = 'time of day';
+    const timeGrid = seaUiEl('div',
+      'display:grid;grid-template-columns:1fr 1fr;gap:4px 8px');
+    const timeRadios = [];
+    for (const id of TIME_MODES) {
+      const input = document.createElement('input');
+      input.type = 'radio';
+      input.name = 'zz-sea-time';
+      input.value = id;
+      input.style.margin = '0';
+      input.style.fontFamily = 'inherit';
+      const cell = row(input, SEA_UI_TIME_LABELS[id] || id);
+      cell.style.margin = '0';
+      timeGrid.append(cell);
+      timeRadios.push(input);
+    }
+    const hour = rangeRow('time', 0, 96, 'zz-sea-hour', '38px');
+    time.append(timeTitle, timeGrid, hour.el);
+
+    const motion = seaUiEl('fieldset', groupCss);
+    const motionTitle = seaUiEl('legend', titleCss);
+    motionTitle.textContent = 'motion';
+    motion.append(motionTitle, waves.el, flow.el, motionResetBtn);
 
     const fpsBox = document.createElement('input');
     fpsBox.type = 'checkbox';
@@ -2620,9 +3834,13 @@ function mountSeaUi(opts) {
     
     
     
+    
+    
     menu.append(
-      onRow, quality, fpsRow, cap, hiddenRow, divider(),
-      opacity.el, brightness.el, hue.el, sat.el, resetBtn, divider(),
+      onRow, quality, resolution, fpsRow, cap, hiddenRow, perfResetBtn, divider(),
+      style, time, styleResetBtn, divider(),
+      opacity.el, brightness.el, hue.el, sat.el, colourResetBtn,
+      motion, divider(),
       updateLine, dates, diagnostics, divider(), repo,
     );
 
@@ -2667,6 +3885,39 @@ function mountSeaUi(opts) {
         if (input.value !== 'static') input.disabled = shaderOff;
       }
       note.hidden = !shaderOff;
+      
+      
+      
+      const still = s.mode === 'static';
+      const resOff = still || shaderOff;
+      const resValue = Number.isFinite(s.resScale) ? s.resScale : 1;
+      for (const input of resRadios) {
+        input.checked = Number(input.value) === resValue;
+        input.disabled = resOff;
+      }
+      resolution.style.opacity = resOff ? '.35' : '';
+      presetSelect.value = s.preset || 'default';
+      presetSelect.disabled = resOff;
+      style.style.opacity = resOff ? '.35' : '';
+      
+      
+      const timeOff = resOff || s.presetDayNight === false;
+      const timeValue = s.timeMode || 'auto';
+      for (const input of timeRadios) {
+        input.checked = input.value === timeValue;
+        input.disabled = timeOff;
+      }
+      time.style.opacity = timeOff ? '.35' : '';
+      const hourValue = Number.isFinite(s.customHour) ? s.customHour : 13;
+      hour.input.value = String(Math.round(hourValue * 4));
+      hour.out.textContent = formatHour24(hourValue);
+      hour.input.disabled = timeOff;
+      hour.el.style.opacity = timeOff ? '.35' : '';
+      
+      
+      const showHour = timeValue === 'custom';
+      hour.el.hidden = !showHour;
+      hour.el.style.display = showHour ? 'flex' : 'none';
       const op = Math.round((Number.isFinite(s.opacity) ? s.opacity : 1) * 100);
       opacity.input.value = String(op);
       opacity.out.textContent = String(op);
@@ -2679,6 +3930,15 @@ function mountSeaUi(opts) {
       const sa = Math.round(Number.isFinite(s.sat) ? s.sat : 100);
       sat.input.value = String(sa);
       sat.out.textContent = `${sa}%`;
+      
+      
+      for (const [row, value] of [[waves, s.waveSpeed], [flow, s.flowSpeed]]) {
+        const pct = Math.round((Number.isFinite(value) ? value : 1) * 100);
+        row.input.value = String(pct);
+        row.out.textContent = `${pct}%`;
+        row.input.disabled = still;
+        row.el.style.opacity = still ? '.35' : '';
+      }
       paintUpdate(s.update);
       paintDates(s);
       fpsBox.checked = !!s.fps30;
@@ -2807,6 +4067,23 @@ function mountSeaUi(opts) {
         if (input.checked) emit({ mode: input.value });
       });
     }
+    for (const input of resRadios) {
+      input.addEventListener('change', () => {
+        if (input.checked) emit({ resScale: Number(input.value) });
+      });
+    }
+    presetSelect.addEventListener('change', () => emit({ preset: presetSelect.value }));
+    for (const input of timeRadios) {
+      input.addEventListener('change', () => {
+        if (input.checked) emit({ timeMode: input.value });
+      });
+    }
+    
+    hour.input.addEventListener('input', () => {
+      const h = Number(hour.input.value) * 0.25;
+      hour.out.textContent = formatHour24(h);
+      emit({ customHour: h });
+    });
     opacity.input.addEventListener('input', () => {
       opacity.out.textContent = opacity.input.value;
       emit({ opacity: Number(opacity.input.value) / 100 });
@@ -2836,7 +4113,23 @@ function mountSeaUi(opts) {
       sat.out.textContent = `${v}%`;
       emit({ sat: v });
     });
-    resetBtn.addEventListener('click', () => emit({ reset: true }));
+    
+    waves.input.addEventListener('input', e => {
+      const v = snapInput(e, waves.input.value, [100, 0]);
+      waves.input.value = String(v);
+      waves.out.textContent = `${v}%`;
+      emit({ waveSpeed: v / 100 });
+    });
+    flow.input.addEventListener('input', e => {
+      const v = snapInput(e, flow.input.value, [100, 0]);
+      flow.input.value = String(v);
+      flow.out.textContent = `${v}%`;
+      emit({ flowSpeed: v / 100 });
+    });
+    perfResetBtn.addEventListener('click', () => emit({ reset: 'perf' }));
+    colourResetBtn.addEventListener('click', () => emit({ reset: 'colour' }));
+    motionResetBtn.addEventListener('click', () => emit({ reset: 'motion' }));
+    styleResetBtn.addEventListener('click', () => emit({ reset: 'style' }));
     updateLine.addEventListener('click', () => {
       const u = (getState() || {}).update;
       
@@ -3198,9 +4491,15 @@ function mountSeaUi(opts) {
     brightness: localStorage.getItem('zz-sea-brightness'),
     hue: localStorage.getItem('zz-sea-hue'),
     sat: localStorage.getItem('zz-sea-sat'),
+    waveSpeed: localStorage.getItem('zz-sea-wave-speed'),
+    flowSpeed: localStorage.getItem('zz-sea-flow-speed'),
     fps30: localStorage.getItem('zz-sea-fps'),
     frameCap: localStorage.getItem('zz-sea-cap'),
     staticWhenHidden: localStorage.getItem('zz-sea-hidden'),
+    resScale: localStorage.getItem('zz-sea-res'),
+    preset: localStorage.getItem('zz-sea-preset'),
+    timeMode: localStorage.getItem('zz-sea-time-mode'),
+    customHour: localStorage.getItem('zz-sea-custom-hour'),
   });
 
   const env = {
@@ -3219,7 +4518,16 @@ function mountSeaUi(opts) {
     img: null, raf: 0, timer: 0, sig: '', draws: 0,
     opacity: saved.opacity, brightness: saved.brightness, hue: saved.hue,
     sat: saved.sat, fps30: saved.fps30,
+    waveSpeed: saved.waveSpeed, flowSpeed: saved.flowSpeed,
+    
+    
+    
+    wavePhase: 0, flowPhase: 0, lastPhaseAt: 0,
     frameCap: saved.frameCap, staticWhenHidden: saved.staticWhenHidden,
+    
+    resScale: saved.resScale, preset: saved.preset,
+    timeMode: saved.timeMode, customHour: saved.customHour,
+    isPirate: false,                
     glReady: false, error: null, loading: false, moving: false,
     colourFormat: null,            
     canUseShader, maxTextureSize: probe.maxTextureSize,
@@ -3236,6 +4544,10 @@ function mountSeaUi(opts) {
     },
   };
   window.__zzSea = state;
+
+  
+  
+  const currentSettings = () => modeSettings(state.mode, state.preset, state.resScale);
 
   
   
@@ -3638,6 +4950,12 @@ function mountSeaUi(opts) {
   
   
   let pirateRawLayers = null;    
+  
+  
+  function syncPirateFlag() {
+    state.isPirate = Array.isArray(pirateRawLayers) &&
+      pirateRawLayers.some(isPirateOceanLayer);
+  }
 
   function hidePirateOcean(deck) {
     if (!deck || deck.__zzSeaOceanFiltered || typeof deck.setProps !== 'function') {
@@ -3648,6 +4966,7 @@ function mountSeaUi(opts) {
     deck.setProps = next => {
       if (next && Array.isArray(next.layers)) {
         pirateRawLayers = next.layers;
+        syncPirateFlag();
         const kept = state.on ? withoutPirateOcean(next.layers) : next.layers;
         if (kept !== next.layers) next = { ...next, layers: kept };
       }
@@ -3656,7 +4975,7 @@ function mountSeaUi(opts) {
     
     
     const live = deck.props && deck.props.layers;
-    if (Array.isArray(live)) pirateRawLayers = live;
+    if (Array.isArray(live)) { pirateRawLayers = live; syncPirateFlag(); }
     if (Array.isArray(live) && state.on && withoutPirateOcean(live) !== live) {
       pass({ layers: withoutPirateOcean(live) });
     }
@@ -4773,13 +6092,13 @@ function mountSeaUi(opts) {
     ? Object.keys(defs).sort().map(k => `${k}=${defs[k]}`).join(';')
     : '');
 
-  function link(gl, defs) {
+  function link(gl, defs, vertSrc = VERT, fragSrc = FRAG) {
     const prog = gl.createProgram();
     let vs = null;
     let fs = null;
     try {
-      vs = compile(gl, gl.VERTEX_SHADER, withDefines(VERT, defs));
-      fs = compile(gl, gl.FRAGMENT_SHADER, withDefines(FRAG, defs));
+      vs = compile(gl, gl.VERTEX_SHADER, withDefines(vertSrc, defs));
+      fs = compile(gl, gl.FRAGMENT_SHADER, withDefines(fragSrc, defs));
       gl.attachShader(prog, vs);
       gl.attachShader(prog, fs);
       gl.linkProgram(prog);
@@ -4798,21 +6117,50 @@ function mountSeaUi(opts) {
   }
 
   const UNIFORM_NAMES = [
-    'uColour', 'uAux', 'uDist', 'uFlow', 'uSpeedTex', 'uCurve', 'uSliceCurve', 'uWarpCurve',
-    'uTarget', 'uSize', 'uFlowSize', 'uSpeedSize', 'uAuxSpan', 'uCenter', 'uFlowCell',
-    'uBleed',
-    'uZoom', 'uTime', 'uDistMax', 'uShoreW', 'uShelf', 'uFlowSpeed', 'uGrain', 'uFoam',
-    'uDeep', 'uSwell', 'uSnap', 'uWaveSpeed', 'uFlowMode', 'uZoomCss', 'uCycle',
-    'uDeflect', 'uDeflectReach', 'uTravelMax', 'uWarp', 'uWarpBias', 'uDirA', 'uDirB',
-    'uSpeedA', 'uSpeedB', 'uScaleA', 'uScaleB', 'uParallax', 'uDeepSlow', 'uWaveIn',
-    'uWaveOut', 'uPomLayers', 'uAlongScale', 'uBrightness', 'uNoiseLayers',
-    'uDepthScale',
-    'uSpec', 'uSpecPow', 'uSpecSize', 'uSpecInvert', 'uSpecMode', 'uSpecFloor',
-    'uHue', 'uSat',
-    'uReveal', 'uWhalePose', 'uWhaleShape', 'uWhaleWake',
-    'uWhaleTex', 'uWhaleHalf', 'uWhaleHeight',
+    'uHeight', 'uAux', 'uDist', 'uFlow', 'uSpeedTex', 'uNormal', 'uSoilTex',
+    'uPalette', 'uSkyMatcap', 'uCurve', 'uSliceCurve', 'uWarpCurve',
+    'uTarget', 'uSize', 'uFlowSize', 'uSpeedSize', 'uAuxSpan', 'uCenter',
+    'uFlowCell', 'uZoom', 'uZoomCss', 'uTime', 'uWaveTime', 'uFlowTime',
+    'uDistMax', 'uShoreW', 'uShelf', 'uFlowSpeed', 'uGrain', 'uFoam', 'uSnap',
+    'uWaveSpeed', 'uFlowMode', 'uCycle', 'uDeflect', 'uDeflectReach',
+    'uTravelMax', 'uWarp', 'uWarpBias', 'uSpec', 'uSpecPow', 'uSpecSize',
+    'uSpecFloor', 'uSpecInvert', 'uSpecMode', 'uDirA', 'uDirB',
+    'uSpeedA', 'uSpeedB', 'uScaleA', 'uScaleB', 'uParallax', 'uDepthScale',
+    'uDeepSlow', 'uWaveIn', 'uWaveOut', 'uPomLayers', 'uAlongScale',
+    'uHeightSpan', 'uPomDepthFloor', 'uBrightness', 'uHue', 'uSat',
+    'uSurfMode', 'uSurfStrength', 'uChopAmp', 'uCrossAmp', 'uSwellAmp',
+    'uMacroAmp', 'uBandLimit', 'uSwellDir', 'uMacroAlign', 'uSurfPattern',
+    'uChoppy', 'uPainterly', 'uChopScale', 'uCrossScale', 'uSwellScale',
+    'uMacroScale', 'uRidgeMix', 'uMacroZoom', 'uMacroZoomMode', 'uPeakBias',
+    'uSpecTilt', 'uDepthGamma', 'uDepthContrast', 'uWaterClarity', 'uBedVis',
+    'uSoilLumLock', 'uSoilDark', 'uSoilSat', 'uReliefFade', 'uDeepVeil',
+    'uVeilStart', 'uSoilMix', 'uIsPirate', 'uMurkGain', 'uAbsorbK',
+    'uMurkAbsorb', 'uMurkScatter', 'uMurkDepthFade', 'uCoastCol',
+    'uCoastLevels', 'uCoastStrength', 'uMurkCol', 'uDayNightOn', 'uSunDir',
+    'uLightCol', 'uAmbientCol', 'uSkyZenith', 'uSkyHorizon', 'uNightMix',
+    'uReliefStrength', 'uBiolumGain', 'uShadowStrength', 'uShadowLen',
+    'uShadowHeight', 'uShadowSoft', 'uShadowMaxEl', 'uShadowStretch', 'uKeyVis',
+    'uSpecTint', 'uSpecDrift', 'uSpecStretch', 'uSpecSpread', 'uSpecRadius',
+    'uSkyOn', 'uSkyGain', 'uSkyOpacity', 'uSkyInt', 'uFresnelF0', 'uFresnelPow',
+    'uSkyNormal', 'uSkyCel', 'uSkyBlend', 'uSpecModel', 'uSpecGain',
+    'uSpecOpacity', 'uSpecInt', 'uRoughTight', 'uRoughBroad', 'uViewTilt',
+    'uSpecCut', 'uSpecBlend', 'uFetchWeight', 'uShoalGain', 'uWaveSet',
+    'uWhalePose', 'uWhaleShape', 'uWhaleWake', 'uWhaleTex', 'uWhaleHalf',
+    'uWhaleHeight', 'uBleed', 'uReveal', 'uViewSize', 'uTileOrigin',
+    'uTexelPass', 'uNoiseLut', 'uShadowTex',
   ];
 
+  const SHADOW_UNIFORMS = [
+    'uAux', 'uCurve', 'uTarget', 'uAuxSpan', 'uCenter', 'uShadowScale',
+    'uZoom', 'uZoomCss', 'uSnap', 'uParallax', 'uDepthScale', 'uHeightSpan',
+    'uSunDir', 'uShadowStrength', 'uShadowLen', 'uShadowHeight', 'uShadowSoft',
+    'uShadowMaxEl', 'uShadowStretch',
+  ];
+  const BLIT_UNIFORMS = [
+    'uTexelFbo', 'uTarget', 'uCenter', 'uTileOrigin', 'uTileSpan', 'uZoom',
+  ];
+
+  
   
   
   function buildProgram(gl, defs) {
@@ -4820,15 +6168,20 @@ function mountSeaUi(opts) {
     const uni = {};
     for (const name of UNIFORM_NAMES) uni[name] = gl.getUniformLocation(prog, name);
     gl.useProgram(prog);
-    gl.uniform1i(uni.uColour, 0);
+    gl.uniform1i(uni.uHeight, 0);
     gl.uniform1i(uni.uAux, 1);
     gl.uniform1i(uni.uDist, 2);
     gl.uniform1i(uni.uFlow, 3);
     gl.uniform1i(uni.uSpeedTex, 4);
-    gl.uniform1i(uni.uCurve, 5);
-    gl.uniform1i(uni.uSliceCurve, 6);
-    gl.uniform1i(uni.uWarpCurve, 7);
-    gl.uniform1i(uni.uWhaleTex, 8);
+    gl.uniform1i(uni.uNormal, 5);
+    gl.uniform1i(uni.uSoilTex, 6);
+    gl.uniform1i(uni.uPalette, 7);
+    gl.uniform1i(uni.uCurve, 8);
+    gl.uniform1i(uni.uSliceCurve, 9);
+    gl.uniform1i(uni.uWarpCurve, 10);
+    gl.uniform1i(uni.uSkyMatcap, 11);
+    gl.uniform1i(uni.uWhaleTex, 12);
+    gl.uniform1i(uni.uShadowTex, 13);
     
     gl.uniform2f(uni.uWhaleHalf, 5.5, 2.0);
     gl.uniform1f(uni.uWhaleHeight, 1.0);
@@ -4837,9 +6190,18 @@ function mountSeaUi(opts) {
     gl.uniform1f(uni.uBleed, 0.0);
     
     gl.uniform1f(uni.uDepthScale, 1.0);
+    
+    
+    gl.uniform1f(uni.uWaveTime, 0.0);
+    gl.uniform1f(uni.uFlowTime, 0.0);
+    gl.uniform1f(uni.uTexelPass, 0.0);
+    gl.uniform2f(uni.uTileOrigin, 0.0, 0.0);
+    gl.uniform2f(uni.uViewSize, 1.0, 1.0);
+    gl.uniform1f(uni.uWaveSet, 1.0);
     return { prog, uni };
   }
 
+  
   
   
   function selectProgram(c, settings) {
@@ -4850,13 +6212,44 @@ function mountSeaUi(opts) {
       try {
         p = buildProgram(c.gl, defs);
       } catch (e) {
-        c.progs.set(key, c.progs.get(''));
-        return;
+        p = c.progs.values().next().value;
+        if (!p) throw e;
       }
       c.progs.set(key, p);
     }
     c.prog = p.prog;
     c.uni = p.uni;
+  }
+
+  function getShadowProgram(c, defs) {
+    const steps = (defs && defs.SHADOW_STEPS) || 14;
+    let p = c.shadowProgs.get(steps);
+    if (!p) {
+      const prog = link(c.gl, { SHADOW_STEPS: steps }, VERT, FRAG_SHADOW);
+      const uni = {};
+      for (const name of SHADOW_UNIFORMS) uni[name] = c.gl.getUniformLocation(prog, name);
+      c.gl.useProgram(prog);
+      c.gl.uniform1i(uni.uAux, 1);
+      c.gl.uniform1i(uni.uCurve, 8);
+      p = { prog, uni };
+      c.shadowProgs.set(steps, p);
+    }
+    return p;
+  }
+
+  function getBlitProgram(c) {
+    if (!c.blitProg) {
+      const prog = link(c.gl, null, VERT, FRAG_BLIT);
+      const uni = {};
+      for (const name of BLIT_UNIFORMS) uni[name] = c.gl.getUniformLocation(prog, name);
+      c.gl.useProgram(prog);
+      
+      
+      c.gl.uniform1i(uni.uTexelFbo, 13);
+      c.blitProg = prog;
+      c.blitUni = uni;
+    }
+    return { prog: c.blitProg, uni: c.blitUni };
   }
 
   
@@ -4865,23 +6258,56 @@ function mountSeaUi(opts) {
   const WHALE_SHAPE = { halfLen: 11.5, halfWid: 3.6 };
 
   
+  const TRAVEL_CAP = 12.0;
+
+  
+  
   
   const PLAIN_UNIFORM = {
     shore: 'uShoreW', shelf: 'uShelf', flow: 'uFlowSpeed', wave: 'uWaveSpeed',
-    grain: 'uGrain', foam: 'uFoam', deep: 'uDeep', swell: 'uSwell',
-    aspeed: 'uSpeedA', ascale: 'uScaleA', bspeed: 'uSpeedB', bscale: 'uScaleB',
-    dslow: 'uDeepSlow', win: 'uWaveIn', wout: 'uWaveOut',
-    wbias: 'uWarpBias', deflect: 'uDeflect', deflectReach: 'uDeflectReach',
-    flowMode: 'uFlowMode', noiseLayers: 'uNoiseLayers', travelMax: 'uTravelMax',
+    grain: 'uGrain', foam: 'uFoam', dslow: 'uDeepSlow', win: 'uWaveIn',
+    wout: 'uWaveOut', wbias: 'uWarpBias', deflect: 'uDeflect',
+    deflectReach: 'uDeflectReach', flowMode: 'uFlowMode', snap: 'uSnap',
     spec: 'uSpec', specPow: 'uSpecPow', specSize: 'uSpecSize',
-    specInvert: 'uSpecInvert', specMode: 'uSpecMode', snap: 'uSnap',
-    specFloor: 'uSpecFloor',
+    specInvert: 'uSpecInvert', specFloor: 'uSpecFloor',
+    specTilt: 'uSpecTilt', viewTilt: 'uViewTilt', roughTight: 'uRoughTight',
+    roughBroad: 'uRoughBroad', chopScale: 'uChopScale', crossScale: 'uCrossScale',
+    swellScale: 'uSwellScale', macroScale: 'uMacroScale', macroZoom: 'uMacroZoom',
+    choppy: 'uChoppy', swellDir: 'uSwellDir', waterClarity: 'uWaterClarity',
+    depthGamma: 'uDepthGamma', depthContrast: 'uDepthContrast',
+    reliefFade: 'uReliefFade', veilStart: 'uVeilStart', shadowLen: 'uShadowLen',
+    shadowH: 'uShadowHeight', shadowSoft: 'uShadowSoft',
+    shadowMaxEl: 'uShadowMaxEl', shadowStretch: 'uShadowStretch',
+    fresnelF0: 'uFresnelF0', fresnelPow: 'uFresnelPow', specDrift: 'uSpecDrift',
+    specStretch: 'uSpecStretch', specSpread: 'uSpecSpread', specRadius: 'uSpecRadius',
+    coastLevels: 'uCoastLevels', murkDepthFade: 'uMurkDepthFade',
+    coastStrength: 'uCoastStrength',
   };
 
-  function setModeUniforms(gl, uni, u) {
+  const PERCENT_UNIFORM = {
+    surfStrength: 'uSurfStrength', chopAmp: 'uChopAmp', crossAmp: 'uCrossAmp',
+    swellAmp: 'uSwellAmp', macroAmp: 'uMacroAmp', bandLimit: 'uBandLimit',
+    macroAlign: 'uMacroAlign', painterly: 'uPainterly', ridgeMix: 'uRidgeMix',
+    peakBias: 'uPeakBias', soilLumLock: 'uSoilLumLock', soilDark: 'uSoilDark',
+    soilSat: 'uSoilSat', bedVis: 'uBedVis', deepVeil: 'uDeepVeil',
+    soilMix: 'uSoilMix', murkGain: 'uMurkGain', murkAbsorb: 'uMurkAbsorb',
+    murkScatter: 'uMurkScatter', relief: 'uReliefStrength', biolum: 'uBiolumGain',
+    specGain: 'uSpecGain', specOpacity: 'uSpecOpacity', specCut: 'uSpecCut',
+    skyGain: 'uSkyGain', skyOpacity: 'uSkyOpacity', skyNormal: 'uSkyNormal',
+    skyCel: 'uSkyCel', fetchW: 'uFetchWeight', shoalG: 'uShoalGain',
+  };
+
+  const hexRgb255 = hex => {
+    const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || ''));
+    const n = m ? parseInt(m[1], 16) : 0x5f8791;
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  };
+
+  function setModeUniforms(gl, uni, u, settings, frame) {
     const rad = deg => deg * Math.PI / 180;
-    
-    
+    const tog = (settings.preset && seaConsts.presets[settings.preset]
+      ? seaConsts.presets[settings.preset].TOG : null) || {};
+    const defs = settings.defines || {};
     for (const k of Object.keys(u)) {
       switch (k) {
         case 'par': gl.uniform1f(uni.uParallax, -u.par); break;
@@ -4892,10 +6318,60 @@ function mountSeaUi(opts) {
         case 'bdir': gl.uniform2f(uni.uDirB, Math.cos(rad(u.bdir)), Math.sin(rad(u.bdir))); break;
         default: {
           const name = PLAIN_UNIFORM[k];
+          const pct = PERCENT_UNIFORM[k];
           if (name) gl.uniform1f(uni[name], u[k]);
+          else if (pct) gl.uniform1f(uni[pct], Number(u[k]) / 100);
         }
       }
     }
+
+    
+    gl.uniform1f(uni.uSurfMode, tog.surfMode ? 1 : 0);
+    gl.uniform1f(uni.uSurfPattern, Number(tog.surfPattern) || 0);
+    gl.uniform1f(uni.uMacroZoomMode, tog.macroZoomMode ? 1 : 0);
+    gl.uniform1f(uni.uTravelMax, tog.clamp ? TRAVEL_CAP : 0);
+
+    
+    const b = seaConsts.baseline;
+    gl.uniform1f(uni.uSpeedA, b.aspeed);
+    gl.uniform1f(uni.uSpeedB, b.bspeed);
+    gl.uniform1f(uni.uScaleA, b.ascale);
+    gl.uniform1f(uni.uScaleB, b.bscale);
+
+    
+    gl.uniform3f(uni.uAbsorbK, Number(u.kR) || 0, Number(u.kG) || 0, Number(u.kB) || 0);
+    const murk = hexRgb255(u.murkCol);
+    gl.uniform3f(uni.uMurkCol, murk[0] / 255, murk[1] / 255, murk[2] / 255);
+    const coast = (activePointer && activePointer.coast) || seaConsts.coast;
+    gl.uniform3f(uni.uCoastCol, coast.r / 255, coast.g / 255, coast.b / 255);
+    gl.uniform1f(uni.uSoilMix,
+      defs.HAS_SOIL && frame && frame.soilReady ? Number(u.soilMix) / 100 : 0);
+    gl.uniform1f(uni.uPomDepthFloor, tog.pomFloor ? 1 : 0);
+    gl.uniform1f(uni.uIsPirate, state.isPirate ? 1 : 0);
+
+    
+    const dn = frame.dn;
+    const on = frame.dayNight ? 1 : 0;
+    gl.uniform1f(uni.uDayNightOn, on);
+    gl.uniform3fv(uni.uSunDir, dn.keyDir);
+    gl.uniform3fv(uni.uLightCol, dn.lightCol);
+    gl.uniform3fv(uni.uAmbientCol, dn.ambCol);
+    gl.uniform3fv(uni.uSkyZenith, dn.skyZ);
+    gl.uniform3fv(uni.uSkyHorizon, dn.skyH);
+    gl.uniform1f(uni.uNightMix, dn.nightMix);
+    gl.uniform1f(uni.uKeyVis, dn.keyVis);
+    gl.uniform3fv(uni.uSpecTint, dn.specTint);
+    gl.uniform1f(uni.uSkyInt, frame.dayNight ? dn.skyI : 1.0);
+    gl.uniform1f(uni.uSpecInt, frame.dayNight ? dn.specI : 1.0);
+    gl.uniform1f(uni.uShadowStrength, frame.shadowEff);
+
+    
+    gl.uniform1f(uni.uSkyOn, tog.skyOn ? 1 : 0);
+    gl.uniform1f(uni.uSkyBlend, Number(tog.skyBlend) || 0);
+    gl.uniform1f(uni.uSpecBlend, Number(tog.specBlend) || 0);
+    gl.uniform1f(uni.uSpecModel, tog.specModel ? 1 : 0);
+    gl.uniform1f(uni.uSpecMode, Number(tog.specMode) || 0);
+    gl.uniform1f(uni.uWaveSet, frame.waveSet);
   }
 
   
@@ -4930,11 +6406,15 @@ function mountSeaUi(opts) {
   
   
   const TEX_FORMAT = {
+    
     colour: ['RGBA8', 'RGBA'],
+    height: ['R8', 'RED'],          
     dist: ['R8', 'RED'],            
     aux: ['RGB8', 'RGB'],           
     flow: ['RGB8', 'RGB'],          
-    speed: ['R8', 'RED'],           
+    speed: ['RGB8', 'RGB'],         
+    normal: ['RGB8', 'RGB'],        
+    soil: ['RGBA8', 'RGBA'],        
   };
 
   function uploadTexture(gl, source, nearest, key) {
@@ -4983,6 +6463,310 @@ function mountSeaUi(opts) {
     return tex;
   }
 
+  
+  function paletteTexture(gl, pal) {
+    const p = pal && Array.isArray(pal.stops) && Array.isArray(pal.cols)
+      ? pal : seaConsts.palette;
+    const n = 256;
+    const data = new Uint8Array(n * 3);
+    const stops = p.stops;
+    const cols = p.cols;
+    for (let i = 0; i < n; i++) {
+      const t = i / (n - 1);
+      let c = cols[cols.length - 1];
+      if (t <= stops[0]) {
+        c = cols[0];
+      } else {
+        for (let k = 1; k < stops.length; k++) {
+          if (t <= stops[k]) {
+            const f = (t - stops[k - 1]) / Math.max(1e-6, stops[k] - stops[k - 1]);
+            c = [0, 1, 2].map(j => cols[k - 1][j] + (cols[k][j] - cols[k - 1][j]) * f);
+            break;
+          }
+        }
+      }
+      data[i * 3] = Math.round(c[0]);
+      data[i * 3 + 1] = Math.round(c[1]);
+      data[i * 3 + 2] = Math.round(c[2]);
+    }
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB8, n, 1, 0, gl.RGB, gl.UNSIGNED_BYTE, data);
+    return tex;
+  }
+
+  
+  
+  function solidTexture(gl, rgba) {
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
+      new Uint8Array(rgba));
+    return tex;
+  }
+
+  
+  
+  
+  function makeTarget(gl, w, h, format, filter) {
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texImage2D(gl.TEXTURE_2D, 0, format, w, h, 0,
+      format === gl.R8 ? gl.RED : gl.RGBA, gl.UNSIGNED_BYTE, null);
+    const fb = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+    const ok = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    if (!ok) {
+      gl.deleteFramebuffer(fb);
+      gl.deleteTexture(tex);
+      return null;
+    }
+    return { fb, tex, w, h, format, filter };
+  }
+
+  
+  function acquireTarget(c, slot, w, h, format, filter, grow) {
+    const gl = c.gl;
+    const old = c.targets[slot];
+    if (old && old.format === format && old.filter === filter &&
+        (grow ? (old.w >= w && old.h >= h) : (old.w === w && old.h === h))) {
+      return old;
+    }
+    if (old) {
+      gl.deleteFramebuffer(old.fb);
+      gl.deleteTexture(old.tex);
+      c.targets[slot] = null;
+    }
+    const nw = grow ? Math.max(w, old ? old.w : 0) : w;
+    const nh = grow ? Math.max(h, old ? old.h : 0) : h;
+    const made = makeTarget(gl, nw, nh, format, filter);
+    if (made) c.targets[slot] = made;
+    return made;
+  }
+
+  function shadowTarget(c, w, h) {
+    if (c.shadowFmt === null) {
+      const gl = c.gl;
+      const probeTarget = makeTarget(gl, 1, 1, gl.R8, gl.LINEAR);
+      if (probeTarget) {
+        gl.deleteFramebuffer(probeTarget.fb);
+        gl.deleteTexture(probeTarget.tex);
+      }
+      gl.getError();                  
+      c.shadowFmt = probeTarget ? gl.R8 : gl.RGBA8;
+    }
+    return acquireTarget(c, 'shadow', w, h, c.shadowFmt, c.gl.LINEAR, false);
+  }
+
+  
+  
+  
+  
+  const SKY_N = 128;
+  let skyCanvas = null;
+  let skyCtx = null;
+
+  function skyNoise2(x, y) {
+    const h = (ix, iy) => {
+      const n = Math.sin(ix * 127.1 + iy * 311.7) * 43758.5453;
+      return n - Math.floor(n);
+    };
+    const ix = Math.floor(x);
+    const iy = Math.floor(y);
+    const fx = x - ix;
+    const fy = y - iy;
+    const sx = fx * fx * (3 - 2 * fx);
+    const sy = fy * fy * (3 - 2 * fy);
+    const a = h(ix, iy);
+    const b = h(ix + 1, iy);
+    const c = h(ix, iy + 1);
+    const d = h(ix + 1, iy + 1);
+    return (a + (b - a) * sx) + ((c + (d - c) * sx) - (a + (b - a) * sx)) * sy;
+  }
+
+  function renderSkyMatcap(dn, clouds, skyDir, sunBloom) {
+    if (!skyCanvas) {
+      skyCanvas = document.createElement('canvas');
+      skyCanvas.width = skyCanvas.height = SKY_N;
+      skyCtx = skyCanvas.getContext('2d');
+    }
+    const N = SKY_N;
+    const img = skyCtx.createImageData(N, N);
+    const px = img.data;
+    const zen = dn.skyZ;
+    const sunC = dn.skyH;
+    const dark = dn.skyD;
+    const key = dn.lightCol;
+    const [sx, sy, sz] = dn.sunDir;
+    const [mx, my, mz] = dn.moonDir;
+    const sunH = dn.sunXY;
+    const moonH = dn.moonXY;
+    const sunVis = dn.sunSkyVis;
+    const moonVis = dn.moonSkyVis;
+    const dirExp = 1 + 5 * clamp(Number(skyDir) / 100, 0, 1);
+    const bloomAmt = clamp(Number(sunBloom) / 100, 0, 1.5);
+    const cloudAmt = clamp(Number(clouds) / 100, 0, 1);
+    const moonHorizon = dn.nightSkyH;
+    const moonKey = dn.nightKey;
+    const mix = (a, b, t) => a + (b - a) * t;
+    for (let y = 0; y < N; y++) {
+      const dv = (y + 0.5) / N - 0.5;     
+      const nv = -dv;                     
+      for (let x = 0; x < N; x++) {
+        const du = (x + 0.5) / N - 0.5;
+        const dist = Math.hypot(du, dv);
+        const r = Math.min(1.0, dist * 2.0);   
+        let rx = 0;
+        let ry = 0;
+        let rz = 1;
+        if (dist > 1e-6) {
+          rz = (1 - r * r) / (1 + r * r);
+          const hm = Math.sqrt(Math.max(0, 1 - rz * rz)) / dist;
+          rx = du * hm;
+          ry = nv * hm;
+        }
+        const invR = dist > 1e-6 ? 1 / dist : 0;
+        const dx = du * invR;
+        const dy = nv * invR;
+        const rawSun = clamp(0.5 + 0.5 * (dx * sunH[0] + dy * sunH[1]), 0, 1);
+        const rawMoon = clamp(0.5 + 0.5 * (dx * moonH[0] + dy * moonH[1]), 0, 1);
+        const sideSun = Math.pow(rawSun, dirExp) * sunVis;
+        const sideMoon = Math.pow(rawMoon, dirExp) * moonVis;
+        const zc = clamp(rz, 0, 1);
+        const gm = Math.pow(1 - zc, 0.62);
+        const hR = mix(mix(dark[0], sunC[0], sideSun), moonHorizon[0], sideMoon);
+        const hG = mix(mix(dark[1], sunC[1], sideSun), moonHorizon[1], sideMoon);
+        const hB = mix(mix(dark[2], sunC[2], sideSun), moonHorizon[2], sideMoon);
+        let cr = mix(zen[0], hR, gm);
+        let cg = mix(zen[1], hG, gm);
+        let cb = mix(zen[2], hB, gm);
+        const horizonFall = Math.pow(1 - zc, 0.75);
+        const bloomSun = Math.pow(rawSun, 2.5) * horizonFall * bloomAmt * sunVis;
+        const bloomMoon = Math.pow(rawMoon, 2.5) * horizonFall * bloomAmt * 0.55 * moonVis;
+        cr += sunC[0] * bloomSun * 0.85 + moonHorizon[0] * bloomMoon * 0.85;
+        cg += sunC[1] * bloomSun * 0.85 + moonHorizon[1] * bloomMoon * 0.85;
+        cb += sunC[2] * bloomSun * 0.85 + moonHorizon[2] * bloomMoon * 0.85;
+        const cosSun = rx * sx + ry * sy + rz * sz;
+        if (cosSun > 0.2 && sunVis > 0.001) {
+          const tight = Math.pow(cosSun, 260) * 1.5 * sunVis;
+          const broad = Math.pow(cosSun, 22) * 0.22 * bloomAmt * sunVis;
+          cr += key[0] * (tight + broad);
+          cg += key[1] * (tight + broad);
+          cb += key[2] * (tight + broad);
+        }
+        const cosMoon = rx * mx + ry * my + rz * mz;
+        if (cosMoon > 0.2 && moonVis > 0.001) {
+          const tight = Math.pow(cosMoon, 320) * 1.15 * moonVis;
+          const broad = Math.pow(cosMoon, 26) * 0.20 * bloomAmt * 0.55 * moonVis;
+          cr += moonKey[0] * (tight + broad);
+          cg += moonKey[1] * (tight + broad);
+          cb += moonKey[2] * (tight + broad);
+        }
+        if (cloudAmt > 0.001 && r > 0.18) {
+          const cu = x / N * 3.2 + 11.0;
+          const cv = y / N * 3.2 + 4.0;
+          const n = skyNoise2(cu, cv) * 0.62 + skyNoise2(cu * 2.1, cv * 2.1) * 0.28
+            + skyNoise2(cu * 4.3, cv * 4.3) * 0.10;
+          const band = Math.pow(Math.min(1, r), 0.7);
+          const mask = clamp((n - 0.55) * 5.0, 0, 1) * band * cloudAmt;
+          const cw = 0.55 + 0.35 * key[0];
+          const cloudR = sunC[0] * 0.55 + cw;
+          const cloudG = sunC[1] * 0.55 + cw;
+          const cloudB = sunC[2] * 0.55 + cw;
+          cr += (cloudR - cr) * mask * 0.34;
+          cg += (cloudG - cg) * mask * 0.34;
+          cb += (cloudB - cb) * mask * 0.34;
+        }
+        const i = (y * N + x) * 4;
+        px[i] = Math.min(255, Math.max(0, cr * 255));
+        px[i + 1] = Math.min(255, Math.max(0, cg * 255));
+        px[i + 2] = Math.min(255, Math.max(0, cb * 255));
+        px[i + 3] = 255;
+      }
+    }
+    skyCtx.putImageData(img, 0, 0);
+  }
+
+  function updateSky(c, dn, settings) {
+    if (!c.tex.sky) return;
+    const s = settings.uniforms;
+    const key = [
+      settings.preset, dn.hour.toFixed(3),
+      dn.sunDir.map(v => v.toFixed(3)).join(','),
+      dn.moonDir.map(v => v.toFixed(3)).join(','),
+      dn.skyZ.map(v => v.toFixed(3)).join(','),
+      dn.skyH.map(v => v.toFixed(3)).join(','),
+      dn.skyD.map(v => v.toFixed(3)).join(','),
+      dn.sunSkyVis.toFixed(4), dn.moonSkyVis.toFixed(4),
+      s.clouds, s.skyDir, s.sunBloom,
+    ].join('|');
+    if (key === c.skyKey) return;
+    c.skyKey = key;
+    renderSkyMatcap(dn, s.clouds, s.skyDir, s.sunBloom);
+    const gl = c.gl;
+    gl.bindTexture(gl.TEXTURE_2D, c.tex.sky);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);   
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, SKY_N, SKY_N, gl.RGBA, gl.UNSIGNED_BYTE,
+      skyCanvas);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+  }
+
+  
+  
+  
+  function ensureOptionalTextures(c, settings, kind, epoch) {
+    const defs = settings.defines || {};
+    if (defs.HAS_LIGHTING && !c.tex.normal && !c.optional.normal) {
+      c.optional.normal = true;
+      c.tex.normal = c.normalFallback;
+      decodeTexture((activePointer && activePointer.bakes && activePointer.bakes.normal)
+        || 'sea-zag-normal.webp', kind)
+        .then(source => {
+          if (epoch !== routeEpoch || glc !== c || c.lost) {
+            if (source && typeof source.close === 'function') source.close();
+            return;
+          }
+          const up = uploadTexture(c.gl, source, false, 'normal');
+          c.tex.normal = up.tex;
+          c.size.normal = [up.w, up.h];
+        })
+        .catch(() => {});
+    }
+    const soilWanted = defs.HAS_SOIL && Number(settings.uniforms.soilMix) > 0;
+    if (soilWanted && !c.tex.soil && !c.optional.soil) {
+      c.optional.soil = true;
+      c.tex.soil = c.soilFallback;
+      const name = activePointer && activePointer.bakes && activePointer.bakes.soil
+        ? activePointer.bakes.soil : 'sea-zag-soil.webp';
+      decodeTexture(name, kind)
+        .then(source => {
+          if (epoch !== routeEpoch || glc !== c || c.lost) {
+            if (source && typeof source.close === 'function') source.close();
+            return;
+          }
+          const up = uploadTexture(c.gl, source, false, 'soil');
+          c.tex.soil = up.tex;
+          c.size.soil = [up.w, up.h];
+        })
+        .catch(() => {});
+    }
+  }
+
   function drainErrors(gl) {
     for (let i = 0; i < 16 && gl.getError() !== gl.NO_ERROR; i++) {  }
   }
@@ -5014,6 +6798,13 @@ function mountSeaUi(opts) {
   function buildGLNow(kind, epoch) {
     if (!state.on || !mapGateOpen) return;      
     if (state.mapOutdated) { paintOutdatedPlaceholder(); return; }
+    
+    
+    
+    if (!activePointer || !activePointer.bakes || !activePointer.bakes.height) {
+      fallbackToStatic(new Error('v2 bakes unavailable'));
+      return;
+    }
     const deck = deckCanvas();
     if (!deck || !deck.parentNode) throw new Error('no deck canvas');
     if (!canUseShader) {
@@ -5045,21 +6836,51 @@ function mountSeaUi(opts) {
       if (info) rendererName = String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL) || '');
     } catch { rendererName = ''; }
 
+    const settings0 = currentSettings();
     let first;
-    try { first = buildProgram(gl, null); } catch (e) { canvas.remove(); throw e; }
+    try {
+      first = buildProgram(gl, settings0.defines);
+    } catch (e) {
+      canvas.remove();
+      throw e;
+    }
     const { prog, uni } = first;
+    const curves = settings0.curves || seaConsts.curves;
+
+    const skyTex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, skyTex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, SKY_N, SKY_N, 0, gl.RGBA,
+      gl.UNSIGNED_BYTE, null);
 
     const c = {
-      canvas, gl, prog, uni, progs: new Map([['', first]]),
+      canvas, gl, prog, uni,
+      progs: new Map([[definesKey(settings0.defines), first]]),
+      shadowProgs: new Map(),
+      blitProg: null, blitUni: null,
       tex: {
-        curve: curveTexture(gl, seaConsts.curves.pc),
-        slice: curveTexture(gl, seaConsts.curves.sc),
-        warp: curveTexture(gl, seaConsts.curves.wc),
+        curve: curveTexture(gl, curves.pc),
+        slice: curveTexture(gl, curves.sc),
+        warp: curveTexture(gl, curves.wc),
+        palette: paletteTexture(gl, activePointer.palette || seaConsts.palette),
+        sky: skyTex,
       },
+      normalFallback: solidTexture(gl, [128, 128, 255, 255]),
+      soilFallback: solidTexture(gl, [0, 0, 0, 0]),
+      shadowFallback: solidTexture(gl, [255, 255, 255, 255]),
+      optional: { normal: false, soil: false },
+      targets: { shadow: null, texel: null },
+      shadowFmt: null,
+      skyKey: '',
       whaleTex: null,
       whaleDirty: true,
-      size: {}, raf: 0, timer: 0, ready: false, css: '', lost: false, first: false,
+      size: { palette: [256, 1], sky: [SKY_N, SKY_N] },
+      raf: 0, timer: 0, ready: false, css: '', lost: false, first: false,
       onLost: null, onRestored: null,
+      epoch, kind,
     };
     glc = c;
     c.onLost = e => onContextLost(c, e);
@@ -5086,27 +6907,24 @@ function mountSeaUi(opts) {
 
     
     
+    
     const specs = [
-      ['colour', 'sea-zag.webp', true],
+      ['height', activePointer.bakes.height, true],
       ['dist', 'sea-zag-dist.webp', true],
       ['aux', 'sea-zag-aux.webp', false],
       ['flow', 'sea-zag-flow.webp', false],
       ['speed', 'sea-zag-speed.webp', false],
     ];
-    Promise.all(specs.map(([key, name, nearest]) =>
-      
-      
-      (key === 'colour' ? loadColour(kind) : decodeTexture(name, kind))
-        .then(source => {
-          if (epoch !== routeEpoch || glc !== c || c.lost) {
-            if (source && typeof source.close === 'function') source.close();
-            return;
-          }
-          const up = uploadTexture(gl, source, nearest, key);
-          c.tex[key] = up.tex;
-          c.size[key] = [up.w, up.h];
-        }),
-    )).then(() => {
+    Promise.all(specs.map(([key, name, nearest]) => decodeTexture(name, kind)
+      .then(source => {
+        if (epoch !== routeEpoch || glc !== c || c.lost) {
+          if (source && typeof source.close === 'function') source.close();
+          return;
+        }
+        const up = uploadTexture(gl, source, nearest, key);
+        c.tex[key] = up.tex;
+        c.size[key] = [up.w, up.h];
+      }))).then(() => {
       if (epoch !== routeEpoch || glc !== c || c.lost) return;
       
       
@@ -5115,7 +6933,7 @@ function mountSeaUi(opts) {
         throw new Error('texture: GL error 0x' + glErr.toString(16));
       }
       const max = Number(gl.getParameter(gl.MAX_TEXTURE_SIZE)) || probe.maxTextureSize;
-      for (const key of ['colour', 'dist', 'aux', 'flow', 'speed']) {
+      for (const key of ['height', 'dist', 'aux', 'flow', 'speed']) {
         const [w, h] = c.size[key] || [0, 0];
         if (!w || !h || w > max || h > max) {
           throw new Error(`texture: ${key} ${w}x${h} > MAX_TEXTURE_SIZE ${max}`);
@@ -5125,6 +6943,9 @@ function mountSeaUi(opts) {
       state.glReady = true;
       state.loading = false;
       state.error = null;
+      
+      
+      ensureOptionalTextures(c, currentSettings(), kind, epoch);
       if (noisy) startIntro();
       startGL();
       refreshUi();
@@ -5208,9 +7029,22 @@ function mountSeaUi(opts) {
       if (c.onLost) c.canvas.removeEventListener('webglcontextlost', c.onLost);
       if (c.onRestored) c.canvas.removeEventListener('webglcontextrestored', c.onRestored);
     }
-    try { c.gl.deleteProgram(c.prog); } catch {}
+    const progs = new Set();
+    if (c.progs) for (const p of c.progs.values()) progs.add(p.prog);
+    if (c.shadowProgs) for (const p of c.shadowProgs.values()) progs.add(p.prog);
+    for (const p of progs) { try { c.gl.deleteProgram(p); } catch {} }
+    if (c.blitProg) { try { c.gl.deleteProgram(c.blitProg); } catch {} }
+    for (const slot of Object.keys(c.targets || {})) {
+      const target = c.targets[slot];
+      if (!target) continue;
+      try { c.gl.deleteFramebuffer(target.fb); } catch {}
+      try { c.gl.deleteTexture(target.tex); } catch {}
+    }
     for (const key of Object.keys(c.tex || {})) {
       try { c.gl.deleteTexture(c.tex[key]); } catch {}
+    }
+    for (const key of ['normalFallback', 'soilFallback', 'shadowFallback']) {
+      if (c[key]) { try { c.gl.deleteTexture(c[key]); } catch {} }
     }
     if (!c.lost) {
       const lose = c.gl.getExtension('WEBGL_lose_context');
@@ -5219,19 +7053,98 @@ function mountSeaUi(opts) {
     if (c.canvas) c.canvas.remove();
   }
 
-  function renderFrame(c, w, h, cam, t, settings, ramps) {
+  
+  
+  
+  
+  function currentHour() {
+    if (state.timeMode === 'day') return 13.0;
+    if (state.timeMode === 'night') return 1.0;
+    if (state.timeMode === 'custom') return state.customHour;
+    if (state.timeMode === 'off') return 12.0;
+    const d = new Date();
+    return d.getHours() + d.getMinutes() / 60;
+  }
+
+  
+  
+  
+  function flatDayNight(settings) {
+    if (!settings || !settings.kf) {
+      const one = [1, 1, 1];
+      return {
+        hour: 12, sunDir: [0, 0, 1], moonDir: [0, 0, 1], keyDir: [0, 0, 1],
+        keyVis: 1, isMoon: false, sunKeyVis: 1, moonKeyVis: 0,
+        sunSkyVis: 1, moonSkyVis: 0, sunXY: [0, 1], moonXY: [0, 1],
+        keyXY: [0, 1], anchor: [0, 0], lowSun: 0,
+        lightCol: one, ambCol: one, skyZ: one, skyH: one,
+        skyD: one, specTint: one, nightMix: 0, lightI: 1, skyI: 1,
+        specI: 1, nightKey: one, nightSkyH: one,
+      };
+    }
+    return dayNightState(12, settings.kf,
+      { ...dnOptions(settings), timeMode: 'off' });
+  }
+
+  function dnOptions(settings) {
+    const u = settings.uniforms || {};
+    return {
+      hemi: u.hemi || 'S',
+      sunMaxEl: u.sunMaxEl,
+      sunAzOff: u.sunAzOff,
+      specDrift: u.specDrift,
+    };
+  }
+
+  function liveDayNight(settings) {
+    
+    if (!settings.dayNight || state.timeMode === 'off') return flatDayNight(settings);
+    return dayNightState(currentHour(), settings.kf,
+      { ...dnOptions(settings), timeMode: state.timeMode });
+  }
+
+  function frameDayNight(settings, frameOpts) {
+    if (frameOpts && frameOpts.hour !== undefined) {
+      return dayNightState(frameOpts.hour, settings.kf,
+        { ...dnOptions(settings), timeMode: 'custom' });
+    }
+    if (frameOpts && frameOpts.flat) return flatDayNight(settings);
+    return liveDayNight(settings);
+  }
+
+  const presetTog = settings => (settings.preset && seaConsts.presets[settings.preset]
+    ? seaConsts.presets[settings.preset].TOG || {} : {});
+
+  function renderFrame(c, w, h, cam, t, settings, ramps, waveTime, flowTime,
+                       frameOpts) {
     const { gl, uni, tex, size } = c;
-    gl.viewport(0, 0, w, h);
-    gl.useProgram(c.prog);
-    gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    const u = settings.uniforms;
+    const defs = settings.defines || {};
+    const dn = frameDayNight(settings, frameOpts);
+    const liveOff = !frameOpts && state.timeMode === 'off';
+    const dayNight = !!(settings.dayNight && !(frameOpts && frameOpts.flat) && !liveOff);
+    const shadowEff = dayNight
+      ? (Number(u.shadowStr) || 0) / 100 * dn.keyVis * (dn.isMoon ? 0.65 : 1)
+      : 0;
+    const waveSet = frameOpts && frameOpts.waveSet !== undefined
+      ? frameOpts.waveSet
+      : waveSetEnvelope(wallNow(performance.now()));
+    const kind = c.kind || activeMapKind;
+    ensureOptionalTextures(c, settings, kind, c.epoch === undefined ? routeEpoch : c.epoch);
+    if (defs.HAS_SKY_MATCAP) updateSky(c, dn, settings);
 
     
     
     
     const pad = mapPad();
-    gl.uniform2f(uni.uTarget, cam.tx + pad, cam.ty + pad);
+    const targetX = cam.tx + pad;
+    const targetY = cam.ty + pad;
+    const hSpan = activePointer.heightHi - activePointer.heightLo;
+
+    gl.useProgram(c.prog);
+    gl.uniform2f(uni.uTarget, targetX, targetY);
     gl.uniform2f(uni.uSize, bakeW(), bakeH());
+    gl.uniform2f(uni.uViewSize, w, h);
     gl.uniform2f(uni.uFlowSize, size.flow[0], size.flow[1]);
     
     
@@ -5249,15 +7162,25 @@ function mountSeaUi(opts) {
     gl.uniform1f(uni.uZoom, cam.zoom);
     gl.uniform1f(uni.uZoomCss, cam.zoomCss);
     gl.uniform1f(uni.uTime, t);
+    gl.uniform1f(uni.uWaveTime, waveTime);
+    gl.uniform1f(uni.uFlowTime, flowTime);
     gl.uniform1f(uni.uDistMax, activePointer.distMax);
     gl.uniform1f(uni.uAlongScale, activePointer.alongScale);
+    gl.uniform1f(uni.uHeightSpan, hSpan > 0 ? hSpan : 0.8394);
     
     
     gl.uniform1f(uni.uDepthScale, parallaxDepthScale(activePointer));
-    gl.uniform1f(uni.uBrightness, state.brightness);
-    gl.uniform1f(uni.uHue, state.hue);
-    gl.uniform1f(uni.uSat, state.sat / 100);
-    setModeUniforms(gl, uni, settings.uniforms);
+    setModeUniforms(gl, uni, u, settings, {
+      dn, dayNight, shadowEff, waveSet,
+      soilReady: !!c.tex.soil && c.tex.soil !== c.soilFallback,
+    });
+
+    
+    
+    gl.uniform1f(uni.uHue, (Number(u.hue) || 0) + state.hue);
+    gl.uniform1f(uni.uSat, (Number(u.sat ?? 100) / 100) * (state.sat / 100));
+    gl.uniform1f(uni.uBrightness,
+      (Number(u.bright ?? 110) / 100) * (state.brightness / 1.1));
 
     
     
@@ -5278,7 +7201,7 @@ function mountSeaUi(opts) {
     if (whaleMesh && activeMapKind === 'exploration') {
       if (!c.whaleTex) c.whaleTex = whaleTexture(gl);
       if (c.whaleDirty) {
-        gl.activeTexture(gl.TEXTURE8);
+        gl.activeTexture(gl.TEXTURE12);
         gl.bindTexture(gl.TEXTURE_2D, c.whaleTex);
         gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, whaleTexSize[0], whaleTexSize[1],
           gl.RGBA, gl.UNSIGNED_BYTE, whaleTexBuf);
@@ -5292,7 +7215,6 @@ function mountSeaUi(opts) {
     
     
     const r = ramps || NEUTRAL_RAMPS;
-    const u = settings.uniforms;
     gl.uniform1f(uni.uReveal, r.reveal);
     if (r.wave < 1) {
       gl.uniform1f(uni.uWaveIn, u.win * r.wave);
@@ -5300,24 +7222,136 @@ function mountSeaUi(opts) {
       gl.uniform1f(uni.uFoam, u.foam * r.wave);
     }
     if (r.grain < 1) gl.uniform1f(uni.uGrain, u.grain * r.grain);
-    if (r.flow < 1) {
-      const k = 1 + 0.5 * (1 - r.flow);
-      gl.uniform1f(uni.uFlowSpeed, u.flow * k);
-      gl.uniform1f(uni.uSpeedA, u.aspeed * k);
-      gl.uniform1f(uni.uSpeedB, u.bspeed * k);
+
+    
+    
+    
+    const tog = presetTog(settings);
+    let texel = null;
+    if (tog.texelFbo !== 0 && u.snap && cam.zoom > 1.05 &&
+        (ramps || NEUTRAL_RAMPS).reveal >= 1) {
+      const tx0 = Math.floor(targetX - w * 0.5 / cam.zoom) - 1;
+      const ty0 = Math.floor(targetY - h * 0.5 / cam.zoom) - 1;
+      const tx1 = Math.ceil(targetX + w * 0.5 / cam.zoom) + 1;
+      const ty1 = Math.ceil(targetY + h * 0.5 / cam.zoom) + 1;
+      const fw = Math.max(1, tx1 - tx0);
+      const fh = Math.max(1, ty1 - ty0);
+      if (fw * fh < w * h * 0.85 && fw <= 4096 && fh <= 4096) {
+        texel = { tx0, ty0, fw, fh };
+      }
+    }
+    const texelTarget = texel
+      ? acquireTarget(c, 'texel', texel.fw, texel.fh, gl.RGBA8, gl.NEAREST, true)
+      : null;
+    if (!texelTarget) texel = null;
+    if (texelTarget) c.size.texel = [texelTarget.w, texelTarget.h];
+
+    
+    const shadowOn = dayNight && defs.HAS_SHADOWS && defs.USE_HALF_SHADOW &&
+      shadowEff > 0.001;
+    const sw = Math.max(1, Math.round(w * 0.5));
+    const sh = Math.max(1, Math.round(h * 0.5));
+    let shTarget = null;
+    if (shadowOn) {
+      try {
+        shTarget = shadowTarget(c, sw, sh);
+        if (shTarget) c.size.shadow = [shTarget.w, shTarget.h];
+      } catch { shTarget = null; }
+    }
+    if (shadowOn && shTarget) {
+      try {
+        const sp = getShadowProgram(c, defs);
+        const su = sp.uni;
+        
+        gl.activeTexture(gl.TEXTURE13);
+        gl.bindTexture(gl.TEXTURE_2D, null);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, shTarget.fb);
+        gl.viewport(0, 0, shTarget.w, shTarget.h);
+        gl.useProgram(sp.prog);
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, tex.aux);
+        gl.uniform1i(su.uAux, 1);
+        gl.activeTexture(gl.TEXTURE8);
+        gl.bindTexture(gl.TEXTURE_2D, tex.curve);
+        gl.uniform1i(su.uCurve, 8);
+        gl.uniform2f(su.uTarget, targetX, targetY);
+        gl.uniform2f(su.uAuxSpan, size.aux[0] * activePointer.auxScale,
+          size.aux[1] * activePointer.auxScale);
+        gl.uniform2f(su.uCenter, cam.centerX, cam.centerY);
+        gl.uniform2f(su.uShadowScale, w / shTarget.w, h / shTarget.h);
+        gl.uniform1f(su.uZoom, cam.zoom);
+        gl.uniform1f(su.uZoomCss, cam.zoomCss);
+        gl.uniform1f(su.uSnap, u.snap);
+        gl.uniform1f(su.uParallax, -(Number(u.par) || 0));
+        gl.uniform1f(su.uDepthScale, parallaxDepthScale(activePointer));
+        gl.uniform1f(su.uHeightSpan, hSpan > 0 ? hSpan : 0.8394);
+        gl.uniform3fv(su.uSunDir, dn.keyDir);
+        gl.uniform1f(su.uShadowStrength, shadowEff);
+        gl.uniform1f(su.uShadowLen, u.shadowLen);
+        gl.uniform1f(su.uShadowHeight, u.shadowH);
+        gl.uniform1f(su.uShadowSoft, u.shadowSoft);
+        gl.uniform1f(su.uShadowMaxEl, u.shadowMaxEl);
+        gl.uniform1f(su.uShadowStretch, u.shadowStretch);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+      } catch {
+        
+        
+        shTarget = null;
+      } finally {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      }
     }
 
-    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex.colour);
-    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, tex.aux);
-    gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, tex.dist);
-    gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, tex.flow);
-    gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, tex.speed);
-    gl.activeTexture(gl.TEXTURE5); gl.bindTexture(gl.TEXTURE_2D, tex.curve);
-    gl.activeTexture(gl.TEXTURE6); gl.bindTexture(gl.TEXTURE_2D, tex.slice);
-    gl.activeTexture(gl.TEXTURE7); gl.bindTexture(gl.TEXTURE_2D, tex.warp);
-    gl.activeTexture(gl.TEXTURE8); gl.bindTexture(gl.TEXTURE_2D, c.whaleTex || null);
+    
+    gl.useProgram(c.prog);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, w, h);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
 
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    const bind = (unit, name, tx) => {
+      gl.activeTexture(gl.TEXTURE0 + unit);
+      gl.bindTexture(gl.TEXTURE_2D, tx || null);
+      gl.uniform1i(uni[name], unit);
+    };
+    bind(0, 'uHeight', tex.height);
+    bind(1, 'uAux', tex.aux);
+    bind(2, 'uDist', tex.dist);
+    bind(3, 'uFlow', tex.flow);
+    bind(4, 'uSpeedTex', tex.speed);
+    bind(5, 'uNormal', tex.normal || c.normalFallback);
+    bind(6, 'uSoilTex', tex.soil || c.soilFallback);
+    bind(7, 'uPalette', tex.palette);
+    bind(8, 'uCurve', tex.curve);
+    bind(9, 'uSliceCurve', tex.slice);
+    bind(10, 'uWarpCurve', tex.warp);
+    bind(11, 'uSkyMatcap', tex.sky);
+    bind(12, 'uWhaleTex', c.whaleTex);
+    bind(13, 'uShadowTex', shTarget ? shTarget.tex : c.shadowFallback);
+
+    if (texel && texelTarget) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, texelTarget.fb);
+      gl.viewport(0, 0, texel.fw, texel.fh);
+      gl.uniform1f(uni.uTexelPass, 1.0);
+      gl.uniform2f(uni.uTileOrigin, texel.tx0, texel.ty0);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.viewport(0, 0, w, h);
+      const bp = getBlitProgram(c);
+      gl.useProgram(bp.prog);
+      gl.activeTexture(gl.TEXTURE13);
+      gl.bindTexture(gl.TEXTURE_2D, texelTarget.tex);
+      gl.uniform1i(bp.uni.uTexelFbo, 13);
+      gl.uniform2f(bp.uni.uTarget, targetX, targetY);
+      gl.uniform2f(bp.uni.uCenter, cam.centerX, cam.centerY);
+      gl.uniform2f(bp.uni.uTileOrigin, texel.tx0, texel.ty0);
+      gl.uniform2f(bp.uni.uTileSpan, texelTarget.w, texelTarget.h);
+      gl.uniform1f(bp.uni.uZoom, cam.zoom);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    } else {
+      gl.uniform1f(uni.uTexelPass, 0.0);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }
   }
 
   
@@ -5364,7 +7398,7 @@ function mountSeaUi(opts) {
     const vs = viewState(deck);
     if (!vs) return;
 
-    const settings = modeSettings(state.mode);
+    const settings = currentSettings();
     selectProgram(glc, settings);
     const sized = sizeGL(settings.renderScale);
     if (!sized) return;
@@ -5381,6 +7415,7 @@ function mountSeaUi(opts) {
     }
     const css = (deck.getAttribute('style') || '') +
       ';pointer-events:none;opacity:' + state.opacity +
+      ';image-rendering:pixelated' +
       (state.on ? '' : ';display:none');
     if (glc.css !== css) {
       glc.css = css;
@@ -5402,6 +7437,23 @@ function mountSeaUi(opts) {
       }
     }
     const ramps = liveRamps(now);
+    
+    
+    
+    
+    
+    const dt = state.lastPhaseAt ? (now - state.lastPhaseAt) / 1000 : 0;
+    
+    
+    if (!state.lastPhaseAt) {
+      state.wavePhase = t;
+      state.flowPhase = t;
+    }
+    state.lastPhaseAt = now;
+    const r = ramps;
+    const k = 1 + 0.5 * (1 - r.flow);
+    state.wavePhase = advancePhase(state.wavePhase, dt, state.waveSpeed);
+    state.flowPhase = advancePhase(state.flowPhase, dt, state.flowSpeed * k);
     const t0 = now;
     
     
@@ -5410,7 +7462,7 @@ function mountSeaUi(opts) {
       tx: target[0], ty: target[1],
       zoom: cam.zoomPx, zoomCss: cam.zoomPx / scale,
       centerX: cam.centerX, centerY: cam.centerY,
-    }, t, settings, ramps);
+    }, t, settings, ramps, state.wavePhase, state.flowPhase);
     pushRing(frameMs, performance.now() - t0);
     state.draws++;
     lastDrawnSig = viewSig(vs);
@@ -5614,7 +7666,7 @@ function mountSeaUi(opts) {
       
       if (glc && glc.ready && !glc.lost) {
         try {
-          sizeGL(modeSettings(id).renderScale);
+          sizeGL(currentSettings().renderScale);
           nextAt = 0;                       
           drawGL(performance.now() / 1000);
         } catch (e) {
@@ -5743,13 +7795,18 @@ function mountSeaUi(opts) {
     if (![w, h, zoom, t, tx, ty].every(isFinite)) {
       throw new Error('debugRender needs finite tx, ty, width, height, zoom');
     }
+    
+    
+    const waveTime = t * state.waveSpeed;
+    const flowTime = t * state.flowSpeed;
 
     const canvas = glc.canvas;
     const prevW = canvas.width, prevH = canvas.height;
     const prevPose = state.whalePose;
     
     
-    const settings = modeSettings(state.mode);
+    
+    const settings = currentSettings();
     selectProgram(glc, settings);       
     const scale = settings.renderScale;
     const bw = Math.max(1, Math.round(w * scale));
@@ -5778,11 +7835,24 @@ function mountSeaUi(opts) {
         canvas.width = bw;
         canvas.height = bh;
       }
+      
+      
+      const frameOpts = {
+        waveSet: opts.waveSetT !== undefined
+          ? waveSetEnvelope(Number(opts.waveSetT)) : 1.0,
+      };
+      if (opts.hour !== undefined) {
+        const hour = Number(opts.hour);
+        if (!isFinite(hour)) throw new Error('debugRender needs a finite hour');
+        frameOpts.hour = hour;
+      } else {
+        frameOpts.flat = true;
+      }
       renderFrame(glc, bw, bh, {
         tx, ty,
         zoom: zoom * scale, zoomCss: zoom,
         centerX: bw / 2, centerY: bh / 2,
-      }, t, settings, liveRamps(performance.now()));
+      }, t, settings, liveRamps(performance.now()), waveTime, flowTime, frameOpts);
 
       const px = new Uint8Array(bw * bh * 4);
       glc.gl.readPixels(0, 0, bw, bh, glc.gl.RGBA, glc.gl.UNSIGNED_BYTE, px);
@@ -5839,7 +7909,7 @@ function mountSeaUi(opts) {
       const deck = deckCanvas();
       const vs = deck && viewState(deck);
       if (!vs) throw new Error('no camera');
-      const settings = modeSettings(mode);
+      const settings = currentSettings();
       const sized = sizeGL(settings.renderScale);
       if (!sized) throw new Error('no viewport');
 
@@ -5851,19 +7921,21 @@ function mountSeaUi(opts) {
         centerX: cam.centerX, centerY: cam.centerY,
       };
       const start = performance.now();
+      const tStart = start / 1000;
       let ms;
       try {
         
         
         updateWhalePose(performance.now());
-        renderFrame(glc, sized.w, sized.h, frame, start / 1000, settings,
-          liveRamps(start));
+        renderFrame(glc, sized.w, sized.h, frame, tStart, settings,
+          liveRamps(start), tStart * state.waveSpeed, tStart * state.flowSpeed);
         syncGL(glc.gl);
         const t0 = performance.now();
         for (let i = 0; i < 60; i++) {
+          const t = tStart + i / 60;
           updateWhalePose(performance.now());
-          renderFrame(glc, sized.w, sized.h, frame, start / 1000 + i / 60, settings,
-            liveRamps(start));
+          renderFrame(glc, sized.w, sized.h, frame, t, settings, liveRamps(start),
+            t * state.waveSpeed, t * state.flowSpeed);
         }
         syncGL(glc.gl);
         ms = performance.now() - t0;
@@ -6060,6 +8132,22 @@ function mountSeaUi(opts) {
 
   
   
+  function setWaveSpeed(multiplier) {
+    const v = Number(multiplier);
+    state.waveSpeed = clamp(isFinite(v) ? v : 1, 0, 2);
+    refreshUi();
+    return state.waveSpeed;
+  }
+
+  function setFlowSpeed(multiplier) {
+    const v = Number(multiplier);
+    state.flowSpeed = clamp(isFinite(v) ? v : 1, 0, 2);
+    refreshUi();
+    return state.flowSpeed;
+  }
+
+  
+  
   function setOpacity(value) {
     const v = Number(value);
     state.opacity = clamp(isFinite(v) ? v : 1, 0, 1);
@@ -6104,6 +8192,42 @@ function mountSeaUi(opts) {
     setBackground(!!on && awayNow());
     refreshUi();
     return state.staticWhenHidden;
+  }
+
+  
+  
+  function setResScale(scale) {
+    const n = Number(scale);
+    state.resScale = RES_SCALES.includes(n) ? n
+      : RES_SCALES.includes(n / 100) ? n / 100 : 1;
+    nextAt = 0;
+    refreshUi();
+    return state.resScale;
+  }
+
+  function setPreset(id) {
+    if (!PRESET_IDS.includes(id)) return state.preset;
+    state.preset = id;
+    if (glc) glc.css = '';         
+    nextAt = 0;
+    refreshUi();
+    return state.preset;
+  }
+
+  function setTimeMode(id) {
+    if (!TIME_MODES.includes(id)) return state.timeMode;
+    state.timeMode = id;
+    nextAt = 0;
+    refreshUi();
+    return state.timeMode;
+  }
+
+  function setCustomHour(hour) {
+    const v = Number(hour);
+    state.customHour = clamp(isFinite(v) ? v : 13, 0, 24);
+    nextAt = 0;
+    refreshUi();
+    return state.customHour;
   }
 
   
@@ -6175,6 +8299,10 @@ function mountSeaUi(opts) {
   state.setStaticWhenHidden = setStaticWhenHidden;
   state.setBrightness = setBrightness;
   state.setOpacity = setOpacity;
+  state.setResScale = setResScale;
+  state.setPreset = setPreset;
+  state.setTimeMode = setTimeMode;
+  state.setCustomHour = setCustomHour;
   state.setOn = setOn;
   state.setWhalePose = setWhalePose;
   state.whale = setWhale;
@@ -6261,14 +8389,64 @@ function mountSeaUi(opts) {
   
   
   
-  const COLOUR_DEFAULTS = { opacity: 1, brightness: 1.1, hue: 0, sat: 100 };
+  
+  function resetPerf() {
+    
+    
+    requestMode(resolveResetMode(env, canUseShader));
+    localStorage.setItem('zz-sea-mode', RESET_PERF.mode);   
+    localStorage.setItem('zz-sea-fps', setAdaptiveFps(RESET_PERF.fps30) ? '1' : '0');
+    localStorage.setItem('zz-sea-cap', String(setFrameCap(RESET_PERF.frameCap)));
+    localStorage.setItem('zz-sea-hidden',
+      setStaticWhenHidden(RESET_PERF.staticWhenHidden) ? '1' : '0');
+    localStorage.setItem('zz-sea-res', String(setResScale(RESET_PERF.resScale)));
+  }
+
+  function resetColour() {
+    setOpacity(RESET_COLOUR.opacity);
+    setBrightness(RESET_COLOUR.brightness);
+    setHue(RESET_COLOUR.hue);
+    setSat(RESET_COLOUR.sat);
+    localStorage.setItem('zz-sea-opacity', String(RESET_COLOUR.opacity));
+    localStorage.setItem('zz-sea-brightness',
+      String(Math.round(RESET_COLOUR.brightness * 100)));
+    localStorage.setItem('zz-sea-hue', String(RESET_COLOUR.hue));
+    localStorage.setItem('zz-sea-sat', String(RESET_COLOUR.sat));
+  }
+
+  function resetMotion() {
+    setWaveSpeed(RESET_MOTION.waveSpeed);
+    setFlowSpeed(RESET_MOTION.flowSpeed);
+    localStorage.setItem('zz-sea-wave-speed',
+      String(Math.round(RESET_MOTION.waveSpeed * 100)));
+    localStorage.setItem('zz-sea-flow-speed',
+      String(Math.round(RESET_MOTION.flowSpeed * 100)));
+  }
+
+  
+  
+  function resetStyle() {
+    setPreset(RESET_STYLE.preset);
+    setTimeMode(RESET_STYLE.timeMode);
+    setCustomHour(RESET_STYLE.customHour);
+    localStorage.setItem('zz-sea-preset', RESET_STYLE.preset);
+    localStorage.setItem('zz-sea-time-mode', RESET_STYLE.timeMode);
+    localStorage.setItem('zz-sea-custom-hour', String(RESET_STYLE.customHour));
+  }
 
   function uiState() {
     return {
       on: state.on, mode: state.mode, opacity: state.opacity,
       brightness: state.brightness, hue: state.hue, sat: state.sat,
+      waveSpeed: state.waveSpeed, flowSpeed: state.flowSpeed,
       fps30: state.fps30,
       frameCap: state.frameCap, staticWhenHidden: state.staticWhenHidden,
+      resScale: state.resScale, preset: state.preset,
+      timeMode: state.timeMode, customHour: state.customHour,
+      
+      
+      presetDayNight:
+        modeSettings(state.mode, state.preset, state.resScale).dayNight,
       canUseShader: state.canUseShader, maxTextureSize: state.maxTextureSize,
       loading: state.loading, error: state.error,
       update: updateState(),
@@ -6288,6 +8466,21 @@ function mountSeaUi(opts) {
       requestMode(patch.mode);       
       localStorage.setItem('zz-sea-mode', patch.mode);
     }
+    if ('resScale' in patch) {
+      localStorage.setItem('zz-sea-res', String(setResScale(patch.resScale)));
+    }
+    if ('preset' in patch) {
+      localStorage.setItem('zz-sea-preset', setPreset(patch.preset));
+    }
+    if ('timeMode' in patch) {
+      localStorage.setItem('zz-sea-time-mode', setTimeMode(patch.timeMode));
+    }
+    if ('customHour' in patch) {
+      localStorage.setItem('zz-sea-custom-hour', String(setCustomHour(patch.customHour)));
+    }
+    if ('resetStyle' in patch && patch.resetStyle) {
+      resetStyle();
+    }
     if ('retry' in patch) {
       retry();
     }
@@ -6304,16 +8497,23 @@ function mountSeaUi(opts) {
     if ('sat' in patch) {
       localStorage.setItem('zz-sea-sat', String(Math.round(setSat(patch.sat))));
     }
+    if ('waveSpeed' in patch) {
+      localStorage.setItem('zz-sea-wave-speed',
+        String(Math.round(setWaveSpeed(patch.waveSpeed) * 100)));
+    }
+    if ('flowSpeed' in patch) {
+      localStorage.setItem('zz-sea-flow-speed',
+        String(Math.round(setFlowSpeed(patch.flowSpeed) * 100)));
+    }
     if ('reset' in patch) {
-      setOpacity(COLOUR_DEFAULTS.opacity);
-      setBrightness(COLOUR_DEFAULTS.brightness);
-      setHue(COLOUR_DEFAULTS.hue);
-      setSat(COLOUR_DEFAULTS.sat);
-      localStorage.setItem('zz-sea-opacity', String(COLOUR_DEFAULTS.opacity));
-      localStorage.setItem('zz-sea-brightness',
-        String(Math.round(COLOUR_DEFAULTS.brightness * 100)));
-      localStorage.setItem('zz-sea-hue', String(COLOUR_DEFAULTS.hue));
-      localStorage.setItem('zz-sea-sat', String(COLOUR_DEFAULTS.sat));
+      const which = patch.reset;
+      if (which === 'perf') resetPerf();
+      else if (which === 'colour') resetColour();
+      else if (which === 'motion') resetMotion();
+      else if (which === 'style') resetStyle();
+      
+      
+      else if (which === true) { resetColour(); resetMotion(); }
     }
     if ('updateCheck' in patch) {
       checkUpdate();

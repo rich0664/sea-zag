@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "assetVersion": "2026-11-01T22-21-31Z-exploration-5dd805af5252-64a9e03c4869",
-  "whaleVersion": "1",
+  "assetVersion": "2026-11-01T22-21-31Z-exploration-3b44c3bac8cb",
+  "whaleVersion": "2",
   "meshVersion": "4",
   "map": {
     "kind": "exploration",
@@ -13,15 +13,90 @@
     "oy": 0,
     "rasterSha256": "64a9e03c4869c82901e4400c22707f0982ff1c49e372e5f17f5821ef7e666ca1"
   },
-  "pipelineStamp": "5dd805af5252",
+  "pipelineStamp": "3b44c3bac8cb",
   "distMax": 600,
   "alongScale": 1.03,
-  "heightLo": 0.1606,
+  "heightLo": 0.17,
   "heightHi": 1.0,
   "auxScale": 2,
   "flowCell": 16,
   "speedCell": 4,
   "pad": 20,
   "bakeW": 7789,
-  "bakeH": 5294
+  "bakeH": 5294,
+  "palette": {
+    "stops": [
+      0.001,
+      0.03,
+      0.07,
+      0.12,
+      0.2,
+      0.32,
+      0.46,
+      0.66,
+      1.0
+    ],
+    "cols": [
+      [
+        74,
+        126,
+        156
+      ],
+      [
+        58,
+        104,
+        134
+      ],
+      [
+        45,
+        86,
+        116
+      ],
+      [
+        35,
+        70,
+        98
+      ],
+      [
+        28,
+        57,
+        82
+      ],
+      [
+        22,
+        46,
+        67
+      ],
+      [
+        17,
+        36,
+        53
+      ],
+      [
+        12,
+        25,
+        37
+      ],
+      [
+        7,
+        13,
+        18
+      ]
+    ]
+  },
+  "coast": {
+    "levels": 5,
+    "strength": 0.15,
+    "r": 138,
+    "g": 199,
+    "b": 234
+  },
+  "bakes": {
+    "height": "sea-zag-height.webp",
+    "heightEncoding": "sqrt-depth",
+    "normal": "sea-zag-normal.webp",
+    "soil": "sea-zag-soil.webp",
+    "soilScale": 4,
+    "speedChannels": "speed-fetch-murk"
+  }
 }
